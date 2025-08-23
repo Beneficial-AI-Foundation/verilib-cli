@@ -1643,6 +1643,7 @@ dependencies = [
  "keyring",
  "reqwest",
  "rpassword",
+ "serde_json",
  "tokio",
  "whoami",
 ]
