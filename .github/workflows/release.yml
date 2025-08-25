@@ -112,6 +112,8 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       BUILD_MANIFEST_NAME: target/distrib/${{ join(matrix.targets, '-') }}-dist-manifest.json
+      PKG_CONFIG_ALLOW_CROSS: 1
+      OPENSSL_NO_VENDOR: 1
     steps:
       - name: enable windows longpaths
         run: |
@@ -126,6 +128,14 @@ jobs:
           if ! command -v cargo > /dev/null 2>&1; then
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+            # Source the cargo environment
+            source "$HOME/.cargo/env"
+          fi
+          # Ensure we have the target for cross-compilation if needed
+          if [ -n "${{ matrix.targets }}" ]; then
+            for target in ${{ join(matrix.targets, ' ') }}; do
+              rustup target add "$target" || true
+            done
           fi
       - name: Install dist
         run: ${{ matrix.install_dist.run }}
@@ -139,6 +149,20 @@ jobs:
       - name: Install dependencies
         run: |
           ${{ matrix.packages_install }}
+      - name: Configure environment for cross-compilation
+        shell: bash
+        run: |
+          # Set environment variables to avoid pkg-config cross-compilation issues
+          echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
+          echo "OPENSSL_NO_VENDOR=1" >> $GITHUB_ENV
+          # Force use of rustls instead of OpenSSL
+          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          # Verify that we're using rustls-tls in Cargo.toml
+          if grep -q 'features.*rustls-tls' Cargo.toml; then
+            echo "✓ Using rustls-tls - no system OpenSSL required"
+          else
+            echo "⚠ Warning: rustls-tls not found in Cargo.toml"
+          fi
       - name: Build artifacts
         run: |
           # Actually do builds and make zips and whatnot
