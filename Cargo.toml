@@ -1,6 +1,6 @@
 [package]
 name = "verilib-cli"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 repository = "https://github.com/Beneficial-AI-Foundation/verilib-cli"
 
