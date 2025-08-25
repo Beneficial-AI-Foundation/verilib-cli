@@ -43,6 +43,12 @@ on:
   push:
     tags:
       - '**[0-9]+.[0-9]+.[0-9]+*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v0.1.2)'
+        required: true
+        type: string
 
 jobs:
   # Run 'dist plan' (or host) to determine what tasks we need to do
@@ -50,16 +56,38 @@ jobs:
     runs-on: "ubuntu-22.04"
     outputs:
       val: ${{ steps.plan.outputs.manifest }}
-      tag: ${{ !github.event.pull_request && github.ref_name || '' }}
-      tag-flag: ${{ !github.event.pull_request && format('--tag={0}', github.ref_name) || '' }}
-      publishing: ${{ !github.event.pull_request }}
+      tag: ${{ github.event.inputs.tag || (!github.event.pull_request && github.ref_name) || '' }}
+      tag-flag: ${{ github.event.inputs.tag && format('--tag={0}', github.event.inputs.tag) || (!github.event.pull_request && format('--tag={0}', github.ref_name)) || '' }}
+      publishing: ${{ github.event.inputs.tag != '' || (!github.event.pull_request && github.ref_type == 'tag') }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          persist-credentials: ${{ github.event.inputs.tag != '' }}
+          token: ${{ github.event.inputs.tag != '' && secrets.GITHUB_TOKEN || '' }}
           submodules: recursive
+      - name: Verify version consistency
+        if: ${{ github.event.inputs.tag != '' }}
+        run: |
+          CARGO_VERSION=$(grep "^version" Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          TAG_VERSION="${{ github.event.inputs.tag }}"
+          # Remove 'v' prefix if present
+          TAG_VERSION_CLEAN=$(echo "$TAG_VERSION" | sed 's/^v//')
+          
+          echo "Cargo.toml version: $CARGO_VERSION"
+          echo "Tag version (clean): $TAG_VERSION_CLEAN"
+          
+          if [ "$CARGO_VERSION" != "$TAG_VERSION_CLEAN" ]; then
+            echo "⚠️  Version mismatch!"
+            echo "Cargo.toml has version $CARGO_VERSION but tag is $TAG_VERSION"
+            echo "You may need to:"
+            echo "1. Update Cargo.toml to version $TAG_VERSION_CLEAN, or"
+            echo "2. Use tag v$CARGO_VERSION instead"
+            exit 1
+          else
+            echo "✅ Version matches between Cargo.toml and tag"
+          fi
       - name: Install dist
         # we specify bash to get pipefail; it guards against the `curl` command
         # failing. otherwise `sh` won't catch that `curl` returned non-0
@@ -77,7 +105,25 @@ jobs:
       # but also really annoying to build CI around when it needs secrets to work right.)
       - id: plan
         run: |
-          dist ${{ (!github.event.pull_request && format('host --steps=create --tag={0}', github.ref_name)) || 'plan' }} --output-format=json > plan-dist-manifest.json
+          echo "Event name: ${{ github.event_name }}"
+          echo "Ref type: ${{ github.ref_type }}"
+          echo "Ref name: ${{ github.ref_name }}"
+          echo "Manual tag input: ${{ github.event.inputs.tag }}"
+          echo "Current Cargo.toml version:"
+          grep "^version" Cargo.toml || echo "No version found in Cargo.toml"
+          echo "Existing tags:"
+          git tag -l | head -10 || echo "No tags found"
+          
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "Manual workflow dispatch with tag: ${{ github.event.inputs.tag }}"
+            dist host --steps=create --tag="${{ github.event.inputs.tag }}" --output-format=json > plan-dist-manifest.json
+          elif [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "Automatic tag push with tag: ${{ github.ref_name }}"
+            dist host --steps=create --tag="${{ github.ref_name }}" --output-format=json > plan-dist-manifest.json
+          else
+            echo "Pull request or other event - using plan mode"
+            dist plan --output-format=json > plan-dist-manifest.json
+          fi
           echo "dist ran successfully"
           cat plan-dist-manifest.json
           echo "manifest=$(jq -c "." plan-dist-manifest.json)" >> "$GITHUB_OUTPUT"
@@ -112,6 +158,10 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       BUILD_MANIFEST_NAME: target/distrib/${{ join(matrix.targets, '-') }}-dist-manifest.json
+      PKG_CONFIG_ALLOW_CROSS: 1
+      PKG_CONFIG_ALLOW_SYSTEM_LIBS: 1
+      PKG_CONFIG_ALLOW_SYSTEM_CFLAGS: 1
+      OPENSSL_NO_VENDOR: 1
     steps:
       - name: enable windows longpaths
         run: |
@@ -120,12 +170,37 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+      - name: Install system dependencies for keyring
+        if: ${{ contains(matrix.runner, 'ubuntu') && contains(join(matrix.targets, ' '), 'x86_64-unknown-linux-gnu') }}
+        run: |
+          if command -v apt-get > /dev/null 2>&1; then
+            # Ubuntu/Debian - only install for x86_64 Linux builds
+            sudo apt-get update
+            sudo apt-get install -y libdbus-1-dev pkg-config build-essential
+          elif command -v dnf > /dev/null 2>&1; then
+            # Fedora/RHEL
+            sudo dnf install -y dbus-devel pkgconf-pkg-config gcc
+          elif command -v yum > /dev/null 2>&1; then
+            # CentOS/older RHEL
+            sudo yum install -y dbus-devel pkgconfig gcc
+          fi
+          # Verify installation
+          pkg-config --exists dbus-1 && echo "✓ dbus-1 found" || echo "✗ dbus-1 not found"
+          pkg-config --modversion dbus-1 || echo "Could not get dbus-1 version"
       - name: Install Rust non-interactively if not already installed
         if: ${{ matrix.container }}
         run: |
           if ! command -v cargo > /dev/null 2>&1; then
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+            # Source the cargo environment
+            source "$HOME/.cargo/env"
+          fi
+          # Ensure we have the target for cross-compilation if needed
+          if [ -n "${{ matrix.targets }}" ]; then
+            for target in ${{ join(matrix.targets, ' ') }}; do
+              rustup target add "$target" || true
+            done
           fi
       - name: Install dist
         run: ${{ matrix.install_dist.run }}
@@ -139,6 +214,38 @@ jobs:
       - name: Install dependencies
         run: |
           ${{ matrix.packages_install }}
+      - name: Configure environment for cross-compilation
+        shell: bash
+        run: |
+          # Set environment variables to avoid pkg-config cross-compilation issues
+          echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
+          echo "PKG_CONFIG_ALLOW_SYSTEM_LIBS=1" >> $GITHUB_ENV
+          echo "PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1" >> $GITHUB_ENV
+          echo "OPENSSL_NO_VENDOR=1" >> $GITHUB_ENV
+          # Force use of rustls instead of OpenSSL
+          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          
+          # Set comprehensive PKG_CONFIG_PATH only for x86_64 Linux builds that need dbus
+          if [[ "${{ matrix.runner }}" == *"ubuntu"* ]] && [[ "${{ join(matrix.targets, ' ') }}" == *"x86_64-unknown-linux-gnu"* ]]; then
+            PKG_PATHS="/usr/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig:/usr/lib64/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig"
+            echo "PKG_CONFIG_PATH=$PKG_PATHS" >> $GITHUB_ENV
+            echo "Setting PKG_CONFIG_PATH to: $PKG_PATHS"
+            # Verify dbus-1.pc exists
+            for path in $(echo "$PKG_PATHS" | tr ':' ' '); do
+              if [ -f "$path/dbus-1.pc" ]; then
+                echo "✓ Found dbus-1.pc in $path"
+              fi
+            done
+          else
+            echo "Skipping PKG_CONFIG_PATH setup for cross-compilation target: ${{ join(matrix.targets, ' ') }}"
+          fi
+          
+          # Verify that we're using rustls-tls in Cargo.toml
+          if grep -q 'features.*rustls-tls' Cargo.toml; then
+            echo "✓ Using rustls-tls - no system OpenSSL required"
+          else
+            echo "⚠ Warning: rustls-tls not found in Cargo.toml"
+          fi
       - name: Build artifacts
         run: |
           # Actually do builds and make zips and whatnot
