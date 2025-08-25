@@ -67,6 +67,27 @@ jobs:
           persist-credentials: ${{ github.event.inputs.tag != '' }}
           token: ${{ github.event.inputs.tag != '' && secrets.GITHUB_TOKEN || '' }}
           submodules: recursive
+      - name: Verify version consistency
+        if: ${{ github.event.inputs.tag != '' }}
+        run: |
+          CARGO_VERSION=$(grep "^version" Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          TAG_VERSION="${{ github.event.inputs.tag }}"
+          # Remove 'v' prefix if present
+          TAG_VERSION_CLEAN=$(echo "$TAG_VERSION" | sed 's/^v//')
+          
+          echo "Cargo.toml version: $CARGO_VERSION"
+          echo "Tag version (clean): $TAG_VERSION_CLEAN"
+          
+          if [ "$CARGO_VERSION" != "$TAG_VERSION_CLEAN" ]; then
+            echo "⚠️  Version mismatch!"
+            echo "Cargo.toml has version $CARGO_VERSION but tag is $TAG_VERSION"
+            echo "You may need to:"
+            echo "1. Update Cargo.toml to version $TAG_VERSION_CLEAN, or"
+            echo "2. Use tag v$CARGO_VERSION instead"
+            exit 1
+          else
+            echo "✅ Version matches between Cargo.toml and tag"
+          fi
       - name: Install dist
         # we specify bash to get pipefail; it guards against the `curl` command
         # failing. otherwise `sh` won't catch that `curl` returned non-0
@@ -84,14 +105,23 @@ jobs:
       # but also really annoying to build CI around when it needs secrets to work right.)
       - id: plan
         run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Ref type: ${{ github.ref_type }}"
+          echo "Ref name: ${{ github.ref_name }}"
+          echo "Manual tag input: ${{ github.event.inputs.tag }}"
+          echo "Current Cargo.toml version:"
+          grep "^version" Cargo.toml || echo "No version found in Cargo.toml"
+          echo "Existing tags:"
+          git tag -l | head -10 || echo "No tags found"
+          
           if [ -n "${{ github.event.inputs.tag }}" ]; then
-            # Manual workflow dispatch with tag
+            echo "Manual workflow dispatch with tag: ${{ github.event.inputs.tag }}"
             dist host --steps=create --tag="${{ github.event.inputs.tag }}" --output-format=json > plan-dist-manifest.json
           elif [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref_type }}" = "tag" ]; then
-            # Automatic tag push
+            echo "Automatic tag push with tag: ${{ github.ref_name }}"
             dist host --steps=create --tag="${{ github.ref_name }}" --output-format=json > plan-dist-manifest.json
           else
-            # Pull request or other event
+            echo "Pull request or other event - using plan mode"
             dist plan --output-format=json > plan-dist-manifest.json
           fi
           echo "dist ran successfully"
