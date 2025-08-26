@@ -21,13 +21,3 @@ windows-archive = ".zip"
 unix-archive = ".tar.xz"
 # Whether to auto-include files like README/LICENSE/CHANGELOG
 include = ["README.md"]
-# Code signing for macOS (requires Apple Developer account)
-[dist.macos-sign]
-# Set to true to enable code signing
-# You'll need to add secrets to your GitHub repository:
-# - APPLE_SIGNING_IDENTITY (Developer ID Application certificate)
-# - APPLE_CERTIFICATE_P12 (base64 encoded .p12 file)
-# - APPLE_CERTIFICATE_PASSWORD (password for .p12 file)
-enable = false
-# Use ad-hoc signing for GitHub releases (same as local builds)
-adhoc = true
