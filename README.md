@@ -184,6 +184,58 @@ verilib-cli --debug init my-repo-789
 
 ## Troubleshooting
 
+### Common Issues
+
+#### macOS Security Warning
+If you see "Apple could not verify verilib-cli is free of malware", this is because the binary isn't code-signed. You have several options:
+
+**Option 1: Use the installer script (recommended)**
+```bash
+curl -sSL https://github.com/Beneficial-AI-Foundation/verilib-cli/releases/latest/download/verilib-cli-installer.sh | sh
+```
+
+**Option 2: Bypass Gatekeeper manually**
+1. Download the binary manually
+2. Try to run it (you'll get the warning)
+3. Go to **System Preferences** → **Security & Privacy** → **General**
+4. Click **"Allow Anyway"** next to the verilib-cli message
+5. Try running again and click **"Open"** when prompted
+
+**Option 3: Use Terminal to remove quarantine**
+```bash
+# After downloading the binary
+xattr -d com.apple.quarantine /path/to/verilib-cli
+```
+
+**Option 4: Install via Homebrew (when available)**
+```bash
+brew install verilib-cli  # Coming soon
+```
+
+#### Authentication Problems
+```bash
+# Check authentication status
+verilib-cli status
+
+# Re-authenticate if needed
+verilib-cli auth
+```
+
+#### Repository Not Found
+- Verify the repository ID is correct
+- Ensure you have access permissions
+- Check your API key is valid
+
+#### Git Issues During Reclone
+```bash
+# Use debug mode to see detailed git status
+verilib-cli --debug reclone
+
+# Common solutions:
+# - Commit or stash local changes
+# - Verify git repository is in clean state
+# - Check network connectivity
+```
 
 #### Keyring Issues
 - **Linux**: Ensure secret service is running (`gnome-keyring-daemon` or KDE Wallet)
