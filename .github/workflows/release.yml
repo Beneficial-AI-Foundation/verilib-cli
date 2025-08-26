@@ -170,6 +170,23 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+      - name: Install system dependencies for keyring
+        if: ${{ contains(matrix.runner, 'ubuntu') || contains(join(matrix.targets, ' '), 'linux') }}
+        run: |
+          if command -v apt-get > /dev/null 2>&1; then
+            # Ubuntu/Debian
+            sudo apt-get update
+            sudo apt-get install -y libdbus-1-dev pkg-config build-essential
+          elif command -v dnf > /dev/null 2>&1; then
+            # Fedora/RHEL
+            sudo dnf install -y dbus-devel pkgconf-pkg-config gcc
+          elif command -v yum > /dev/null 2>&1; then
+            # CentOS/older RHEL
+            sudo yum install -y dbus-devel pkgconfig gcc
+          fi
+          # Verify installation
+          pkg-config --exists dbus-1 && echo "✓ dbus-1 found" || echo "✗ dbus-1 not found"
+          pkg-config --modversion dbus-1 || echo "Could not get dbus-1 version"
       - name: Install Rust non-interactively if not already installed
         if: ${{ matrix.container }}
         run: |
@@ -197,20 +214,6 @@ jobs:
       - name: Install dependencies
         run: |
           ${{ matrix.packages_install }}
-      - name: Install system dependencies for keyring
-        if: ${{ contains(matrix.targets, 'linux') }}
-        run: |
-          if command -v apt-get > /dev/null 2>&1; then
-            # Ubuntu/Debian
-            sudo apt-get update
-            sudo apt-get install -y libdbus-1-dev pkg-config
-          elif command -v dnf > /dev/null 2>&1; then
-            # Fedora/RHEL
-            sudo dnf install -y dbus-devel pkgconf-pkg-config
-          elif command -v yum > /dev/null 2>&1; then
-            # CentOS/older RHEL
-            sudo yum install -y dbus-devel pkgconfig
-          fi
       - name: Configure environment for cross-compilation
         shell: bash
         run: |
@@ -221,15 +224,25 @@ jobs:
           echo "OPENSSL_NO_VENDOR=1" >> $GITHUB_ENV
           # Force use of rustls instead of OpenSSL
           echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
+          
+          # Set comprehensive PKG_CONFIG_PATH for Linux systems
+          if [[ "${{ matrix.runner }}" == *"ubuntu"* ]] || [[ "${{ join(matrix.targets, ' ') }}" == *"linux"* ]]; then
+            PKG_PATHS="/usr/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig:/usr/lib64/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig"
+            echo "PKG_CONFIG_PATH=$PKG_PATHS" >> $GITHUB_ENV
+            echo "Setting PKG_CONFIG_PATH to: $PKG_PATHS"
+            # Verify dbus-1.pc exists
+            for path in $(echo "$PKG_PATHS" | tr ':' ' '); do
+              if [ -f "$path/dbus-1.pc" ]; then
+                echo "✓ Found dbus-1.pc in $path"
+              fi
+            done
+          fi
+          
           # Verify that we're using rustls-tls in Cargo.toml
           if grep -q 'features.*rustls-tls' Cargo.toml; then
             echo "✓ Using rustls-tls - no system OpenSSL required"
           else
             echo "⚠ Warning: rustls-tls not found in Cargo.toml"
-          fi
-          # Set PKG_CONFIG_PATH for common Linux distributions
-          if [ -d "/usr/lib/pkgconfig" ]; then
-            echo "PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig" >> $GITHUB_ENV
           fi
       - name: Build artifacts
         run: |
