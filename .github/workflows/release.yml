@@ -159,6 +159,8 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       BUILD_MANIFEST_NAME: target/distrib/${{ join(matrix.targets, '-') }}-dist-manifest.json
       PKG_CONFIG_ALLOW_CROSS: 1
+      PKG_CONFIG_ALLOW_SYSTEM_LIBS: 1
+      PKG_CONFIG_ALLOW_SYSTEM_CFLAGS: 1
       OPENSSL_NO_VENDOR: 1
     steps:
       - name: enable windows longpaths
@@ -195,11 +197,27 @@ jobs:
       - name: Install dependencies
         run: |
           ${{ matrix.packages_install }}
+      - name: Install system dependencies for keyring
+        if: ${{ contains(matrix.targets, 'linux') }}
+        run: |
+          if command -v apt-get > /dev/null 2>&1; then
+            # Ubuntu/Debian
+            sudo apt-get update
+            sudo apt-get install -y libdbus-1-dev pkg-config
+          elif command -v dnf > /dev/null 2>&1; then
+            # Fedora/RHEL
+            sudo dnf install -y dbus-devel pkgconf-pkg-config
+          elif command -v yum > /dev/null 2>&1; then
+            # CentOS/older RHEL
+            sudo yum install -y dbus-devel pkgconfig
+          fi
       - name: Configure environment for cross-compilation
         shell: bash
         run: |
           # Set environment variables to avoid pkg-config cross-compilation issues
           echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
+          echo "PKG_CONFIG_ALLOW_SYSTEM_LIBS=1" >> $GITHUB_ENV
+          echo "PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1" >> $GITHUB_ENV
           echo "OPENSSL_NO_VENDOR=1" >> $GITHUB_ENV
           # Force use of rustls instead of OpenSSL
           echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> $GITHUB_ENV
@@ -208,6 +226,10 @@ jobs:
             echo "✓ Using rustls-tls - no system OpenSSL required"
           else
             echo "⚠ Warning: rustls-tls not found in Cargo.toml"
+          fi
+          # Set PKG_CONFIG_PATH for common Linux distributions
+          if [ -d "/usr/lib/pkgconfig" ]; then
+            echo "PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig" >> $GITHUB_ENV
           fi
       - name: Build artifacts
         run: |
