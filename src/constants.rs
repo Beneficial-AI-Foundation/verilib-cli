@@ -1,4 +1,4 @@
-pub const DEFAULT_BASE_URL: &str = "https://api.verilib.com";
+pub const DEFAULT_BASE_URL: &str = "https://verilib.org";
 
 // CLI binary name - could also get this from env!("CARGO_PKG_NAME")
 pub const CLI_NAME: &str = env!("CARGO_PKG_NAME");
