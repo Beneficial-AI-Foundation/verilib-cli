@@ -23,14 +23,10 @@ pub enum Commands {
     Init {
         /// Repository ID to fetch
         repo_id: String,
-        /// Base URL for API (defaults to production)
-        #[arg(long, short)]
-        base_url: Option<String>,
+        /// API base URL (defaults to production)
+        #[arg(long)]
+        url: Option<String>,
     },
     /// Reclone repository after checking for uncommitted changes
-    Reclone {
-        /// Base URL for API (defaults to production)
-        #[arg(long, short)]
-        base_url: Option<String>,
-    },
+    Reclone,
 }

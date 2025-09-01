@@ -26,11 +26,11 @@ async fn main() -> Result<()> {
         Commands::Status => {
             handle_status().await?;
         }
-        Commands::Init { repo_id, base_url } => {
-            handle_init(repo_id, base_url).await?;
+        Commands::Init { repo_id, url } => {
+            handle_init(repo_id, url).await?;
         }
-        Commands::Reclone { base_url } => {
-            handle_reclone(base_url, cli.debug).await?;
+        Commands::Reclone => {
+            handle_reclone(cli.debug).await?;
         }
     }
 

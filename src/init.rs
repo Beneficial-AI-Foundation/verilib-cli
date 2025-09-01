@@ -6,7 +6,7 @@ use std::fs;
 use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
 use crate::status::get_stored_api_key;
 
-pub async fn handle_init(repo_id: String, base_url: Option<String>) -> Result<()> {
+pub async fn handle_init(repo_id: String, url: Option<String>) -> Result<()> {
     println!("Initializing project with repository ID: {}", repo_id);
     
     // Get the API key from keyring
@@ -14,7 +14,7 @@ pub async fn handle_init(repo_id: String, base_url: Option<String>) -> Result<()
         .context(auth_required_msg())?;
     
     // Determine the base URL
-    let url_base = base_url.unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
+    let url_base = url.clone().unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
     let endpoint = format!("{}/v2/repo/tree/{}", url_base, repo_id);
     
     println!("Fetching repository tree from: {}", endpoint);
@@ -55,8 +55,17 @@ pub async fn handle_init(repo_id: String, base_url: Option<String>) -> Result<()
         .get("data")
         .context("Response does not contain 'data' property")?;
     
-    // Convert data back to JSON string for storage
-    let data_json = serde_json::to_string_pretty(data)
+    // Create the final JSON structure with repo object containing the base URL
+    let final_json = serde_json::json!({
+        "repo": {
+            "id": repo_id,
+            "url": url_base
+        },
+        "data": data
+    });
+    
+    // Convert to pretty JSON string for storage
+    let data_json = serde_json::to_string_pretty(&final_json)
         .context("Failed to serialize data to JSON")?;
     
     // Create .verilib directory if it doesn't exist

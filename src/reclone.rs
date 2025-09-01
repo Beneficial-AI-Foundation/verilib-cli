@@ -8,7 +8,7 @@ use std::process::Command;
 use crate::constants::{auth_required_msg, init_required_msg, DEFAULT_BASE_URL};
 use crate::status::get_stored_api_key;
 
-pub async fn handle_reclone(base_url: Option<String>, debug: bool) -> Result<()> {
+pub async fn handle_reclone(debug: bool) -> Result<()> {
     if debug {
         println!("Debug: Starting reclone process...");
     } else {
@@ -35,7 +35,19 @@ pub async fn handle_reclone(base_url: Option<String>, debug: bool) -> Result<()>
     let repo_id = extract_repo_id(&tree_json)
         .context("Could not find repository ID in tree.json")?;
     
+    // Extract URL from tree.json
+    let url_base = extract_repo_url(&tree_json)
+        .unwrap_or_else(|| {
+            if debug {
+                println!("Debug: No URL found in tree.json, using default");
+            }
+            DEFAULT_BASE_URL.to_string()
+        });
+    
     println!("Found repository ID: {}", repo_id);
+    if debug {
+        println!("Debug: Using URL: {}", url_base);
+    }
     
     // Check if git is available
     if !is_git_available() {
@@ -51,7 +63,6 @@ pub async fn handle_reclone(base_url: Option<String>, debug: bool) -> Result<()>
     
     // Perform the reclone API call
     let api_key = get_stored_api_key()?;
-    let url_base = base_url.unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
     let endpoint = format!("{}/v2/repo/reclone/{}", url_base, repo_id);
     
     println!("Calling reclone endpoint: {}", endpoint);
@@ -131,6 +142,15 @@ fn extract_repo_id(tree_json: &Value) -> Option<String> {
     tree_json
         .get("repo")?
         .get("id")?
+        .as_str()
+        .map(|s| s.to_string())
+}
+
+fn extract_repo_url(tree_json: &Value) -> Option<String> {
+    // Extract repo.url from the tree.json structure
+    tree_json
+        .get("repo")?
+        .get("url")?
         .as_str()
         .map(|s| s.to_string())
 }
