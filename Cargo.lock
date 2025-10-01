@@ -1531,6 +1531,7 @@ dependencies = [
  "keyring",
  "reqwest",
  "rpassword",
+ "serde",
  "serde_json",
  "tokio",
  "whoami",

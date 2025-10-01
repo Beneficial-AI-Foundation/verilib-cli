@@ -4,6 +4,7 @@ use clap::Parser;
 mod auth;
 mod cli;
 mod constants;
+mod download;
 mod init;
 mod keyring_utils;
 mod reclone;
