@@ -29,4 +29,10 @@ pub enum Commands {
     },
     /// Reclone repository after checking for uncommitted changes
     Reclone,
+    /// Deploy repository to server
+    Deploy {
+        /// API base URL (defaults to production)
+        #[arg(long)]
+        url: Option<String>,
+    },
 }

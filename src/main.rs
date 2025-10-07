@@ -4,6 +4,7 @@ use clap::Parser;
 mod auth;
 mod cli;
 mod constants;
+mod deploy;
 mod download;
 mod init;
 mod keyring_utils;
@@ -12,6 +13,7 @@ mod status;
 
 use auth::handle_auth;
 use cli::{Cli, Commands};
+use deploy::handle_deploy;
 use init::handle_init;
 use reclone::handle_reclone;
 use status::handle_status;
@@ -28,10 +30,13 @@ async fn main() -> Result<()> {
             handle_status().await?;
         }
         Commands::Init { repo_id, url } => {
-            handle_init(repo_id, url).await?;
+            handle_init(repo_id, url, cli.debug).await?;
         }
         Commands::Reclone => {
             handle_reclone(cli.debug).await?;
+        }
+        Commands::Deploy { url } => {
+            handle_deploy(url, cli.debug).await?;
         }
     }
 
