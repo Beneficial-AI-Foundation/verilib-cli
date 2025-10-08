@@ -9,6 +9,7 @@ pub struct TreeNode {
     pub id: u64,
     pub parent_id: Option<u64>,
     pub identifier: String,
+    pub index: u32,
     pub statement_type: String,
     pub status_id: u32,
     pub specified: u32,
@@ -148,7 +149,7 @@ fn process_node(node: &TreeNode, current_path: &PathBuf, layouts: &std::collecti
             process_tree(&node.children, &dir_path, layouts)?;
         }
         _ => {
-            let file_name = format!("{}.atom.verilib", node.identifier);
+            let file_name = format!("[{}] - {}.atom.verilib", node.index, node.identifier);
             let file_path = current_path.join(&file_name);
             
             let content = node.snippets
@@ -165,7 +166,7 @@ fn process_node(node: &TreeNode, current_path: &PathBuf, layouts: &std::collecti
                 .with_context(|| format!("Failed to write file: {:?}", file_path))?;
             
             if !node.dependencies.is_empty() {
-                let meta_file_name = format!("{}.meta.verilib", node.identifier);
+                let meta_file_name = format!("[{}] - {}.meta.verilib", node.index, node.identifier);
                 let meta_file_path = current_path.join(&meta_file_name);
                 
                 let meta_data = serde_json::json!({

@@ -1,9 +1,11 @@
 use anyhow::{Context, Result};
 use dialoguer::Select;
+use regex::Regex;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::ffi::OsStr;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -441,10 +443,11 @@ fn build_tree(base_path: &Path, current_path: &Path) -> Result<Vec<DeployNode>> 
     for entry in entries {
         let entry = entry?;
         let path = entry.path();
+        let extension = path.extension();
         let file_name = entry.file_name();
         let file_name_str = file_name.to_string_lossy();
-        
-        if file_name_str == "metadata.json" || file_name_str == "debug_response.json" {
+
+        if extension == Some(OsStr::new("json")) {
             continue;
         }
         
@@ -465,13 +468,15 @@ fn build_tree(base_path: &Path, current_path: &Path) -> Result<Vec<DeployNode>> 
         } else if file_name_str.ends_with(".atom.verilib") {
             let content = fs::read_to_string(&path)
                 .with_context(|| format!("Failed to read file: {:?}", path))?;
-            
-            let identifier = path.strip_prefix(base_path)
+            let regex_pattern = r"\[\d*\]\s-\s";
+            let re = Regex::new(regex_pattern).unwrap();
+            let identifier_base = path.strip_prefix(base_path)
                 .unwrap()
                 .to_string_lossy()
                 .to_string()
                 .trim_end_matches(".atom.verilib")
                 .to_string();
+            let identifier = re.replace(&identifier_base, "").to_string();
             
             let meta_file_name = file_name_str.trim_end_matches(".atom.verilib").to_string() + ".meta.verilib";
             let meta_path = path.parent().unwrap().join(meta_file_name);
