@@ -1,22 +1,14 @@
 use anyhow::Result;
 use clap::Parser;
 
-mod auth;
 mod cli;
+mod commands;
 mod constants;
-mod deploy;
 mod download;
-mod init;
-mod keyring_utils;
-mod reclone;
-mod status;
+mod storage;
 
-use auth::handle_auth;
 use cli::{Cli, Commands};
-use deploy::handle_deploy;
-use init::handle_init;
-use reclone::handle_reclone;
-use status::handle_status;
+use commands::{handle_auth, handle_deploy, handle_init, handle_reclone, handle_status};
 
 #[tokio::main]
 async fn main() -> Result<()> {

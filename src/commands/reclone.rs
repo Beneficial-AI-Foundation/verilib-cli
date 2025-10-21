@@ -6,7 +6,7 @@ use std::path::Path;
 use std::process::Command;
 
 use crate::constants::{auth_required_msg, init_required_msg, DEFAULT_BASE_URL};
-use crate::status::get_stored_api_key;
+use crate::commands::status::get_stored_api_key;
 
 pub async fn handle_reclone(debug: bool) -> Result<()> {
     if debug {

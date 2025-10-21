@@ -2,8 +2,8 @@ use anyhow::{Context, Result};
 use dialoguer::Select;
 use regex::Regex;
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sha2::{Sha256, Digest};
 use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs;
@@ -11,81 +11,21 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
-use crate::status::get_stored_api_key;
+use crate::commands::status::get_stored_api_key;
+use super::types::{DeployNode, DeployResponse, Metadata, RepoMetadata, VerifierVersionsResponse, LANGUAGES, TYPES};
 
-#[derive(Debug)]
-struct Language {
-    id: u32,
-    name: &'static str,
-    extensions: &'static [&'static str],
-}
-
-const LANGUAGES: &[Language] = &[
-    Language { id: 1, name: "Dafny", extensions: &[".dfy"] },
-    Language { id: 2, name: "Lean", extensions: &[".lean"] },
-    Language { id: 3, name: "Rocq", extensions: &[".v"] },
-    Language { id: 4, name: "Isabelle", extensions: &[".thy"] },
-    Language { id: 5, name: "Metamath", extensions: &[".mm"] },
-    Language { id: 6, name: "Rust", extensions: &[".rs"] },
-    Language { id: 7, name: "RefinedC", extensions: &[".c"] },
-    Language { id: 8, name: "Python", extensions: &[".py"] },
-    Language { id: 9, name: "Kani", extensions: &[".rs"] },
-    Language { id: 10, name: "Verus", extensions: &[".rs"] },
-];
-
-const TYPES: &[(u32, &str)] = &[
-    (1, "Algorithms"),
-    (5, "Blockchain"),
-    (6, "Privacy"),
-    (7, "Security"),
-    (8, "Math"),
-];
-
-#[derive(Debug, Serialize)]
-struct DeployNode {
-    identifier: String,
-    content: String,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    dependencies: Vec<String>,
-    children: Vec<DeployNode>,
-}
-
-#[derive(Debug, Deserialize)]
-struct VerifierVersionsResponse {
-    data: Vec<VerifierVersion>,
-}
-
-#[derive(Debug, Deserialize)]
-struct VerifierVersion {
-    id: u32,
-    version: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct Metadata {
-    repo: RepoMetadata,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct RepoMetadata {
-    id: String,
-    url: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct DeployResponse {
-    status: String,
-    data: DeployData,
-}
-
-#[derive(Debug, Deserialize)]
-struct DeployData {
-    id: u64,
+#[derive(Debug, Clone, Copy)]
+enum ChangeDecision {
+    Ask,
+    YesToAll,
+    NoToAll,
 }
 
 pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
     println!("Preparing deployment...");
-    println!("Debug mode: {}", debug);
+    if debug {
+        println!("Debug mode: {}", debug);
+    }
 
     let api_key = get_stored_api_key()
         .context(auth_required_msg())?;
@@ -109,7 +49,9 @@ pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
         anyhow::bail!("No .verilib directory found. Please run 'init' first.");
     }
 
-    let tree = build_tree(&verilib_path, &verilib_path)?;
+    let mut decision = ChangeDecision::Ask;
+    let mut has_changes = false;
+    let tree = build_tree(&verilib_path, &verilib_path, &mut decision, &mut has_changes)?;
     let layouts = build_layouts(&verilib_path, &verilib_path)?;
     
     if debug {
@@ -130,6 +72,10 @@ pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
         "tree": tree,
         "layouts": layouts,
     });
+    
+    if has_changes {
+        payload["has_changes"] = Value::Bool(true);
+    }
 
     if let Some((language_id, proof_id, verifierversion_id, summary, description, type_id)) = deploy_info {
         payload["language_id"] = Value::Number(language_id.into());
@@ -434,7 +380,7 @@ async fn collect_deploy_info(base_url: &str, api_key: &str) -> Result<(u32, u32,
     Ok((language_id, proof_id, verifierversion_id, summary, description, type_id))
 }
 
-fn build_tree(base_path: &Path, current_path: &Path) -> Result<Vec<DeployNode>> {
+fn build_tree(base_path: &Path, current_path: &Path, decision: &mut ChangeDecision, has_changes: &mut bool) -> Result<Vec<DeployNode>> {
     let mut nodes = Vec::new();
     
     let entries = fs::read_dir(current_path)
@@ -457,13 +403,17 @@ fn build_tree(base_path: &Path, current_path: &Path) -> Result<Vec<DeployNode>> 
                 .to_string_lossy()
                 .to_string();
             
-            let children = build_tree(base_path, &path)?;
+            let children = build_tree(base_path, &path, decision, has_changes)?;
             
             nodes.push(DeployNode {
                 identifier: relative_path,
                 content: String::new(),
                 dependencies: Vec::new(),
+                code_name: String::new(),
+                file_type: "folder".to_string(),
                 children,
+                status_id: None,
+                snippets: None,
             });
         } else if file_name_str.ends_with(".atom.verilib") {
             let content = fs::read_to_string(&path)
@@ -481,23 +431,92 @@ fn build_tree(base_path: &Path, current_path: &Path) -> Result<Vec<DeployNode>> 
             let meta_file_name = file_name_str.trim_end_matches(".atom.verilib").to_string() + ".meta.verilib";
             let meta_path = path.parent().unwrap().join(meta_file_name);
             
-            let dependencies = if meta_path.exists() {
+            let (dependencies, code_name, status_id, stored_fingerprint, snippets_value) = if meta_path.exists() {
                 let meta_content = fs::read_to_string(&meta_path)?;
                 let meta_value: Value = serde_json::from_str(&meta_content)?;
-                if let Some(deps) = meta_value.get("dependencies") {
+                
+                let deps = if let Some(deps) = meta_value.get("dependencies") {
                     serde_json::from_value(deps.clone()).unwrap_or_default()
                 } else {
                     Vec::new()
-                }
+                };
+                
+                let name = if let Some(name) = meta_value.get("code_name") {
+                    name.as_str().unwrap_or_default().to_string()
+                } else {
+                    String::new()
+                };
+                
+                let status = meta_value.get("status_id").and_then(|v| v.as_u64()).map(|v| v as u32);
+                let fingerprint = meta_value.get("fingerprint").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let snippets = meta_value.get("snippets").cloned();
+                
+                (deps, name, status, fingerprint, snippets)
             } else {
-                Vec::new()
+                (Vec::new(), String::new(), None, None, None)
+            };
+            
+            let mut hasher = Sha256::new();
+            hasher.update(&content);
+            let hash_result = hasher.finalize();
+            let current_fingerprint = format!("{:x}", hash_result);
+            
+            let (final_content, snippets) = if let Some(stored_fp) = stored_fingerprint {
+                if stored_fp != current_fingerprint {
+                    let use_new_content = match *decision {
+                        ChangeDecision::YesToAll => true,
+                        ChangeDecision::NoToAll => false,
+                        ChangeDecision::Ask => {
+                            println!("\nFile has been modified: {}", identifier);
+                            println!("   Current file differs from the stored version.");
+                            
+                            let options = vec![
+                                "Yes - Deploy edited content (triggers re-snippetization for entire repository)",
+                                "No - Keep original snippets for this file",
+                                "No to all - Skip all edited files"
+                            ];
+                            
+                            let selection = Select::new()
+                                .with_prompt("Would you like to deploy the edited content?")
+                                .items(&options)
+                                .default(0)
+                                .interact()?;
+                            
+                            match selection {
+                                0 => {
+                                    *decision = ChangeDecision::YesToAll;
+                                    true
+                                }
+                                1 => false,
+                                2 => {
+                                    *decision = ChangeDecision::NoToAll;
+                                    false
+                                }
+                                _ => false,
+                            }
+                        }
+                    };
+                    if use_new_content {
+                        *has_changes = true;
+                    }
+                } else {
+                   
+                }
+                 (content.clone(), snippets_value)
+            } else {
+                *has_changes = true;
+                (content.clone(), None)
             };
             
             nodes.push(DeployNode {
                 identifier,
-                content,
+                content: final_content,
                 dependencies,
+                code_name,
+                file_type: "file".to_string(),
                 children: Vec::new(),
+                status_id,
+                snippets,
             });
         }
     }

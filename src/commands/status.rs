@@ -1,9 +1,9 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 
-use crate::keyring_utils::{get_keyring_entry, get_platform_keyring_info};
+use crate::storage::{get_credential_storage, get_platform_info};
 
 pub async fn handle_status() -> Result<()> {
-    let platform_info = get_platform_keyring_info();
+    let platform_info = get_platform_info();
     
     match get_stored_api_key() {
         Ok(key) => {
@@ -24,18 +24,8 @@ pub async fn handle_status() -> Result<()> {
 }
 
 pub fn get_stored_api_key() -> Result<String> {
-    let entry = get_keyring_entry()?;
+    let entry = get_credential_storage()?;
     
-    match entry.get_password() {
-        Ok(password) => Ok(password),
-        Err(keyring::Error::NoEntry) => {
-            anyhow::bail!("No API key found in keyring")
-        }
-        Err(keyring::Error::PlatformFailure(err)) => {
-            anyhow::bail!("Platform keyring error: {}", err)
-        }
-        Err(err) => {
-            anyhow::bail!("Keyring error: {}", err)
-        }
-    }
+    entry.get_password()
+        .context("Failed to retrieve API key from storage")
 }
