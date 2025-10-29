@@ -35,7 +35,8 @@ pub struct DownloadResponse {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LayoutNode {
     pub identifier: String,
-    pub id: String,
+    #[serde(default)]
+    pub id: Option<String>,
     pub fx: f64,
     pub fy: f64,
     pub path: String,
