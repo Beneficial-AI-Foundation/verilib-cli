@@ -3,6 +3,7 @@ use reqwest::Client;
 use std::fs;
 
 use super::types::DownloadResponse;
+use super::error::handle_api_error;
 
 pub async fn download_repo(
     repo_id: &str,
@@ -22,11 +23,8 @@ pub async fn download_repo(
         .context("Failed to send request to API")?;
     
     if !response.status().is_success() {
-        anyhow::bail!(
-            "API request failed with status: {} - {}",
-            response.status(),
-            response.text().await.unwrap_or_else(|_| "Unable to read error response".to_string())
-        );
+        let error_msg = handle_api_error(response).await?;
+        anyhow::bail!(error_msg);
     }
     
     let response_text = response

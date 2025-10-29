@@ -36,4 +36,6 @@ pub enum Commands {
         #[arg(long)]
         url: Option<String>,
     },
+    /// Pull repository updates from server
+    Pull,
 }

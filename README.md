@@ -5,8 +5,9 @@ A command-line tool for managing Verilib repositories and API interactions. This
 ## Features
 
 -  **Secure Authentication** - Store API keys safely using system keyring
--  **Repository Initialization** - Fetch and store repository data locally
--  **Repository Management** - Safely reclone repositories with git checks
+-  **Repository Initialization** - Initialize from existing ID or create new from git URL
+-  **Auto-detection** - Automatically detects git URL from current directory
+-  **Repository Deployment** - Deploy changes to repositories
 -  **Cross-Platform** - Works on macOS, Linux, and Windows
 
 ## Installation
@@ -65,20 +66,23 @@ verilib-cli status
 
 ### 2. Initialize a Repository
 ```bash
-# Initialize current directory with repository data
-verilib-cli init <repository-id>
+# Initialize from existing repository ID
+verilib-cli init --id my-repo-123
 
-# Example
-verilib-cli init my-repo-123
+# Create new repository (auto-detects git URL)
+verilib-cli init
 ```
 
-### 3. Reclone Repository
+### 3. Work with Repository
 ```bash
-# Safely reclone repository with git checks
-verilib-cli reclone
+# Pull latest changes
+verilib-cli pull
 
-# Enable debug output
-verilib-cli --debug reclone
+# Deploy your changes
+verilib-cli deploy
+
+# Trigger reclone on server
+verilib-cli reclone
 ```
 
 ## Commands
@@ -97,27 +101,65 @@ Display current authentication status and API key information (masked for securi
 verilib-cli status
 ```
 
-### `init <repository-id>`
-Initialize the current directory with repository data from the Verilib API. This fetches the repository tree structure and stores it locally.
+### `init`
+Initialize a repository either from an existing ID or by creating a new one from a git URL.
 
 ```bash
-verilib-cli init <repository-id>
+# Initialize from existing repository ID
+verilib-cli init --id <repository-id>
+
+# Create new repository from git URL (auto-detects from current directory)
+verilib-cli init
 ```
 
 **Options:**
-- `<repository-id>` - The unique identifier for the repository
+- `--id <repository-id>` - Initialize from existing repository
+- `--url <api-url>` - Custom API base URL (optional)
+
+**Creating New Repositories:**
+When no `--id` is provided, the CLI will:
+1. Auto-detect git URL from current directory (if available)
+2. Prompt for repository URL with format options:
+   - Full repository: `https://github.com/user/repo`
+   - Specific branch: `https://github.com/user/repo@branch-name`
+   - Folder only: `https://github.com/user/repo/tree/main/folder-name`
+   - Folder from branch: `https://github.com/user/repo/tree/main/folder-name@branch-name`
+3. Collect repository metadata (language, proof language, summary, etc.)
+4. Create repository via API and save the ID locally
+
+### `deploy`
+Deploy repository changes to the server.
+
+```bash
+verilib-cli deploy
+```
+
+**Options:**
+- `--url <api-url>` - Custom API base URL (optional)
+
+### `pull`
+Pull the latest repository structure from the server. Uses repository ID and URL from `.verilib/metadata.json`.
+
+```bash
+verilib-cli pull
+```
+
+This command will:
+1. Read repository ID and URL from local metadata
+2. Download the latest repository structure
+3. Recreate the `.verilib` directory with updated files
 
 ### `reclone`
-Safely reclone the repository using data from the local tree file. Includes git safety checks to prevent data loss.
+Trigger a reclone operation on the server for the current repository. Includes git safety checks.
 
 ```bash
 verilib-cli reclone
 ```
 
 **Safety Features:**
-- Checks for uncommitted changes
-- Verifies git repository status
-- Confirms before destructive operations
+- Checks for git availability
+- Verifies no uncommitted changes exist
+- Uses repository ID and URL from metadata
 
 ## Global Options
 
@@ -136,13 +178,21 @@ verilib-cli --debug reclone
 ## Configuration
 
 ### API Key Storage
-API keys are stored securely using your system's native keyring:
-- **macOS**: Keychain
-- **Linux**: Secret Service (GNOME Keyring, KDE Wallet)
-- **Windows**: Windows Credential Manager
+API keys are stored securely:
+- **macOS**: Keychain (set `VERILIB_STORAGE=file` to use file system instead)
+- **Linux**: File system (primary method)
+- **Windows**: Windows Credential Manager (set `VERILIB_STORAGE=file` to use file system instead)
+
+You can override the default storage method using the `VERILIB_STORAGE` environment variable:
+```bash
+export VERILIB_STORAGE=file    # Force file storage
+export VERILIB_STORAGE=keyring # Use system keyring (not available on Linux)
+```
 
 ### Local Files
-- `.verilib/tree.json` - Repository tree data (created by `init` command)
+- `.verilib/metadata.json` - Repository metadata (ID and URL)
+- `.verilib/*.atom.verilib` - Code files
+- `.verilib/*.meta.verilib` - Metadata for code files
 
 ## Examples
 
@@ -150,36 +200,28 @@ API keys are stored securely using your system's native keyring:
 ```bash
 # 1. Authenticate
 verilib-cli auth
-Enter your API key: [hidden input]
-✅ API key stored successfully
 
-# 2. Check status
-verilib-cli status
-🔑 Authenticated: Yes
-👤 User: your-username
-🔐 API Key: sk-****...****1234
+# 2. Initialize from existing repo
+verilib-cli init --id 456
 
-# 3. Initialize repository
-verilib-cli init my-project-456
-✅ Repository initialized successfully
-📁 Tree data saved to .verilib/tree.json
+# 3. Or create new repo
+verilib-cli init
+# (follows prompts for git URL, language, summary, etc.)
 
-# 4. Reclone repository
-verilib-cli reclone
-🔍 Found repository ID: my-project-456
-✅ Repository recloned successfully
+# 4. Work with the repository
+verilib-cli pull      # Pull latest
+verilib-cli deploy    # Deploy changes
+verilib-cli reclone   # Reclone on server
 ```
 
-### Debug Mode
+### Creating a New Repository
 ```bash
-# Enable debug output for troubleshooting
-verilib-cli --debug init my-repo-789
+# In your project directory
+verilib-cli init
 
-# Debug output includes:
-# - API request/response details
-# - File system operations
-# - Git status checks
-# - Detailed error information
+# Auto-detects: git@github.com:user/repo.git
+# Converts to: https://github.com/user/repo
+# Then prompts for metadata
 ```
 
 ## Troubleshooting
@@ -226,21 +268,22 @@ verilib-cli auth
 - Ensure you have access permissions
 - Check your API key is valid
 
-#### Git Issues During Reclone
+#### Debug Mode
 ```bash
-# Use debug mode to see detailed git status
-verilib-cli --debug reclone
-
-# Common solutions:
-# - Commit or stash local changes
-# - Verify git repository is in clean state
-# - Check network connectivity
+verilib-cli --debug init
+verilib-cli --debug deploy
 ```
 
-#### Keyring Issues
-- **Linux**: Ensure secret service is running (`gnome-keyring-daemon` or KDE Wallet)
-- **macOS**: Keychain access should work automatically
-- **Windows**: Windows Credential Manager should be available
+#### Storage Issues
+- **Linux**: API key stored in `~/.verilib/credentials.json`
+- **macOS**: Keychain access should work automatically (or use `VERILIB_STORAGE=file`)
+- **Windows**: Windows Credential Manager should be available (or use `VERILIB_STORAGE=file`)
+
+If you encounter keyring issues, force file storage:
+```bash
+export VERILIB_STORAGE=file
+verilib-cli auth
+```
 
 ## Development
 
@@ -263,7 +306,7 @@ cargo install --path .
 ### Requirements
 - Rust 1.70+ (2021 edition)
 - Platform-specific keyring support
-- Git (for reclone functionality)
+- Git (for auto-detection)
 
 ## Contributing
 

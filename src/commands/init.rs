@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
-use crate::download::{download_repo, process_tree};
+use crate::download::{download_repo, process_tree, handle_api_error};
 use crate::commands::status::get_stored_api_key;
 use crate::commands::deploy::collect_deploy_info_with_path;
 use crate::commands::types::Metadata;
@@ -28,16 +28,6 @@ pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -
     
     let url_base = url.unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
     
-    let verilib_path = PathBuf::from(".verilib");
-    if verilib_path.exists() {
-        println!("Cleaning existing .verilib directory...");
-        fs::remove_dir_all(&verilib_path)
-            .context("Failed to remove existing .verilib directory")?;
-    }
-    
-    fs::create_dir_all(".verilib")
-        .context("Failed to create .verilib directory")?;
-    
     let repo_id = if let Some(repo_id) = id {
         println!("Initializing project with repository ID: {}", repo_id);
         repo_id
@@ -51,7 +41,9 @@ pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -
         println!("Repository created successfully!");
         println!("Repository ID: {}", repo_id);
         
-        // Save metadata and return
+        fs::create_dir_all(".verilib")
+            .context("Failed to create .verilib directory")?;
+        
         save_metadata(&repo_id, &url_base)?;
         
         return Ok(());
@@ -60,6 +52,16 @@ pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -
     println!("Downloading repository structure...");
     
     let download_data = download_repo(&repo_id, &url_base, &api_key, debug).await?;
+    
+    let verilib_path = PathBuf::from(".verilib");
+    if verilib_path.exists() {
+        println!("Cleaning existing .verilib directory...");
+        fs::remove_dir_all(&verilib_path)
+            .context("Failed to remove existing .verilib directory")?;
+    }
+    
+    fs::create_dir_all(".verilib")
+        .context("Failed to create .verilib directory")?;
     
     save_metadata(&repo_id, &url_base)?;
     
@@ -183,18 +185,16 @@ async fn create_repo_from_git_url(git_url: &str, base_url: &str, api_key: &str) 
         .context("Failed to send create repository request")?;
     
     let status = response.status();
+    
+    if !status.is_success() {
+        let error_msg = handle_api_error(response).await?;
+        anyhow::bail!(error_msg);
+    }
+    
     let response_text = response
         .text()
         .await
-        .unwrap_or_else(|_| "Unable to read response".to_string());
-    
-    if !status.is_success() {
-        anyhow::bail!(
-            "Repository creation failed with status: {} - {}",
-            status,
-            response_text
-        );
-    }
+        .context("Failed to read response body")?;
     
     let create_response: CreateRepoResponse = serde_json::from_str(&response_text)
         .context("Failed to parse create repository response")?;

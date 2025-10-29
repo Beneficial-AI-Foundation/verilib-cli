@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 
 use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
 use crate::commands::status::get_stored_api_key;
+use crate::download::handle_api_error;
 use super::types::{DeployNode, DeployResponse, Metadata, RepoMetadata, VerifierVersionsResponse, LANGUAGES, TYPES};
 
 #[derive(Debug, Clone, Copy)]
@@ -112,18 +113,16 @@ pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
         .context("Failed to send deploy request")?;
 
     let status = response.status();
+    
+    if !status.is_success() {
+        let error_msg = handle_api_error(response).await?;
+        anyhow::bail!(error_msg);
+    }
+    
     let response_text = response
         .text()
         .await
-        .unwrap_or_else(|_| "Unable to read response".to_string());
-
-    if !status.is_success() {
-        anyhow::bail!(
-            "Deploy failed with status: {} - {}",
-            status,
-            response_text
-        );
-    }
+        .context("Failed to read response body")?;
 
     if debug {
         println!("Debug: API response: {}", response_text);
@@ -177,10 +176,6 @@ fn save_metadata_from_response(response_data: &DeployResponse, base_url: &str) -
     println!("Repository ID: {}", response_data.data.id);
     println!("Repository URL: {}", base_url);
     Ok(())
-}
-
-fn detect_language() -> Option<u32> {
-    detect_language_in_path(&PathBuf::from(".verilib"))
 }
 
 fn detect_language_in_path(search_path: &PathBuf) -> Option<u32> {
@@ -285,7 +280,8 @@ async fn fetch_verifier_versions(proof_id: u32, base_url: &str, api_key: &str) -
     println!("Debug: Response status: {}", response.status());
     
     if !response.status().is_success() {
-        println!("Debug: Request failed, no verifier versions available");
+        let error_msg = handle_api_error(response).await?;
+        println!("Debug: Request failed - {}", error_msg);
         return Ok(None);
     }
     

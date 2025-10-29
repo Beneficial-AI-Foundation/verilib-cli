@@ -5,8 +5,10 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
-use crate::constants::{auth_required_msg, init_required_msg, DEFAULT_BASE_URL};
+use crate::constants::{auth_required_msg, init_required_msg};
 use crate::commands::status::get_stored_api_key;
+use crate::commands::types::Metadata;
+use crate::download::handle_api_error;
 
 pub async fn handle_reclone(debug: bool) -> Result<()> {
     if debug {
@@ -19,30 +21,20 @@ pub async fn handle_reclone(debug: bool) -> Result<()> {
     get_stored_api_key()
         .context(auth_required_msg())?;
     
-    // Check if project is initialized (.verilib/tree.json exists)
-    if !Path::new(".verilib/tree.json").exists() {
+    // Check if project is initialized (.verilib/metadata.json exists)
+    if !Path::new(".verilib/metadata.json").exists() {
         anyhow::bail!(init_required_msg());
     }
     
-    // Read and parse tree.json to get repo_id
-    let tree_content = fs::read_to_string(".verilib/tree.json")
-        .context("Failed to read .verilib/tree.json")?;
+    // Read and parse metadata.json to get repo_id and url
+    let metadata_content = fs::read_to_string(".verilib/metadata.json")
+        .context("Failed to read .verilib/metadata.json")?;
     
-    let tree_json: Value = serde_json::from_str(&tree_content)
-        .context("Failed to parse tree.json")?;
+    let metadata: Metadata = serde_json::from_str(&metadata_content)
+        .context("Failed to parse metadata.json")?;
     
-    // Extract repo_id from tree.json (assuming it's in the root or we can find it)
-    let repo_id = extract_repo_id(&tree_json)
-        .context("Could not find repository ID in tree.json")?;
-    
-    // Extract URL from tree.json
-    let url_base = extract_repo_url(&tree_json)
-        .unwrap_or_else(|| {
-            if debug {
-                println!("Debug: No URL found in tree.json, using default");
-            }
-            DEFAULT_BASE_URL.to_string()
-        });
+    let repo_id = metadata.repo.id;
+    let url_base = metadata.repo.url;
     
     println!("Found repository ID: {}", repo_id);
     if debug {
@@ -76,8 +68,15 @@ pub async fn handle_reclone(debug: bool) -> Result<()> {
         .await
         .context("Failed to send reclone request")?;
     
+    let status = response.status();
+    
     if debug {
-        println!("Debug: Response status: {}", response.status());
+        println!("Debug: Response status: {}", status);
+    }
+    
+    if !status.is_success() {
+        let error_msg = handle_api_error(response).await?;
+        anyhow::bail!(error_msg);
     }
     
     let response_text = response
@@ -98,61 +97,15 @@ pub async fn handle_reclone(debug: bool) -> Result<()> {
         println!("{}", serde_json::to_string_pretty(&json_response).unwrap_or_else(|_| "Failed to pretty print".to_string()));
     }
     
-    // Check response format
+    // Check for success
     if let Some(status) = json_response.get("status") {
-        if debug {
-            println!("Debug: Found top-level status: {}", status);
-        }
-        if status == "error" {
-            if let Some(data) = json_response.get("data") {
-                if debug {
-                    println!("Debug: Error data: {}", data);
-                }
-                if let Some(code) = data.get("code") {
-                    anyhow::bail!("Reclone failed with error code: {}", code);
-                }
-            }
-            anyhow::bail!("Reclone failed with unknown error");
-        }
-    } else if debug {
-        println!("Debug: No top-level 'status' field found");
-    }
-    
-    // Check for success in data.status
-    if let Some(status) = json_response.get("status") {
-        if debug {
-            println!("Debug: Found data.status: {}", status);
-        }
         if status == "success" {
             println!("Reclone completed successfully!");
             return Ok(());
-        } else if debug {
-            println!("Debug: data.status is not 'success': {}", status);
         }
-    } else if debug {
-        println!("Debug: No 'status' field found in data object");
     }
-
     
-    anyhow::bail!("Unexpected response format from reclone API. See debug output above for details.");
-}
-
-fn extract_repo_id(tree_json: &Value) -> Option<String> {
-    // Extract repo.id from the tree.json structure
-    tree_json
-        .get("repo")?
-        .get("id")?
-        .as_str()
-        .map(|s| s.to_string())
-}
-
-fn extract_repo_url(tree_json: &Value) -> Option<String> {
-    // Extract repo.url from the tree.json structure
-    tree_json
-        .get("repo")?
-        .get("url")?
-        .as_str()
-        .map(|s| s.to_string())
+    anyhow::bail!("Unexpected response format from reclone API");
 }
 
 fn is_git_available() -> bool {
