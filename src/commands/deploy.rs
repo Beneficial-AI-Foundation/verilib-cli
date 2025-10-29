@@ -180,14 +180,18 @@ fn save_metadata_from_response(response_data: &DeployResponse, base_url: &str) -
 }
 
 fn detect_language() -> Option<u32> {
-    let verilib_path = PathBuf::from(".verilib");
-    
-    println!("Debug: Scanning for language detection in .verilib directory...");
+    detect_language_in_path(&PathBuf::from(".verilib"))
+}
+
+fn detect_language_in_path(search_path: &PathBuf) -> Option<u32> {
+    let full_path = std::fs::canonicalize(search_path)
+        .unwrap_or_else(|_| search_path.clone());
+    println!("Debug: Scanning for language detection in directory: {}", full_path.display());
     
     for language in LANGUAGES {
         println!("Debug: Checking for {} with extensions: {:?}", language.name, language.extensions);
         for ext in language.extensions {
-            if find_files_with_extension(&verilib_path, ext) {
+            if find_files_with_extension(search_path, ext) {
                 println!("Debug: Found {} file with extension {}", language.name, ext);
                 return Some(language.id);
             }
@@ -220,6 +224,15 @@ fn find_files_with_extension(dir: &Path, extension: &str) -> bool {
                 
                 if find_files_with_extension(&path, extension) {
                     return true;
+                }
+            } else if path.is_file() {
+                if let Some(file_ext) = path.extension() {
+                    let file_ext_str = file_ext.to_string_lossy();
+                    let ext_without_dot = extension.trim_start_matches('.');
+                    if file_ext_str == ext_without_dot {
+                        println!("Debug: Found matching file: {} with extension {}", file_name, extension);
+                        return true;
+                    }
                 }
             }
         }
@@ -365,8 +378,12 @@ fn prompt_description() -> Result<Option<String>> {
     }
 }
 
-async fn collect_deploy_info(base_url: &str, api_key: &str) -> Result<(u32, u32, Option<u32>, String, Option<String>, u32)> {
-    let detected_language = detect_language();
+pub async fn collect_deploy_info(base_url: &str, api_key: &str) -> Result<(u32, u32, Option<u32>, String, Option<String>, u32)> {
+    collect_deploy_info_with_path(base_url, api_key, &PathBuf::from(".verilib")).await
+}
+
+pub async fn collect_deploy_info_with_path(base_url: &str, api_key: &str, search_path: &PathBuf) -> Result<(u32, u32, Option<u32>, String, Option<String>, u32)> {
+    let detected_language = detect_language_in_path(search_path);
     
     let language_id = prompt_language(detected_language, "Select Language:")?;
     let proof_id = prompt_language(Some(language_id), "Select Proof Language:")?;

@@ -22,7 +22,8 @@ pub enum Commands {
     /// Initialize project with repository tree
     Init {
         /// Repository ID to fetch
-        repo_id: String,
+        #[arg(long)]
+        id: Option<String>,
         /// API base URL (defaults to production)
         #[arg(long)]
         url: Option<String>,

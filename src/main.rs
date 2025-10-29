@@ -21,8 +21,8 @@ async fn main() -> Result<()> {
         Commands::Status => {
             handle_status().await?;
         }
-        Commands::Init { repo_id, url } => {
-            handle_init(repo_id, url, cli.debug).await?;
+        Commands::Init { id, url } => {
+            handle_init(id, url, cli.debug).await?;
         }
         Commands::Reclone => {
             handle_reclone(cli.debug).await?;

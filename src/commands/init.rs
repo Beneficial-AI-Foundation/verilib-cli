@@ -1,24 +1,33 @@
 use anyhow::{Context, Result};
+use dialoguer::Input;
+use reqwest::Client;
+use serde_json::Value;
 use std::fs;
 use std::path::PathBuf;
+use std::process::Command;
 
 use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
 use crate::download::{download_repo, process_tree};
 use crate::commands::status::get_stored_api_key;
+use crate::commands::deploy::collect_deploy_info_with_path;
+use crate::commands::types::Metadata;
 
-pub async fn handle_init(repo_id: String, url: Option<String>, debug: bool) -> Result<()> {
-    println!("Initializing project with repository ID: {}", repo_id);
-    
+#[derive(serde::Deserialize, Debug)]
+struct CreateRepoResponse {
+    data: CreateRepoData,
+}
+
+#[derive(serde::Deserialize, Debug)]
+struct CreateRepoData {
+    id: u32,
+}
+
+pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -> Result<()> {
     let api_key = get_stored_api_key()
         .context(auth_required_msg())?;
     
     let url_base = url.unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
     
-    println!("Downloading repository structure...");
-    
-    let download_data = download_repo(&repo_id, &url_base, &api_key, debug).await?;
-    
-    // Remove existing .verilib directory if it exists
     let verilib_path = PathBuf::from(".verilib");
     if verilib_path.exists() {
         println!("Cleaning existing .verilib directory...");
@@ -29,18 +38,30 @@ pub async fn handle_init(repo_id: String, url: Option<String>, debug: bool) -> R
     fs::create_dir_all(".verilib")
         .context("Failed to create .verilib directory")?;
     
-    let metadata = serde_json::json!({
-        "repo": {
-            "id": repo_id,
-            "url": url_base
-        }
-    });
+    let repo_id = if let Some(repo_id) = id {
+        println!("Initializing project with repository ID: {}", repo_id);
+        repo_id
+    } else {
+        let git_url = prompt_git_url()?;
+        
+        println!("Creating new repository from git URL: {}", git_url);
+        
+        let repo_id = create_repo_from_git_url(&git_url, &url_base, &api_key).await?;
+        
+        println!("Repository created successfully!");
+        println!("Repository ID: {}", repo_id);
+        
+        // Save metadata and return
+        save_metadata(&repo_id, &url_base)?;
+        
+        return Ok(());
+    };
     
-    let metadata_json = serde_json::to_string_pretty(&metadata)
-        .context("Failed to serialize metadata to JSON")?;
+    println!("Downloading repository structure...");
     
-    fs::write(".verilib/metadata.json", &metadata_json)
-        .context("Failed to write metadata.json file")?;
+    let download_data = download_repo(&repo_id, &url_base, &api_key, debug).await?;
+    
+    save_metadata(&repo_id, &url_base)?;
     
     println!("Creating files and folders...");
     
@@ -48,6 +69,152 @@ pub async fn handle_init(repo_id: String, url: Option<String>, debug: bool) -> R
     process_tree(&download_data.data.tree, &base_path, &download_data.data.layouts)?;
     
     println!("Repository successfully initialized!");
+    
+    Ok(())
+}
+
+fn detect_git_url() -> Option<String> {
+    let output = Command::new("git")
+        .args(&["config", "--get", "remote.origin.url"])
+        .output()
+        .ok()?;
+    
+    if output.status.success() {
+        let url = String::from_utf8(output.stdout).ok()?;
+        let url = url.trim().to_string();
+        if !url.is_empty() {
+            return Some(normalize_git_url(&url));
+        }
+    }
+    
+    None
+}
+
+fn normalize_git_url(url: &str) -> String {
+    // Convert SSH format (git@github.com:user/repo.git) to HTTPS (https://github.com/user/repo)
+    if url.starts_with("git@") {
+        // Extract host and path from git@host:path format
+        if let Some(at_pos) = url.find('@') {
+            if let Some(colon_pos) = url.find(':') {
+                if colon_pos > at_pos {
+                    let host = &url[at_pos + 1..colon_pos];
+                    let path = &url[colon_pos + 1..];
+                    // Remove .git suffix if present
+                    let path = path.strip_suffix(".git").unwrap_or(path);
+                    return format!("https://{}/{}", host, path);
+                }
+            }
+        }
+    }
+    
+    // If already HTTPS, just remove .git suffix if present
+    if url.starts_with("https://") || url.starts_with("http://") {
+        return url.strip_suffix(".git").unwrap_or(url).to_string();
+    }
+    
+    // Return as-is if we can't parse it
+    url.to_string()
+}
+
+fn prompt_git_url() -> Result<String> {
+    println!("\nRepository URL Options:");
+    println!("• Full repository: https://github.com/user/repo");
+    println!("• Specific branch: https://github.com/user/repo@branch-name");
+    println!("• Folder only: https://github.com/user/repo/tree/main/folder-name");
+    println!("• Folder from branch: https://github.com/user/repo/tree/main/folder-name@branch-name");
+    println!();
+    
+    let detected_url = detect_git_url();
+    
+    let git_url = if let Some(default_url) = detected_url {
+        Input::<String>::new()
+            .with_prompt("Enter repository URL")
+            .default(default_url)
+            .interact_text()
+            .context("Failed to get git URL input")?
+    } else {
+        Input::<String>::new()
+            .with_prompt("Enter repository URL")
+            .interact_text()
+            .context("Failed to get git URL input")?
+    };
+    
+    let git_url = git_url.trim().to_string();
+    
+    if git_url.is_empty() {
+        anyhow::bail!("Repository URL cannot be empty");
+    }
+    
+    Ok(git_url)
+}
+
+async fn create_repo_from_git_url(git_url: &str, base_url: &str, api_key: &str) -> Result<String> {
+    println!("\nCollecting repository information...");
+    
+    let (language_id, proof_id, verifierversion_id, summary, description, type_id) = 
+        collect_deploy_info_with_path(base_url, api_key, &PathBuf::from(".")).await?;
+    
+    let mut payload = serde_json::json!({
+        "url": git_url,
+        "language_id": language_id,
+        "prooflanguage_id": proof_id,
+        "summary": summary,
+        "type_id": type_id,
+    });
+    
+    if let Some(desc) = description {
+        payload["description"] = Value::String(desc);
+    }
+    
+    if let Some(version_id) = verifierversion_id {
+        payload["verifierversion_id"] = Value::Number(version_id.into());
+    }
+    
+    let endpoint = format!("{}/v2/repo/create", base_url);
+    
+    let client = Client::new();
+    let response = client
+        .post(&endpoint)
+        .header("Authorization", format!("ApiKey {}", api_key))
+        .header("Content-Type", "application/json")
+        .json(&payload)
+        .send()
+        .await
+        .context("Failed to send create repository request")?;
+    
+    let status = response.status();
+    let response_text = response
+        .text()
+        .await
+        .unwrap_or_else(|_| "Unable to read response".to_string());
+    
+    if !status.is_success() {
+        anyhow::bail!(
+            "Repository creation failed with status: {} - {}",
+            status,
+            response_text
+        );
+    }
+    
+    let create_response: CreateRepoResponse = serde_json::from_str(&response_text)
+        .context("Failed to parse create repository response")?;
+    
+    Ok(create_response.data.id.to_string())
+}
+
+fn save_metadata(repo_id: &str, base_url: &str) -> Result<()> {
+    let metadata = Metadata {
+        repo: crate::commands::types::RepoMetadata {
+            id: repo_id.to_string(),
+            url: base_url.to_string(),
+        },
+    };
+    
+    let metadata_json = serde_json::to_string_pretty(&metadata)
+        .context("Failed to serialize metadata to JSON")?;
+    
+    fs::write(".verilib/metadata.json", &metadata_json)
+        .context("Failed to write metadata.json file")?;
     
     Ok(())
 }
