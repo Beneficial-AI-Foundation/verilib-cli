@@ -37,7 +37,7 @@ pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
     
     let deploy_info = if repo_id.is_none() {
         println!("New repository - collecting deployment information...");
-        Some(collect_deploy_info(&url_base, &api_key).await?)
+        Some(collect_deploy_info(&url_base, &api_key, debug).await?)
     } else {
         println!("Updating existing repository (ID: {})...", repo_id.as_ref().unwrap());
         None
@@ -178,26 +178,34 @@ fn save_metadata_from_response(response_data: &DeployResponse, base_url: &str) -
     Ok(())
 }
 
-fn detect_language_in_path(search_path: &PathBuf) -> Option<u32> {
+fn detect_language_in_path(search_path: &PathBuf, debug: bool) -> Option<u32> {
     let full_path = std::fs::canonicalize(search_path)
         .unwrap_or_else(|_| search_path.clone());
-    println!("Debug: Scanning for language detection in directory: {}", full_path.display());
+    if debug {
+        println!("Debug: Scanning for language detection in directory: {}", full_path.display());
+    }
     
     for language in LANGUAGES {
-        println!("Debug: Checking for {} with extensions: {:?}", language.name, language.extensions);
+        if debug {
+            println!("Debug: Checking for {} with extensions: {:?}", language.name, language.extensions);
+        }
         for ext in language.extensions {
-            if find_files_with_extension(search_path, ext) {
-                println!("Debug: Found {} file with extension {}", language.name, ext);
+            if find_files_with_extension(search_path, ext, debug) {
+                if debug {
+                    println!("Debug: Found {} file with extension {}", language.name, ext);
+                }
                 return Some(language.id);
             }
         }
     }
     
-    println!("Debug: No matching language detected");
+    if debug {
+        println!("Debug: No matching language detected");
+    }
     None
 }
 
-fn find_files_with_extension(dir: &Path, extension: &str) -> bool {
+fn find_files_with_extension(dir: &Path, extension: &str, debug: bool) -> bool {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
@@ -213,11 +221,13 @@ fn find_files_with_extension(dir: &Path, extension: &str) -> bool {
                 
                 if dir_name == format!("mod{}", extension) || 
                    dir_name.ends_with(&format!(".{}", ext_without_dot)) {
-                    println!("Debug: Found matching directory: {} with extension {}", dir_name, extension);
+                    if debug {
+                        println!("Debug: Found matching directory: {} with extension {}", dir_name, extension);
+                    }
                     return true;
                 }
                 
-                if find_files_with_extension(&path, extension) {
+                if find_files_with_extension(&path, extension, debug) {
                     return true;
                 }
             } else if path.is_file() {
@@ -225,7 +235,9 @@ fn find_files_with_extension(dir: &Path, extension: &str) -> bool {
                     let file_ext_str = file_ext.to_string_lossy();
                     let ext_without_dot = extension.trim_start_matches('.');
                     if file_ext_str == ext_without_dot {
-                        println!("Debug: Found matching file: {} with extension {}", file_name, extension);
+                        if debug {
+                            println!("Debug: Found matching file: {} with extension {}", file_name, extension);
+                        }
                         return true;
                     }
                 }
@@ -263,10 +275,12 @@ fn prompt_language(default_id: Option<u32>, prompt_text: &str) -> Result<u32> {
     Ok(LANGUAGES[selection].id)
 }
 
-async fn fetch_verifier_versions(proof_id: u32, base_url: &str, api_key: &str) -> Result<Option<u32>> {
+async fn fetch_verifier_versions(proof_id: u32, base_url: &str, api_key: &str, debug: bool) -> Result<Option<u32>> {
     let endpoint = format!("{}/v2/verifier/versions/{}", base_url, proof_id);
     
-    println!("Debug: Fetching verifier versions from: {}", endpoint);
+    if debug {
+        println!("Debug: Fetching verifier versions from: {}", endpoint);
+    }
     
     let client = Client::new();
     let response = client
@@ -277,11 +291,15 @@ async fn fetch_verifier_versions(proof_id: u32, base_url: &str, api_key: &str) -
         .await
         .context("Failed to fetch verifier versions")?;
     
-    println!("Debug: Response status: {}", response.status());
+    if debug {
+        println!("Debug: Response status: {}", response.status());
+    }
     
     if !response.status().is_success() {
         let error_msg = handle_api_error(response).await?;
-        println!("Debug: Request failed - {}", error_msg);
+        if debug {
+            println!("Debug: Request failed - {}", error_msg);
+        }
         return Ok(None);
     }
     
@@ -290,15 +308,21 @@ async fn fetch_verifier_versions(proof_id: u32, base_url: &str, api_key: &str) -
         .await
         .context("Failed to read response body")?;
     
-    println!("Debug: Response body: {}", response_text);
+    if debug {
+        println!("Debug: Response body: {}", response_text);
+    }
     
     let versions_response: VerifierVersionsResponse = serde_json::from_str(&response_text)
         .context("Failed to parse verifier versions response")?;
     
-    println!("Debug: Found {} versions", versions_response.data.len());
+    if debug {
+        println!("Debug: Found {} versions", versions_response.data.len());
+    }
     
     if versions_response.data.is_empty() {
-        println!("Debug: No versions available");
+        if debug {
+            println!("Debug: No versions available");
+        }
         return Ok(None);
     }
     
@@ -374,17 +398,17 @@ fn prompt_description() -> Result<Option<String>> {
     }
 }
 
-pub async fn collect_deploy_info(base_url: &str, api_key: &str) -> Result<(u32, u32, Option<u32>, String, Option<String>, u32)> {
-    collect_deploy_info_with_path(base_url, api_key, &PathBuf::from(".verilib")).await
+pub async fn collect_deploy_info(base_url: &str, api_key: &str, debug: bool) -> Result<(u32, u32, Option<u32>, String, Option<String>, u32)> {
+    collect_deploy_info_with_path(base_url, api_key, &PathBuf::from(".verilib"), debug).await
 }
 
-pub async fn collect_deploy_info_with_path(base_url: &str, api_key: &str, search_path: &PathBuf) -> Result<(u32, u32, Option<u32>, String, Option<String>, u32)> {
-    let detected_language = detect_language_in_path(search_path);
+pub async fn collect_deploy_info_with_path(base_url: &str, api_key: &str, search_path: &PathBuf, debug: bool) -> Result<(u32, u32, Option<u32>, String, Option<String>, u32)> {
+    let detected_language = detect_language_in_path(search_path, debug);
     
     let language_id = prompt_language(detected_language, "Select Language:")?;
     let proof_id = prompt_language(Some(language_id), "Select Proof Language:")?;
     
-    let verifierversion_id = fetch_verifier_versions(proof_id, base_url, api_key).await?;
+    let verifierversion_id = fetch_verifier_versions(proof_id, base_url, api_key, debug).await?;
     
     let summary = prompt_summary()?;
     let description = prompt_description()?;

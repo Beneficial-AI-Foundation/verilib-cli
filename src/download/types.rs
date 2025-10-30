@@ -79,3 +79,8 @@ pub struct DownloadData {
 pub struct RepoInfo {
     pub id: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct AtomizationStatusResponse {
+    pub status_id: String,
+}
