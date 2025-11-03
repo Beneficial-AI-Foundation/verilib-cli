@@ -41,6 +41,7 @@ pub struct DeployNode {
     pub status_id: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub snippets: Option<serde_json::Value>,
+    pub specified: bool,
 }
 
 #[derive(Debug, Deserialize)]
