@@ -451,6 +451,7 @@ fn build_tree(base_path: &Path, current_path: &Path, decision: &mut ChangeDecisi
                 children,
                 status_id: None,
                 snippets: None,
+                specified: false,
             });
         } else if file_name_str.ends_with(".atom.verilib") {
             let content = fs::read_to_string(&path)
@@ -468,7 +469,7 @@ fn build_tree(base_path: &Path, current_path: &Path, decision: &mut ChangeDecisi
             let meta_file_name = file_name_str.trim_end_matches(".atom.verilib").to_string() + ".meta.verilib";
             let meta_path = path.parent().unwrap().join(meta_file_name);
             
-            let (dependencies, code_name, status_id, stored_fingerprint, snippets_value) = if meta_path.exists() {
+            let (dependencies, code_name, status_id, stored_fingerprint, snippets_value, specified) = if meta_path.exists() {
                 let meta_content = fs::read_to_string(&meta_path)?;
                 let meta_value: Value = serde_json::from_str(&meta_content)?;
                 
@@ -487,10 +488,11 @@ fn build_tree(base_path: &Path, current_path: &Path, decision: &mut ChangeDecisi
                 let status = meta_value.get("status_id").and_then(|v| v.as_u64()).map(|v| v as u32);
                 let fingerprint = meta_value.get("fingerprint").and_then(|v| v.as_str()).map(|s| s.to_string());
                 let snippets = meta_value.get("snippets").cloned();
+                let specified = meta_value.get("specified").and_then(|v| v.as_bool()).unwrap_or_default();
                 
-                (deps, name, status, fingerprint, snippets)
+                (deps, name, status, fingerprint, snippets, specified)
             } else {
-                (Vec::new(), String::new(), None, None, None)
+                (Vec::new(), String::new(), None, None, None, false)
             };
             
             let mut hasher = Sha256::new();
@@ -553,7 +555,8 @@ fn build_tree(base_path: &Path, current_path: &Path, decision: &mut ChangeDecisi
                 file_type: "file".to_string(),
                 children: Vec::new(),
                 status_id,
-                snippets,
+                snippets,  
+                specified
             });
         }
     }

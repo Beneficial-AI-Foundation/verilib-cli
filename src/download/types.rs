@@ -9,7 +9,7 @@ pub struct TreeNode {
     pub index: u32,
     pub statement_type: String,
     pub status_id: u32,
-    pub specified: u32,
+    pub specified: bool,
     pub path: String,
     pub snippets: Vec<Snippet>,
     #[serde(default)]
