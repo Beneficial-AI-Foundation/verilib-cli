@@ -38,4 +38,7 @@ pub enum Commands {
     },
     /// Pull repository updates from server
     Pull,
+    /// Interactive mode to manage .verilib atoms
+    #[command(name = "status-update")]
+    StatusUpdate,
 }

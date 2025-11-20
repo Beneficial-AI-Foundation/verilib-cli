@@ -8,7 +8,7 @@ mod download;
 mod storage;
 
 use cli::{Cli, Commands};
-use commands::{handle_auth, handle_deploy, handle_init, handle_pull, handle_reclone, handle_status};
+use commands::{handle_auth, handle_deploy, handle_init, handle_pull, handle_reclone, handle_status, handle_status_update};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -32,6 +32,9 @@ async fn main() -> Result<()> {
         }
         Commands::Pull => {
             handle_pull(cli.debug).await?;
+        }
+        Commands::StatusUpdate => {
+            handle_status_update().await?;
         }
     }
 
