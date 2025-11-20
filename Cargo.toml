@@ -1,6 +1,6 @@
 [package]
 name = "verilib-cli"
-version = "0.1.6-beta.4"
+version = "0.1.6-beta.5"
 edition = "2021"
 description = "A command-line tool for managing Verilib repositories and API interactions"
 homepage = "https://github.com/Beneficial-AI-Foundation/verilib-cli"
