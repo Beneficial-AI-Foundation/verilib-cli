@@ -4,6 +4,7 @@ pub mod init;
 pub mod pull;
 pub mod reclone;
 pub mod status;
+pub mod status_update;
 pub mod types;
 
 pub use auth::handle_auth;
@@ -12,3 +13,4 @@ pub use init::handle_init;
 pub use pull::handle_pull;
 pub use reclone::handle_reclone;
 pub use status::handle_status;
+pub use status_update::handle_status_update;
