@@ -45,6 +45,7 @@ pub async fn handle_pull(debug: bool) -> Result<()> {
         repo: crate::commands::types::RepoMetadata {
             id: repo_id.clone(),
             url: url_base.clone(),
+            is_admin: download_data.data.is_admin,
         },
     };
     

@@ -18,6 +18,8 @@ pub struct TreeNode {
     pub dependencies: Vec<String>,
     #[serde(default)]
     pub code_name: String,
+    #[serde(default)]
+    pub disabled: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -73,6 +75,8 @@ pub struct DownloadData {
     pub tree: Vec<TreeNode>,
     #[serde(deserialize_with = "deserialize_layouts")]
     pub layouts: HashMap<String, Layout>,
+    #[serde(default, rename = "isAdmin")]
+    pub is_admin: bool,
 }
 
 #[derive(Debug, Deserialize)]

@@ -28,12 +28,18 @@ struct FileEntry {
     is_dir: bool,
     is_verilib_meta: bool,
     specified: bool,
+    disabled: bool,
+    status_id: u32,
 }
 
 #[derive(Serialize, Deserialize)]
 struct MetaFile {
     #[serde(default)]
     specified: bool,
+    #[serde(default)]
+    disabled: bool,
+    #[serde(default)]
+    status_id: u32,
     #[serde(flatten)]
     other: serde_json::Value,
 }
@@ -46,11 +52,30 @@ struct App {
     search_query: String,
     search_results: Vec<FileEntry>,
     root_dir: PathBuf,
+    is_admin: bool,
 }
 
 impl App {
     fn new() -> Result<Self> {
         let root_dir = std::env::current_dir()?.join(".verilib");
+        
+        let mut is_admin = false;
+        let metadata_path = root_dir.join("metadata.json");
+        if metadata_path.exists() {
+            if let Ok(content) = fs::read_to_string(&metadata_path) {
+                // We need to parse this to check is_admin
+                // Using a temporary struct to avoid importing everything
+                #[derive(Deserialize)]
+                struct TempMeta { repo: TempRepo }
+                #[derive(Deserialize)]
+                struct TempRepo { #[serde(default)] is_admin: bool }
+                
+                if let Ok(meta) = serde_json::from_str::<TempMeta>(&content) {
+                    is_admin = meta.repo.is_admin;
+                }
+            }
+        }
+
         let mut app = Self {
             current_dir: root_dir.clone(),
             items: Vec::new(),
@@ -59,6 +84,7 @@ impl App {
             search_query: String::new(),
             search_results: Vec::new(),
             root_dir,
+            is_admin,
         };
         app.refresh_items()?;
         Ok(app)
@@ -73,6 +99,8 @@ impl App {
                 is_dir: true,
                 is_verilib_meta: false,
                 specified: false,
+                disabled: false,
+                status_id: 0,
             });
         }
 
@@ -95,10 +123,15 @@ impl App {
                 let is_verilib_meta = path.extension().map_or(false, |ext| ext == "verilib");
                 
                 let mut specified = false;
+                let mut disabled = false;
+                let mut status_id = 0;
+
                 if is_verilib_meta {
                     if let Ok(content) = fs::read_to_string(&path) {
                         if let Ok(meta) = serde_json::from_str::<MetaFile>(&content) {
                             specified = meta.specified;
+                            disabled = meta.disabled;
+                            status_id = meta.status_id;
                         }
                     }
                 }
@@ -108,6 +141,8 @@ impl App {
                     is_dir,
                     is_verilib_meta,
                     specified,
+                    disabled,
+                    status_id,
                 });
             }
         }
@@ -133,11 +168,15 @@ impl App {
             if path.is_file() && file_name.contains(".meta.") && path.to_string_lossy().contains(&self.search_query) {
                 let is_verilib_meta = path.extension().map_or(false, |ext| ext == "verilib");
                 let mut specified = false;
+                let mut disabled = false;
+                let mut status_id = 0;
                 
                 if is_verilib_meta {
                     if let Ok(content) = fs::read_to_string(path) {
                         if let Ok(meta) = serde_json::from_str::<MetaFile>(&content) {
                             specified = meta.specified;
+                            disabled = meta.disabled;
+                            status_id = meta.status_id;
                         }
                     }
                 }
@@ -147,6 +186,8 @@ impl App {
                     is_dir: false,
                     is_verilib_meta,
                     specified,
+                    disabled,
+                    status_id,
                 });
             }
         }
@@ -172,6 +213,62 @@ impl App {
                     let mut meta: MetaFile = serde_json::from_str(&content)?;
                     meta.specified = !meta.specified;
                     item.specified = meta.specified;
+                    
+                    let new_content = serde_json::to_string_pretty(&meta)?;
+                    fs::write(&item.path, new_content)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn toggle_ignored(&mut self) -> Result<()> {
+        let items = if self.search_mode {
+            &mut self.search_results
+        } else {
+            &mut self.items
+        };
+
+        if let Some(selected) = self.state.selected() {
+            if let Some(item) = items.get_mut(selected) {
+                if item.is_verilib_meta {
+                    let content = fs::read_to_string(&item.path)?;
+                    let mut meta: MetaFile = serde_json::from_str(&content)?;
+                    meta.disabled = !meta.disabled;
+                    item.disabled = meta.disabled;
+                    
+                    let new_content = serde_json::to_string_pretty(&meta)?;
+                    fs::write(&item.path, new_content)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn toggle_verified(&mut self) -> Result<()> {
+        if !self.is_admin {
+            return Ok(());
+        }
+
+        let items = if self.search_mode {
+            &mut self.search_results
+        } else {
+            &mut self.items
+        };
+
+        if let Some(selected) = self.state.selected() {
+            if let Some(item) = items.get_mut(selected) {
+                if item.is_verilib_meta {
+                    let content = fs::read_to_string(&item.path)?;
+                    let mut meta: MetaFile = serde_json::from_str(&content)?;
+                    
+                    // Toggle between 0 (unverified) and 2 (verified)
+                    if meta.status_id == 2 {
+                        meta.status_id = 0;
+                    } else {
+                        meta.status_id = 2;
+                    }
+                    item.status_id = meta.status_id;
                     
                     let new_content = serde_json::to_string_pretty(&meta)?;
                     fs::write(&item.path, new_content)?;
@@ -339,6 +436,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> 
                             }
                             KeyCode::Up => app.previous(),
                             KeyCode::Down => app.next(),
+                            KeyCode::F(2) => app.toggle_ignored()?,
+                            KeyCode::F(4) => app.toggle_verified()?,
                             _ => {}
                         }
                     } else {
@@ -364,8 +463,19 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> 
                             KeyCode::Tab => app.toggle_current()?,
                             KeyCode::Up | KeyCode::Char('k') => app.previous(),
                             KeyCode::Down | KeyCode::Char('j') => app.next(),
-                            KeyCode::Char(' ') => app.toggle_current()?,
+                            KeyCode::F(2) => app.toggle_ignored()?,
+                            KeyCode::F(4) => app.toggle_verified()?,
                             KeyCode::Esc => return Ok(()),
+                            KeyCode::Char('i') => {
+                                if key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                                    app.toggle_ignored()?;
+                                }
+                            }
+                            KeyCode::Char('v') => {
+                                if key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                                    app.toggle_verified()?;
+                                }
+                            }
                             _ => {}
                         }
                     }
@@ -380,6 +490,7 @@ fn ui(f: &mut Frame, app: &mut App) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(3),
+            Constraint::Length(1),
             Constraint::Min(0),
             Constraint::Length(3),
         ])
@@ -388,6 +499,21 @@ fn ui(f: &mut Frame, app: &mut App) {
     let title = Paragraph::new(format!(" Verilib Validation Manager - {} ", app.current_dir.display()))
         .block(Block::default().borders(Borders::ALL).title("Location"));
     f.render_widget(title, chunks[0]);
+
+    // Column headers
+    let mut header_spans = vec![
+        Span::styled(" ", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)),
+        Span::styled("Spec ", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)),
+        Span::styled("Ignore  ", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
+    ];
+    if app.is_admin {
+        header_spans.push(Span::styled("Ver  ", Style::default().fg(Color::Blue).add_modifier(Modifier::BOLD)));
+    }
+    header_spans.push(Span::styled("Name", Style::default().add_modifier(Modifier::BOLD)));
+    
+    let header = Paragraph::new(Line::from(header_spans))
+        .style(Style::default().bg(Color::DarkGray));
+    f.render_widget(header, chunks[1]);
 
     let is_search = app.search_mode;
     let parent_dir = app.current_dir.parent().unwrap_or(&app.current_dir).to_path_buf();
@@ -418,17 +544,32 @@ fn ui(f: &mut Frame, app: &mut App) {
         let (icon, style) = if i.is_dir {
             ("📁", Style::default())
         } else {
-            if i.specified {
-                ("✅", Style::default())
-            } else {
-                ("[]", Style::default())
-            }
+            let specified_icon = if i.specified { "✅" } else { "  " };
+            (specified_icon, Style::default())
         };
 
-        let content = Line::from(vec![
-            Span::styled(format!("{} ", icon), style),
-            Span::raw(name),
-        ]);
+        let content = if i.is_dir {
+            Line::from(vec![
+                Span::styled(format!("{} ", icon), style),
+                Span::raw(name),
+            ])
+        } else {
+            let specified_icon = if i.specified { "[x]" } else { "[ ]" };
+            let ignored_icon = if i.disabled { "[I]" } else { "[ ]" };
+            
+            let mut spans = vec![
+                Span::styled(format!("{} ", specified_icon), if i.specified { Style::default().fg(Color::Green) } else { Style::default() }),
+                Span::styled(format!("{} ", ignored_icon), if i.disabled { Style::default().fg(Color::Red) } else { Style::default() }),
+            ];
+
+            if app.is_admin {
+                let verified_icon = if i.status_id == 2 { "[V]" } else { "[ ]" };
+                spans.push(Span::styled(format!("{} ", verified_icon), if i.status_id == 2 { Style::default().fg(Color::Blue) } else { Style::default() }));
+            }
+
+            spans.push(Span::raw(name));
+            Line::from(spans)
+        };
         ListItem::new(content)
     })
     .collect();
@@ -444,15 +585,27 @@ fn ui(f: &mut Frame, app: &mut App) {
         .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
         .highlight_symbol(">> ");
 
-    f.render_stateful_widget(list, chunks[1], &mut app.state);
+    f.render_stateful_widget(list, chunks[2], &mut app.state);
 
     if app.search_mode {
+        let mut help_text = "Search Mode (Tab/Enter: Spec | F2: Ignored".to_string();
+        if app.is_admin {
+            help_text.push_str(" | F4: Verified");
+        }
+        help_text.push_str(" | Esc: Exit)");
+        
         let search = Paragraph::new(format!("Search: {}", app.search_query))
-            .block(Block::default().borders(Borders::ALL).title("Search Mode (Tab/Enter to toggle, Esc to exit)"));
-        f.render_widget(search, chunks[2]);
+            .block(Block::default().borders(Borders::ALL).title(help_text));
+        f.render_widget(search, chunks[3]);
     } else {
-        let help = Paragraph::new("Nav: ↑/↓/←/→ | Toggle: Space/Tab/Enter | Search: / | Quit: Esc")
+        let mut help_text = "Nav: ↑/↓/←/→ | Spec: Tab/Enter | Ignored: F2".to_string();
+        if app.is_admin {
+            help_text.push_str(" | Verified: F4");
+        }
+        help_text.push_str(" | Search: / | Quit: Esc");
+        
+        let help = Paragraph::new(help_text)
             .block(Block::default().borders(Borders::ALL).title("Help"));
-        f.render_widget(help, chunks[2]);
+        f.render_widget(help, chunks[3]);
     }
 }

@@ -44,7 +44,7 @@ pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -
         fs::create_dir_all(".verilib")
             .context("Failed to create .verilib directory")?;
         
-        save_metadata(&repo_id, &url_base)?;
+        save_metadata(&repo_id, &url_base, true)?;
         
         println!();
         wait_for_atomization(&repo_id, &url_base, &api_key).await?;
@@ -53,6 +53,9 @@ pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -
         
         let download_data = download_repo(&repo_id, &url_base, &api_key, debug).await?;
         
+        // Update metadata with actual admin status from server
+        save_metadata(&repo_id, &url_base, download_data.data.is_admin)?;
+
         println!("Creating files and folders...");
         
         let base_path = PathBuf::from(".verilib");
@@ -77,7 +80,7 @@ pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -
     fs::create_dir_all(".verilib")
         .context("Failed to create .verilib directory")?;
     
-    save_metadata(&repo_id, &url_base)?;
+    save_metadata(&repo_id, &url_base, download_data.data.is_admin)?;
     
     println!("Creating files and folders...");
     
@@ -216,11 +219,12 @@ async fn create_repo_from_git_url(git_url: &str, base_url: &str, api_key: &str, 
     Ok(create_response.data.id.to_string())
 }
 
-fn save_metadata(repo_id: &str, base_url: &str) -> Result<()> {
+fn save_metadata(repo_id: &str, base_url: &str, is_admin: bool) -> Result<()> {
     let metadata = Metadata {
         repo: crate::commands::types::RepoMetadata {
             id: repo_id.to_string(),
             url: base_url.to_string(),
+            is_admin,
         },
     };
     
