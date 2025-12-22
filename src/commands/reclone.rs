@@ -2,13 +2,13 @@ use anyhow::{Context, Result};
 use reqwest::Client;
 use serde_json::Value;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use crate::constants::{auth_required_msg, init_required_msg};
 use crate::commands::status::get_stored_api_key;
 use crate::commands::types::Metadata;
-use crate::download::handle_api_error;
+use crate::download::{handle_api_error, wait_for_atomization, download_repo, process_tree};
 
 pub async fn handle_reclone(debug: bool) -> Result<()> {
     if debug {
@@ -33,8 +33,8 @@ pub async fn handle_reclone(debug: bool) -> Result<()> {
     let metadata: Metadata = serde_json::from_str(&metadata_content)
         .context("Failed to parse metadata.json")?;
     
-    let repo_id = metadata.repo.id;
-    let url_base = metadata.repo.url;
+    let repo_id = metadata.repo.id.clone();
+    let url_base = metadata.repo.url.clone();
     
     println!("Found repository ID: {}", repo_id);
     if debug {
@@ -101,6 +101,40 @@ pub async fn handle_reclone(debug: bool) -> Result<()> {
     if let Some(status) = json_response.get("status") {
         if status == "success" {
             println!("Reclone completed successfully!");
+            
+            println!();
+            wait_for_atomization(&repo_id, &url_base, &api_key).await?;
+            
+            println!("Atomization complete! Downloading latest data...");
+            
+            let download_data = download_repo(&repo_id, &url_base, &api_key, debug).await?;
+            
+            let verilib_path = PathBuf::from(".verilib");
+            if verilib_path.exists() {
+                println!("Cleaning existing .verilib directory...");
+                fs::remove_dir_all(&verilib_path)
+                    .context("Failed to remove existing .verilib directory")?;
+            }
+            
+            fs::create_dir_all(".verilib")
+                .context("Failed to create .verilib directory")?;
+            
+            let mut metadata = metadata;
+            metadata.repo.is_admin = download_data.data.is_admin;
+
+            let metadata_content = serde_json::to_string_pretty(&metadata)
+                .context("Failed to serialize metadata to JSON")?;
+            
+            fs::write(".verilib/metadata.json", &metadata_content)
+                .context("Failed to write metadata.json file")?;
+            
+            println!("Creating files and folders...");
+            
+            let base_path = PathBuf::from(".verilib");
+            process_tree(&download_data.data.tree, &base_path, &download_data.data.layouts)?;
+            
+            println!("Repository successfully updated!");
+            
             return Ok(());
         }
     }

@@ -65,6 +65,7 @@ fn process_node(node: &TreeNode, current_path: &PathBuf, layouts: &std::collecti
                 "path": node.path,
                 "dependencies": node.dependencies,
                 "code_name": node.code_name,
+                "disabled": node.disabled,
                 "fingerprint": fingerprint,
                 "snippets": node.snippets
             });

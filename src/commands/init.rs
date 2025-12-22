@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
-use crate::download::{download_repo, process_tree, handle_api_error};
+use crate::download::{download_repo, process_tree, handle_api_error, wait_for_atomization};
 use crate::commands::status::get_stored_api_key;
 use crate::commands::deploy::collect_deploy_info_with_path;
 use crate::commands::types::Metadata;
@@ -36,7 +36,7 @@ pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -
         
         println!("Creating new repository from git URL: {}", git_url);
         
-        let repo_id = create_repo_from_git_url(&git_url, &url_base, &api_key).await?;
+        let repo_id = create_repo_from_git_url(&git_url, &url_base, &api_key, debug).await?;
         
         println!("Repository created successfully!");
         println!("Repository ID: {}", repo_id);
@@ -44,7 +44,24 @@ pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -
         fs::create_dir_all(".verilib")
             .context("Failed to create .verilib directory")?;
         
-        save_metadata(&repo_id, &url_base)?;
+        save_metadata(&repo_id, &url_base, true)?;
+        
+        println!();
+        wait_for_atomization(&repo_id, &url_base, &api_key).await?;
+        
+        println!("Atomization complete! Downloading repository structure...");
+        
+        let download_data = download_repo(&repo_id, &url_base, &api_key, debug).await?;
+        
+        // Update metadata with actual admin status from server
+        save_metadata(&repo_id, &url_base, download_data.data.is_admin)?;
+
+        println!("Creating files and folders...");
+        
+        let base_path = PathBuf::from(".verilib");
+        process_tree(&download_data.data.tree, &base_path, &download_data.data.layouts)?;
+        
+        println!("Repository successfully initialized!");
         
         return Ok(());
     };
@@ -63,7 +80,7 @@ pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -
     fs::create_dir_all(".verilib")
         .context("Failed to create .verilib directory")?;
     
-    save_metadata(&repo_id, &url_base)?;
+    save_metadata(&repo_id, &url_base, download_data.data.is_admin)?;
     
     println!("Creating files and folders...");
     
@@ -150,11 +167,11 @@ fn prompt_git_url() -> Result<String> {
     Ok(git_url)
 }
 
-async fn create_repo_from_git_url(git_url: &str, base_url: &str, api_key: &str) -> Result<String> {
+async fn create_repo_from_git_url(git_url: &str, base_url: &str, api_key: &str, debug: bool) -> Result<String> {
     println!("\nCollecting repository information...");
     
     let (language_id, proof_id, verifierversion_id, summary, description, type_id) = 
-        collect_deploy_info_with_path(base_url, api_key, &PathBuf::from(".")).await?;
+        collect_deploy_info_with_path(base_url, api_key, &PathBuf::from("."), debug).await?;
     
     let mut payload = serde_json::json!({
         "url": git_url,
@@ -202,11 +219,12 @@ async fn create_repo_from_git_url(git_url: &str, base_url: &str, api_key: &str) 
     Ok(create_response.data.id.to_string())
 }
 
-fn save_metadata(repo_id: &str, base_url: &str) -> Result<()> {
+fn save_metadata(repo_id: &str, base_url: &str, is_admin: bool) -> Result<()> {
     let metadata = Metadata {
         repo: crate::commands::types::RepoMetadata {
             id: repo_id.to_string(),
             url: base_url.to_string(),
+            is_admin,
         },
     };
     

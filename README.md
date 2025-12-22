@@ -161,6 +161,52 @@ verilib-cli reclone
 - Verifies no uncommitted changes exist
 - Uses repository ID and URL from metadata
 
+### `api`
+Programmatic API for managing `.verilib` files and metadata. Useful for scripting and automation.
+
+#### `api get`
+Get metadata for a specific file.
+
+```bash
+verilib-cli api get --file example
+```
+
+#### `api list`
+List all files, optionally filtered by status.
+
+```bash
+verilib-cli api list
+verilib-cli api list --filter specified
+```
+
+#### `api set`
+Set metadata fields for a file.
+
+```bash
+verilib-cli api set --file example --specified true
+```
+
+#### `api batch`
+Batch update multiple files from a JSON input file.
+
+```bash
+verilib-cli api batch --input updates.json
+```
+
+#### `api create-file`
+Create a new file with content from a string, file, or standard input. Automatically creates parent directories.
+
+```bash
+# From string
+verilib-cli api create-file --path ./config.json --content '{"key": "value"}'
+
+# From file
+verilib-cli api create-file --path ./dest.txt --from-file ./source.txt
+
+# From pipe (stdin)
+echo "content" | verilib-cli api create-file --path ./piped.txt
+```
+
 ## Global Options
 
 ### `--debug`

@@ -9,7 +9,7 @@ pub struct TreeNode {
     pub index: u32,
     pub statement_type: String,
     pub status_id: u32,
-    pub specified: u32,
+    pub specified: bool,
     pub path: String,
     pub snippets: Vec<Snippet>,
     #[serde(default)]
@@ -18,6 +18,8 @@ pub struct TreeNode {
     pub dependencies: Vec<String>,
     #[serde(default)]
     pub code_name: String,
+    #[serde(default)]
+    pub disabled: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -35,7 +37,8 @@ pub struct DownloadResponse {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LayoutNode {
     pub identifier: String,
-    pub id: String,
+    #[serde(default)]
+    pub id: Option<String>,
     pub fx: f64,
     pub fy: f64,
     pub path: String,
@@ -72,9 +75,16 @@ pub struct DownloadData {
     pub tree: Vec<TreeNode>,
     #[serde(deserialize_with = "deserialize_layouts")]
     pub layouts: HashMap<String, Layout>,
+    #[serde(default, rename = "isAdmin")]
+    pub is_admin: bool,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct RepoInfo {
     pub id: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AtomizationStatusResponse {
+    pub status_id: String,
 }
