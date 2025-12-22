@@ -42,6 +42,8 @@ pub struct DeployNode {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub snippets: Option<serde_json::Value>,
     pub specified: bool,
+    #[serde(default)]
+    pub disabled: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -64,6 +66,8 @@ pub struct Metadata {
 pub struct RepoMetadata {
     pub id: String,
     pub url: String,
+    #[serde(default)]
+    pub is_admin: bool,
 }
 
 #[derive(Debug, Deserialize)]

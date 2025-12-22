@@ -119,6 +119,9 @@ pub async fn handle_reclone(debug: bool) -> Result<()> {
             fs::create_dir_all(".verilib")
                 .context("Failed to create .verilib directory")?;
             
+            let mut metadata = metadata;
+            metadata.repo.is_admin = download_data.data.is_admin;
+
             let metadata_content = serde_json::to_string_pretty(&metadata)
                 .context("Failed to serialize metadata to JSON")?;
             

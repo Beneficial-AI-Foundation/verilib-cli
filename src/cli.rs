@@ -9,6 +9,14 @@ pub struct Cli {
     #[arg(long, global = true)]
     pub debug: bool,
     
+    /// Output in JSON format (for API commands)
+    #[arg(long, global = true)]
+    pub json: bool,
+    
+    /// Dry run mode - show changes without applying (for API commands)
+    #[arg(long, global = true)]
+    pub dry_run: bool,
+    
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -41,4 +49,71 @@ pub enum Commands {
     /// Interactive mode to manage .verilib atoms
     #[command(name = "status-update")]
     StatusUpdate,
+    /// Programmatic API for managing .verilib files
+    #[command(subcommand)]
+    Api(ApiCommands),
+}
+
+#[derive(Subcommand)]
+pub enum ApiCommands {
+    /// Get metadata for a specific file
+    Get {
+        /// Path to the .meta.verilib file
+        #[arg(long)]
+        file: String,
+    },
+    /// List all files, optionally filtered by status
+    List {
+        /// Filter by status: specified, ignored, or verified
+        #[arg(long)]
+        filter: Option<String>,
+    },
+    /// Set metadata fields for a file
+    Set {
+        /// Path to the .meta.verilib file
+        #[arg(long)]
+        file: String,
+        /// Set specified status
+        #[arg(long)]
+        specified: Option<bool>,
+        /// Set ignored/disabled status
+        #[arg(long)]
+        ignored: Option<bool>,
+        /// Set verified status (admin only)
+        #[arg(long)]
+        verified: Option<bool>,
+    },
+    /// Batch update multiple files from JSON input
+    Batch {
+        /// Path to JSON file with batch operations
+        #[arg(long)]
+        input: String,
+    },
+    /// Create a new file with content from string, file, or stdin
+    CreateFile {
+        /// Destination path for the new file
+        #[arg(long)]
+        path: String,
+        /// Content string to write to the file
+        #[arg(long, group = "source")]
+        content: Option<String>,
+        /// Path to a source file to read content from
+        #[arg(long, group = "source")]
+        from_file: Option<String>,
+        /// Set disabled status
+        #[arg(long, default_value_t = false)]
+        disabled: bool,
+        /// Set specified status
+        #[arg(long, default_value_t = false)]
+        specified: bool,
+        /// Set status ID
+        #[arg(long, default_value_t = 0)]
+        status_id: u32,
+        /// Set statement type
+        #[arg(long)]
+        statement_type: Option<String>,
+        /// Set code name (defaults to parent directory name)
+        #[arg(long)]
+        code_name: Option<String>,
+    },
 }

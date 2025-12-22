@@ -1,3 +1,4 @@
+pub mod api;
 pub mod auth;
 pub mod deploy;
 pub mod init;
@@ -7,6 +8,7 @@ pub mod status;
 pub mod status_update;
 pub mod types;
 
+pub use api::handle_api;
 pub use auth::handle_auth;
 pub use deploy::handle_deploy;
 pub use init::handle_init;
