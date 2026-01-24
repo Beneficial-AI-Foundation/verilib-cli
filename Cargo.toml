@@ -26,6 +26,15 @@ ratatui = "0.29.0"
 crossterm = "0.29.0"
 walkdir = "2.5.0"
 
+# Dependencies for structure commands (merged from verilib-structure)
+serde_yaml = "0.9"
+percent-encoding = "2"
+glob = "0.3"
+chrono = { version = "0.4", features = ["serde"] }
+csv = "1"
+intervaltree = "0.2"
+which = "8"
+
 # Platform-specific keyring dependencies to avoid cross-compilation issues
 [target.'cfg(target_os = "macos")'.dependencies]
 keyring = { version = "3.0", features = ["apple-native"] }

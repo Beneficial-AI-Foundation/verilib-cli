@@ -6,11 +6,12 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
-use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
-use crate::download::{download_repo, process_tree, handle_api_error, wait_for_atomization};
-use crate::commands::status::get_stored_api_key;
 use crate::commands::deploy::collect_deploy_info_with_path;
-use crate::commands::types::Metadata;
+use crate::commands::status::get_stored_api_key;
+use crate::commands::types::Config;
+use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
+use crate::download::{download_repo, handle_api_error, process_tree, wait_for_atomization};
+use crate::structure::create_gitignore;
 
 #[derive(serde::Deserialize, Debug)]
 struct CreateRepoResponse {
@@ -220,19 +221,41 @@ async fn create_repo_from_git_url(git_url: &str, base_url: &str, api_key: &str, 
 }
 
 fn save_metadata(repo_id: &str, base_url: &str, is_admin: bool) -> Result<()> {
-    let metadata = Metadata {
-        repo: crate::commands::types::RepoMetadata {
-            id: repo_id.to_string(),
-            url: base_url.to_string(),
-            is_admin,
-        },
+    let config_path = PathBuf::from(".verilib/config.json");
+    let verilib_path = PathBuf::from(".verilib");
+
+    // Build the repo config
+    let repo_config = crate::commands::types::RepoConfig {
+        id: repo_id.to_string(),
+        url: base_url.to_string(),
+        is_admin,
     };
-    
-    let metadata_json = serde_json::to_string_pretty(&metadata)
-        .context("Failed to serialize metadata to JSON")?;
-    
-    fs::write(".verilib/metadata.json", &metadata_json)
-        .context("Failed to write metadata.json file")?;
-    
+
+    // Check if config.json exists
+    let config_json = if config_path.exists() {
+        // Read existing config and preserve structure-root if present
+        let existing_content =
+            fs::read_to_string(&config_path).context("Failed to read existing config.json")?;
+
+        let mut existing_json: serde_json::Value =
+            serde_json::from_str(&existing_content).unwrap_or(serde_json::json!({}));
+
+        // Update the repo field while preserving other fields (like structure-root)
+        existing_json["repo"] = serde_json::to_value(&repo_config)
+            .context("Failed to serialize repo config")?;
+
+        serde_json::to_string_pretty(&existing_json).context("Failed to serialize config to JSON")?
+    } else {
+        // Create new config with only repo field (no structure-root)
+        let config = Config { repo: repo_config };
+
+        serde_json::to_string_pretty(&config).context("Failed to serialize config to JSON")?
+    };
+
+    fs::write(&config_path, &config_json).context("Failed to write config.json file")?;
+
+    // Create .gitignore for generated files
+    create_gitignore(&verilib_path)?;
+
     Ok(())
 }

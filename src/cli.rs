@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "verilib-cli")]
@@ -8,15 +9,15 @@ pub struct Cli {
     /// Enable debug output
     #[arg(long, global = true)]
     pub debug: bool,
-    
+
     /// Output in JSON format (for API commands)
     #[arg(long, global = true)]
     pub json: bool,
-    
+
     /// Dry run mode - show changes without applying (for API commands)
     #[arg(long, global = true)]
     pub dry_run: bool,
-    
+
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -52,6 +53,49 @@ pub enum Commands {
     /// Programmatic API for managing .verilib files
     #[command(subcommand)]
     Api(ApiCommands),
+
+    // ===== Structure Commands (merged from verilib-structure) =====
+
+    /// Initialize structure files from source analysis
+    Create {
+        /// Project root directory (default: current working directory)
+        #[arg(default_value = ".")]
+        project_root: PathBuf,
+
+        /// Root directory for structure files (default: .verilib/structure)
+        #[arg(long)]
+        root: Option<PathBuf>,
+    },
+
+    /// Enrich structure files with metadata from SCIP atoms
+    Atomize {
+        /// Project root directory (default: current working directory)
+        #[arg(default_value = ".")]
+        project_root: PathBuf,
+
+        /// Update .md structure files with code-name from atoms
+        #[arg(short = 's', long)]
+        update_stubs: bool,
+    },
+
+    /// Check specification status and manage spec certs
+    Specify {
+        /// Project root directory (default: current working directory)
+        #[arg(default_value = ".")]
+        project_root: PathBuf,
+    },
+
+    /// Run verification and update stubs with verification status
+    #[command(name = "verify")]
+    Verify {
+        /// Project root directory (default: current working directory)
+        #[arg(default_value = ".")]
+        project_root: PathBuf,
+
+        /// Only verify functions in this module
+        #[arg(long)]
+        verify_only_module: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]

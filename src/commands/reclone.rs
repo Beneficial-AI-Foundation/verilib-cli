@@ -7,7 +7,7 @@ use std::process::Command;
 
 use crate::constants::{auth_required_msg, init_required_msg};
 use crate::commands::status::get_stored_api_key;
-use crate::commands::types::Metadata;
+use crate::commands::types::Config;
 use crate::download::{handle_api_error, wait_for_atomization, download_repo, process_tree};
 
 pub async fn handle_reclone(debug: bool) -> Result<()> {
@@ -21,20 +21,20 @@ pub async fn handle_reclone(debug: bool) -> Result<()> {
     get_stored_api_key()
         .context(auth_required_msg())?;
     
-    // Check if project is initialized (.verilib/metadata.json exists)
-    if !Path::new(".verilib/metadata.json").exists() {
+    // Check if project is initialized (.verilib/config.json exists)
+    if !Path::new(".verilib/config.json").exists() {
         anyhow::bail!(init_required_msg());
     }
-    
-    // Read and parse metadata.json to get repo_id and url
-    let metadata_content = fs::read_to_string(".verilib/metadata.json")
-        .context("Failed to read .verilib/metadata.json")?;
-    
-    let metadata: Metadata = serde_json::from_str(&metadata_content)
-        .context("Failed to parse metadata.json")?;
-    
-    let repo_id = metadata.repo.id.clone();
-    let url_base = metadata.repo.url.clone();
+
+    // Read and parse config.json to get repo_id and url
+    let config_content = fs::read_to_string(".verilib/config.json")
+        .context("Failed to read .verilib/config.json")?;
+
+    let config: Config = serde_json::from_str(&config_content)
+        .context("Failed to parse config.json")?;
+
+    let repo_id = config.repo.id.clone();
+    let url_base = config.repo.url.clone();
     
     println!("Found repository ID: {}", repo_id);
     if debug {
@@ -119,14 +119,14 @@ pub async fn handle_reclone(debug: bool) -> Result<()> {
             fs::create_dir_all(".verilib")
                 .context("Failed to create .verilib directory")?;
             
-            let mut metadata = metadata;
-            metadata.repo.is_admin = download_data.data.is_admin;
+            let mut config = config;
+            config.repo.is_admin = download_data.data.is_admin;
 
-            let metadata_content = serde_json::to_string_pretty(&metadata)
-                .context("Failed to serialize metadata to JSON")?;
-            
-            fs::write(".verilib/metadata.json", &metadata_content)
-                .context("Failed to write metadata.json file")?;
+            let config_content = serde_json::to_string_pretty(&config)
+                .context("Failed to serialize config to JSON")?;
+
+            fs::write(".verilib/config.json", &config_content)
+                .context("Failed to write config.json file")?;
             
             println!("Creating files and folders...");
             

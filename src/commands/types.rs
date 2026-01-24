@@ -58,12 +58,12 @@ pub struct VerifierVersion {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Metadata {
-    pub repo: RepoMetadata,
+pub struct Config {
+    pub repo: RepoConfig,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct RepoMetadata {
+pub struct RepoConfig {
     pub id: String,
     pub url: String,
     #[serde(default)]
@@ -72,6 +72,7 @@ pub struct RepoMetadata {
 
 #[derive(Debug, Deserialize)]
 pub struct DeployResponse {
+    #[allow(dead_code)]
     pub status: String,
     pub data: DeployData,
 }
