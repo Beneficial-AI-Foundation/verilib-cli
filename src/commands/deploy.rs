@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
 use crate::commands::status::get_stored_api_key;
 use crate::download::handle_api_error;
-use super::types::{DeployNode, DeployResponse, Metadata, RepoMetadata, VerifierVersionsResponse, LANGUAGES, TYPES};
+use super::types::{Config, DeployNode, DeployResponse, RepoConfig, VerifierVersionsResponse, LANGUAGES, TYPES};
 
 #[derive(Debug, Clone, Copy)]
 enum ChangeDecision {
@@ -33,7 +33,7 @@ pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
 
     let url_base = url.unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
 
-    let repo_id = read_repo_id_from_metadata()?;
+    let repo_id = read_repo_id_from_config()?;
     
     let deploy_info = if repo_id.is_none() {
         println!("New repository - collecting deployment information...");
@@ -131,58 +131,58 @@ pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
     let deploy_response: DeployResponse = serde_json::from_str(&response_text)
         .context("Failed to parse deploy response")?;
     
-    save_metadata_from_response(&deploy_response, &url_base)
-        .context("Failed to save metadata file")?;
+    save_config_from_response(&deploy_response, &url_base)
+        .context("Failed to save config file")?;
 
     println!("Deployment successful!");
     
     Ok(())
 }
 
-fn read_repo_id_from_metadata() -> Result<Option<String>> {
-    let metadata_path = PathBuf::from(".verilib/metadata.json");
-    
-    if !metadata_path.exists() {
+fn read_repo_id_from_config() -> Result<Option<String>> {
+    let config_path = PathBuf::from(".verilib/config.json");
+
+    if !config_path.exists() {
         return Ok(None);
     }
 
-    let metadata_content = fs::read_to_string(&metadata_path)
-        .context("Failed to read metadata.json")?;
-    
-    let metadata: Metadata = serde_json::from_str(&metadata_content)
-        .context("Failed to parse metadata.json")?;
-    
-    Ok(Some(metadata.repo.id))
+    let config_content = fs::read_to_string(&config_path)
+        .context("Failed to read config.json")?;
+
+    let config: Config = serde_json::from_str(&config_content)
+        .context("Failed to parse config.json")?;
+
+    Ok(Some(config.repo.id))
 }
 
-fn save_metadata_from_response(response_data: &DeployResponse, base_url: &str) -> Result<()> {
+fn save_config_from_response(response_data: &DeployResponse, base_url: &str) -> Result<()> {
     let repo_id_str = response_data.data.id.to_string();
-    
+
     let mut is_admin = false;
-    let metadata_path = PathBuf::from(".verilib/metadata.json");
-    if metadata_path.exists() {
-         if let Ok(content) = fs::read_to_string(&metadata_path) {
-             if let Ok(meta) = serde_json::from_str::<Metadata>(&content) {
-                 is_admin = meta.repo.is_admin;
+    let config_path = PathBuf::from(".verilib/config.json");
+    if config_path.exists() {
+         if let Ok(content) = fs::read_to_string(&config_path) {
+             if let Ok(cfg) = serde_json::from_str::<Config>(&content) {
+                 is_admin = cfg.repo.is_admin;
              }
          }
     }
 
-    let metadata = Metadata {
-        repo: RepoMetadata {
+    let config = Config {
+        repo: RepoConfig {
             id: repo_id_str.clone(),
             url: base_url.to_string(),
             is_admin,
         },
     };
-    
-    let metadata_json = serde_json::to_string_pretty(&metadata)
-        .context("Failed to serialize metadata")?;
-    
-    fs::write(&metadata_path, metadata_json)
-        .context("Failed to write metadata.json")?;
-    
-    println!("Metadata saved to .verilib/metadata.json");
+
+    let config_json = serde_json::to_string_pretty(&config)
+        .context("Failed to serialize config")?;
+
+    fs::write(&config_path, config_json)
+        .context("Failed to write config.json")?;
+
+    println!("Config saved to .verilib/config.json");
     println!("Repository ID: {}", response_data.data.id);
     println!("Repository URL: {}", base_url);
     Ok(())
@@ -221,7 +221,7 @@ fn find_files_with_extension(dir: &Path, extension: &str, debug: bool) -> bool {
             let path = entry.path();
             let file_name = path.file_name().unwrap_or_default().to_string_lossy();
             
-            if file_name == "metadata.json" || file_name == "debug_response.json" {
+            if file_name == "config.json" || file_name == "debug_response.json" {
                 continue;
             }
             

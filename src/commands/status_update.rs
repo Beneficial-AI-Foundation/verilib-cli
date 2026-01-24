@@ -60,16 +60,16 @@ impl App {
         let root_dir = std::env::current_dir()?.join(".verilib");
         
         let mut is_admin = false;
-        let metadata_path = root_dir.join("metadata.json");
-        if metadata_path.exists() {
-            if let Ok(content) = fs::read_to_string(&metadata_path) {
+        let config_path = root_dir.join("config.json");
+        if config_path.exists() {
+            if let Ok(content) = fs::read_to_string(&config_path) {
                 // We need to parse this to check is_admin
                 // Using a temporary struct to avoid importing everything
                 #[derive(Deserialize)]
                 struct TempMeta { repo: TempRepo }
                 #[derive(Deserialize)]
                 struct TempRepo { #[serde(default)] is_admin: bool }
-                
+
                 if let Ok(meta) = serde_json::from_str::<TempMeta>(&content) {
                     is_admin = meta.repo.is_admin;
                 }

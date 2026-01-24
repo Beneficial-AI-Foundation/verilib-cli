@@ -145,25 +145,20 @@ async fn handle_create_file(
     json_output: bool,
     dry_run: bool,
 ) -> Result<()> {
-    let mut final_content = String::new();
-    let mut source_desc = String::new();
-
-    if let Some(c) = content {
-        final_content = c;
-        source_desc = "argument string".to_string();
+    let (final_content, source_desc) = if let Some(c) = content {
+        (c, "argument string".to_string())
     } else if let Some(p) = from_file {
-        final_content = fs::read_to_string(&p)
+        let content = fs::read_to_string(&p)
             .with_context(|| format!("Failed to read source file: {:?}", p))?;
-        source_desc = format!("file {:?}", p);
+        (content, format!("file {:?}", p))
+    } else if !io::stdin().is_terminal() {
+        let mut content = String::new();
+        io::stdin().read_to_string(&mut content)
+            .context("Failed to read from stdin")?;
+        (content, "stdin".to_string())
     } else {
-        if !io::stdin().is_terminal() {
-            io::stdin().read_to_string(&mut final_content)
-                .context("Failed to read from stdin")?;
-            source_desc = "stdin".to_string();
-        } else {
-            anyhow::bail!("No content provided. Use --content, --from-file, or pipe content to stdin.");
-        }
-    }
+        anyhow::bail!("No content provided. Use --content, --from-file, or pipe content to stdin.");
+    };
 
     let identifier = path.file_name()
         .ok_or_else(|| anyhow::anyhow!("Invalid path: no filename"))?
@@ -542,15 +537,15 @@ fn validate_meta_file(file: &PathBuf) -> Result<()> {
 }
 
 fn check_admin_status() -> Result<()> {
-    let metadata_path = PathBuf::from(".verilib/metadata.json");
-    
-    if !metadata_path.exists() {
-        anyhow::bail!("No metadata.json found. Please run 'init' first.");
+    let config_path = PathBuf::from(".verilib/config.json");
+
+    if !config_path.exists() {
+        anyhow::bail!("No config.json found. Please run 'init' first.");
     }
-    
-    let content = fs::read_to_string(&metadata_path)
-        .context("Failed to read metadata.json")?;
-    
+
+    let content = fs::read_to_string(&config_path)
+        .context("Failed to read config.json")?;
+
     #[derive(Deserialize)]
     struct TempMeta {
         repo: TempRepo,
@@ -560,14 +555,14 @@ fn check_admin_status() -> Result<()> {
         #[serde(default)]
         is_admin: bool,
     }
-    
+
     let meta: TempMeta = serde_json::from_str(&content)
-        .context("Failed to parse metadata.json")?;
-    
+        .context("Failed to parse config.json")?;
+
     if !meta.repo.is_admin {
         anyhow::bail!("Admin access required to modify verified status");
     }
-    
+
     Ok(())
 }
 

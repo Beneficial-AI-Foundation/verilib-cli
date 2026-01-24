@@ -6,9 +6,14 @@ mod commands;
 mod constants;
 mod download;
 mod storage;
+mod structure;
 
-use cli::{Cli, Commands, ApiCommands};
-use commands::{handle_api, handle_auth, handle_deploy, handle_init, handle_pull, handle_reclone, handle_status, handle_status_update};
+use cli::{ApiCommands, Cli, Commands};
+use commands::{
+    handle_api, handle_atomize, handle_auth, handle_create, handle_deploy, handle_init,
+    handle_pull, handle_reclone, handle_specify, handle_status, handle_status_update,
+    handle_verify,
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -39,7 +44,7 @@ async fn main() -> Result<()> {
         Commands::Api(api_cmd) => {
             use commands::api::{ApiSubcommand, StatusFilter};
             use std::path::PathBuf;
-            
+
             let subcommand = match api_cmd {
                 ApiCommands::Get { file } => ApiSubcommand::Get {
                     file: PathBuf::from(file),
@@ -54,8 +59,13 @@ async fn main() -> Result<()> {
                     ApiSubcommand::List {
                         filter: parsed_filter,
                     }
-                },
-                ApiCommands::Set { file, specified, ignored, verified } => ApiSubcommand::Set {
+                }
+                ApiCommands::Set {
+                    file,
+                    specified,
+                    ignored,
+                    verified,
+                } => ApiSubcommand::Set {
                     file: PathBuf::from(file),
                     specified,
                     ignored,
@@ -64,9 +74,9 @@ async fn main() -> Result<()> {
                 ApiCommands::Batch { input } => ApiSubcommand::Batch {
                     input: PathBuf::from(input),
                 },
-                ApiCommands::CreateFile { 
-                    path, 
-                    content, 
+                ApiCommands::CreateFile {
+                    path,
+                    content,
                     from_file,
                     disabled,
                     specified,
@@ -84,8 +94,28 @@ async fn main() -> Result<()> {
                     code_name,
                 },
             };
-            
+
             handle_api(subcommand, cli.json, cli.dry_run).await?;
+        }
+
+        // Structure commands (merged from verilib-structure)
+        Commands::Create { project_root, root } => {
+            handle_create(project_root, root).await?;
+        }
+        Commands::Atomize {
+            project_root,
+            update_stubs,
+        } => {
+            handle_atomize(project_root, update_stubs).await?;
+        }
+        Commands::Specify { project_root } => {
+            handle_specify(project_root).await?;
+        }
+        Commands::Verify {
+            project_root,
+            verify_only_module,
+        } => {
+            handle_verify(project_root, verify_only_module).await?;
         }
     }
 

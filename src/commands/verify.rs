@@ -1,0 +1,201 @@
+//! Verify subcommand implementation.
+//!
+//! Run verification and update stubs.json with verification status.
+
+use crate::structure::{
+    cleanup_intermediate_files, get_display_name, require_probe_installed, run_command,
+    ConfigPaths, VERIFY_INTERMEDIATE_FILES,
+};
+use anyhow::{bail, Context, Result};
+use serde_json::Value;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+
+/// Run the verify subcommand.
+pub async fn handle_verify(
+    project_root: PathBuf,
+    verify_only_module: Option<String>,
+) -> Result<()> {
+    let project_root = project_root
+        .canonicalize()
+        .context("Failed to resolve project root")?;
+    let config = ConfigPaths::load(&project_root)?;
+
+    // Load existing stubs.json
+    let stubs_path = &config.structure_json_path;
+    if !stubs_path.exists() {
+        bail!(
+            "{} not found. Run 'verilib-cli atomize' first.",
+            stubs_path.display()
+        );
+    }
+    let stubs_content = std::fs::read_to_string(stubs_path)?;
+    let mut stubs: HashMap<String, Value> = serde_json::from_str(&stubs_content)?;
+
+    // Run probe-verus verify to generate proofs.json
+    let proofs_path = config.verilib_path.join("proofs.json");
+    let proofs_data = run_probe_verify(
+        &project_root,
+        &proofs_path,
+        &config.atoms_path,
+        verify_only_module.as_deref(),
+    )?;
+
+    // Update stubs with verification status
+    let (newly_verified, newly_unverified) =
+        update_stubs_with_verification(&mut stubs, &proofs_data);
+
+    // Save updated stubs.json
+    let stubs_content = serde_json::to_string_pretty(&stubs)?;
+    std::fs::write(stubs_path, stubs_content)?;
+    println!("\nUpdated {}", stubs_path.display());
+
+    // Print summary
+    print_verification_summary(&newly_verified, &newly_unverified);
+
+    Ok(())
+}
+
+/// Update stubs with verification status from proofs data.
+/// Returns (newly_verified, newly_unverified) lists.
+fn update_stubs_with_verification(
+    stubs: &mut HashMap<String, Value>,
+    proofs_data: &HashMap<String, Value>,
+) -> (Vec<String>, Vec<String>) {
+    let mut newly_verified = Vec::new();
+    let mut newly_unverified = Vec::new();
+
+    for (stub_name, stub_data) in stubs.iter_mut() {
+        let stub_obj = match stub_data.as_object_mut() {
+            Some(obj) => obj,
+            None => continue,
+        };
+
+        // Get the code-name for this stub
+        let code_name = match stub_obj.get("code-name").and_then(|v| v.as_str()) {
+            Some(name) => name.to_string(),
+            None => continue,
+        };
+
+        // Get previous verification status
+        let was_verified = stub_obj
+            .get("verified")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+
+        // Look up current verification status from proofs.json
+        let is_verified = proofs_data
+            .get(&code_name)
+            .and_then(|v| v.get("verified"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+
+        // Update the verified field
+        stub_obj.insert("verified".to_string(), Value::Bool(is_verified));
+
+        // Track changes
+        if is_verified && !was_verified {
+            newly_verified.push(stub_name.clone());
+        } else if !is_verified && was_verified {
+            newly_unverified.push(stub_name.clone());
+        }
+    }
+
+    newly_verified.sort();
+    newly_unverified.sort();
+
+    (newly_verified, newly_unverified)
+}
+
+/// Print summary of verification changes.
+fn print_verification_summary(newly_verified: &[String], newly_unverified: &[String]) {
+    println!();
+    println!("{}", "=".repeat(60));
+    println!("VERIFICATION STATUS CHANGES");
+    println!("{}", "=".repeat(60));
+
+    if !newly_verified.is_empty() {
+        println!("\nNewly verified ({}):", newly_verified.len());
+        for stub_name in newly_verified {
+            let display_name = get_display_name(stub_name);
+            println!("  + {}", display_name);
+            println!("    {}", stub_name);
+        }
+    } else {
+        println!("\n  No newly verified items");
+    }
+
+    if !newly_unverified.is_empty() {
+        println!("\nNewly unverified ({}):", newly_unverified.len());
+        for stub_name in newly_unverified {
+            let display_name = get_display_name(stub_name);
+            println!("  - {}", display_name);
+            println!("    {}", stub_name);
+        }
+    } else {
+        println!("\n  No newly unverified items");
+    }
+
+    println!();
+    println!("{}", "=".repeat(60));
+    println!("  Newly verified: +{}", newly_verified.len());
+    println!("  Newly unverified: -{}", newly_unverified.len());
+    println!("{}", "=".repeat(60));
+}
+
+/// Run probe-verus verify and return the results.
+fn run_probe_verify(
+    project_root: &Path,
+    proofs_path: &Path,
+    atoms_path: &Path,
+    verify_only_module: Option<&str>,
+) -> Result<HashMap<String, Value>> {
+    require_probe_installed()?;
+
+    if let Some(parent) = proofs_path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+
+    let mut args = vec![
+        "verify",
+        project_root.to_str().unwrap(),
+        "-o",
+        proofs_path.to_str().unwrap(),
+        "-a",
+        atoms_path.to_str().unwrap(),
+    ];
+
+    if let Some(module) = verify_only_module {
+        args.push("--verify-only-module");
+        args.push(module);
+        println!(
+            "Running probe-verus verify on {} (module: {})...",
+            project_root.display(),
+            module
+        );
+    } else {
+        println!(
+            "Running probe-verus verify on {}...",
+            project_root.display()
+        );
+    }
+
+    let output = run_command("probe-verus", &args, Some(project_root))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        eprintln!("Error: probe-verus verify failed.");
+        if !stderr.is_empty() {
+            eprintln!("{}", stderr);
+        }
+        bail!("probe-verus verify failed");
+    }
+
+    println!("Verification results saved to {}", proofs_path.display());
+
+    cleanup_intermediate_files(project_root, VERIFY_INTERMEDIATE_FILES);
+
+    let content = std::fs::read_to_string(proofs_path)?;
+    let proofs: HashMap<String, Value> = serde_json::from_str(&content)?;
+    Ok(proofs)
+}

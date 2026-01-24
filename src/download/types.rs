@@ -71,6 +71,7 @@ where
 
 #[derive(Debug, Deserialize)]
 pub struct DownloadData {
+    #[allow(dead_code)]
     pub repo: RepoInfo,
     pub tree: Vec<TreeNode>,
     #[serde(deserialize_with = "deserialize_layouts")]
@@ -81,6 +82,7 @@ pub struct DownloadData {
 
 #[derive(Debug, Deserialize)]
 pub struct RepoInfo {
+    #[allow(dead_code)]
     pub id: String,
 }
 
