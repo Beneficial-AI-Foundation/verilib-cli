@@ -360,8 +360,18 @@ fn update_structure_files(
         let mut metadata: HashMap<String, Value> =
             fm.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
         metadata.insert("code-name".to_string(), json!(code_name));
-        metadata.remove("code-line");
-        metadata.remove("code-path");
+
+        // Update code-path and code-line to be consistent with enriched data
+        if let Some(code_path) = entry.get("code-path").and_then(|v| v.as_str()) {
+            metadata.insert("code-path".to_string(), json!(code_path));
+        }
+        if let Some(code_line) = entry
+            .get("code-text")
+            .and_then(|ct| ct.get("lines-start"))
+            .and_then(|v| v.as_u64())
+        {
+            metadata.insert("code-line".to_string(), json!(code_line));
+        }
 
         write_frontmatter(&path, &metadata, body.as_deref())?;
         updated_count += 1;
