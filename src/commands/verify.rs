@@ -15,6 +15,8 @@ use std::path::{Path, PathBuf};
 pub async fn handle_verify(
     project_root: PathBuf,
     verify_only_module: Option<String>,
+    no_probe: bool,
+    check_only: bool,
 ) -> Result<()> {
     let project_root = project_root
         .canonicalize()
@@ -32,14 +34,24 @@ pub async fn handle_verify(
     let stubs_content = std::fs::read_to_string(stubs_path)?;
     let mut stubs: HashMap<String, Value> = serde_json::from_str(&stubs_content)?;
 
-    // Run probe-verus verify to generate proofs.json
+    // If check_only, just check for failures in existing stubs
+    if check_only {
+        println!("Checking stubs for verification failures...");
+        return check_for_failures(&stubs);
+    }
+
+    // Run probe-verus verify or load from existing file
     let proofs_path = config.verilib_path.join("proofs.json");
-    let proofs_data = run_probe_verify(
-        &project_root,
-        &proofs_path,
-        &config.atoms_path,
-        verify_only_module.as_deref(),
-    )?;
+    let proofs_data = if no_probe {
+        load_proofs_from_file(&proofs_path)?
+    } else {
+        run_probe_verify(
+            &project_root,
+            &proofs_path,
+            &config.atoms_path,
+            verify_only_module.as_deref(),
+        )?
+    };
 
     // Update stubs with verification status
     let (newly_verified, newly_unverified) =
@@ -54,6 +66,50 @@ pub async fn handle_verify(
     print_verification_summary(&newly_verified, &newly_unverified);
 
     Ok(())
+}
+
+/// Check if any stub has status "failure".
+/// Returns Ok if no failures, error with list of failed stubs otherwise.
+fn check_for_failures(stubs: &HashMap<String, Value>) -> Result<()> {
+    let mut failed_stubs: Vec<(String, String, String)> = Vec::new();
+
+    for (stub_path, stub_data) in stubs {
+        let status = stub_data
+            .get("status")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+
+        if status == "failure" {
+            let display_name = stub_data
+                .get("display-name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("?")
+                .to_string();
+            let code_name = stub_data
+                .get("code-name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("?")
+                .to_string();
+            failed_stubs.push((stub_path.clone(), display_name, code_name));
+        }
+    }
+
+    if failed_stubs.is_empty() {
+        println!("All {} stubs passed verification.", stubs.len());
+        return Ok(());
+    }
+
+    failed_stubs.sort_by(|a, b| a.0.cmp(&b.0));
+
+    eprintln!("Found {} stubs with status \"failure\":", failed_stubs.len());
+    for (stub_path, display_name, code_name) in &failed_stubs {
+        eprintln!("  {}: {} ({})", stub_path, display_name, code_name);
+    }
+
+    bail!(
+        "{} stubs failed verification. Run 'verify' to update verification status.",
+        failed_stubs.len()
+    );
 }
 
 /// Update stubs with verification status from proofs data.
@@ -141,6 +197,24 @@ fn print_verification_summary(newly_verified: &[String], newly_unverified: &[Str
     println!("  Newly verified: +{}", newly_verified.len());
     println!("  Newly unverified: -{}", newly_unverified.len());
     println!("{}", "=".repeat(60));
+}
+
+/// Load proofs from an existing proofs.json file.
+fn load_proofs_from_file(proofs_path: &Path) -> Result<HashMap<String, Value>> {
+    if !proofs_path.exists() {
+        bail!(
+            "proofs.json not found at {}. Run without --no-probe first to generate it.",
+            proofs_path.display()
+        );
+    }
+
+    println!("Loading proofs from {}...", proofs_path.display());
+    let content = std::fs::read_to_string(proofs_path)
+        .with_context(|| format!("Failed to read {}", proofs_path.display()))?;
+    let proofs: HashMap<String, Value> = serde_json::from_str(&content)
+        .with_context(|| format!("Failed to parse {}", proofs_path.display()))?;
+    println!("Loaded {} proofs", proofs.len());
+    Ok(proofs)
 }
 
 /// Run probe-verus verify and return the results.
