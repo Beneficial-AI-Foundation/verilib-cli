@@ -106,8 +106,9 @@ async fn main() -> Result<()> {
             project_root,
             update_stubs,
             no_probe,
+            check_only,
         } => {
-            handle_atomize(project_root, update_stubs, no_probe).await?;
+            handle_atomize(project_root, update_stubs, no_probe, check_only).await?;
         }
         Commands::Specify { project_root } => {
             handle_specify(project_root).await?;

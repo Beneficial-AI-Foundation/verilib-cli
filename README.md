@@ -207,6 +207,7 @@ verilib-cli atomize -s              # Also update .md files with code-name
 |--------|-------------|
 | `-s, --update-stubs` | Update .md files with code-name |
 | `-n, --no-probe` | Skip running probe-verus atomize and read existing atoms.json |
+| `-c, --check-only` | Check if .md stub files match enriched stubs.json without writing |
 
 ### `specify`
 Check specification status and manage spec certificates.

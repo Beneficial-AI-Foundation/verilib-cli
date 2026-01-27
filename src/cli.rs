@@ -80,6 +80,10 @@ pub enum Commands {
         /// Skip running probe-verus atomize and read atoms.json from disk
         #[arg(short = 'n', long)]
         no_probe: bool,
+
+        /// Check if .md stub files match enriched stubs.json without writing
+        #[arg(short = 'c', long)]
+        check_only: bool,
     },
 
     /// Check specification status and manage spec certs
