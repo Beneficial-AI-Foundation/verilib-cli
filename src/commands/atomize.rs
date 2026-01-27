@@ -13,7 +13,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 /// Run the atomize subcommand.
-pub async fn handle_atomize(project_root: PathBuf, update_stubs: bool) -> Result<()> {
+pub async fn handle_atomize(project_root: PathBuf, update_stubs: bool, no_probe: bool) -> Result<()> {
     let project_root = project_root
         .canonicalize()
         .context("Failed to resolve project root")?;
@@ -23,8 +23,12 @@ pub async fn handle_atomize(project_root: PathBuf, update_stubs: bool) -> Result
     let stubs = generate_stubs(&config.structure_root, &config.structure_json_path)?;
     println!("Loaded {} stubs from structure files", stubs.len());
 
-    // Step 2: Generate atoms.json using probe-verus atomize
-    let probe_atoms = generate_probe_atoms(&project_root, &config.atoms_path)?;
+    // Step 2: Generate or load atoms.json
+    let probe_atoms = if no_probe {
+        load_atoms_from_file(&config.atoms_path)?
+    } else {
+        generate_probe_atoms(&project_root, &config.atoms_path)?
+    };
     println!("Loaded {} atoms", probe_atoms.len());
 
     // Step 3: Build probe index for fast lookups
@@ -90,6 +94,23 @@ fn generate_stubs(structure_root: &Path, stubs_path: &Path) -> Result<HashMap<St
     let content = std::fs::read_to_string(stubs_path)?;
     let stubs: HashMap<String, Value> = serde_json::from_str(&content)?;
     Ok(stubs)
+}
+
+/// Load atoms from an existing atoms.json file.
+fn load_atoms_from_file(atoms_path: &Path) -> Result<HashMap<String, Value>> {
+    if !atoms_path.exists() {
+        bail!(
+            "atoms.json not found at {}. Run without --no-probe first to generate it.",
+            atoms_path.display()
+        );
+    }
+
+    println!("Loading atoms from {}...", atoms_path.display());
+    let content = std::fs::read_to_string(atoms_path)
+        .with_context(|| format!("Failed to read {}", atoms_path.display()))?;
+    let atoms: HashMap<String, Value> = serde_json::from_str(&content)
+        .with_context(|| format!("Failed to parse {}", atoms_path.display()))?;
+    Ok(atoms)
 }
 
 /// Run probe-verus atomize on the project and save results to atoms.json.
