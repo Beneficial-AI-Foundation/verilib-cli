@@ -96,6 +96,14 @@ pub enum Commands {
         /// Only verify functions in this module
         #[arg(long)]
         verify_only_module: Option<String>,
+
+        /// Skip running probe-verus verify and read proofs.json from disk
+        #[arg(short = 'n', long)]
+        no_probe: bool,
+
+        /// Check if any stub has status "failure", error if any are found
+        #[arg(short = 'c', long)]
+        check_only: bool,
     },
 }
 

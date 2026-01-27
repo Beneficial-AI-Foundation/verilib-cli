@@ -54,8 +54,10 @@ async fn main() -> Result<()> {
         Commands::Verify {
             project_root,
             verify_only_module,
+            no_probe,
+            check_only,
         } => {
-            handle_verify(project_root, verify_only_module).await?;
+            handle_verify(project_root, verify_only_module, no_probe, check_only).await?;
         }
     }
 

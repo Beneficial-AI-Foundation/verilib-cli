@@ -240,6 +240,8 @@ verilib-cli verify --verify-only-module my_module
 | Option | Description |
 |--------|-------------|
 | `--verify-only-module <name>` | Only verify functions in this module |
+| `-n, --no-probe` | Skip running probe-verus verify and read existing proofs.json |
+| `-c, --check-only` | Check if any stub has status "failure", error if any are found |
 
 ---
 
