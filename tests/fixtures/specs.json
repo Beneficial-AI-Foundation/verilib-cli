@@ -1,0 +1,35 @@
+{
+  "probe:test/1.0.0/module/func_a()": {
+    "code-path": "src/module.rs",
+    "spec-text": {
+      "lines-start": 8,
+      "lines-end": 20
+    },
+    "context": "impl",
+    "specified": true,
+    "has_requires": true,
+    "has_ensures": true
+  },
+  "probe:test/1.0.0/module/func_b()": {
+    "code-path": "src/module.rs",
+    "spec-text": {
+      "lines-start": 23,
+      "lines-end": 35
+    },
+    "context": "standalone",
+    "specified": true,
+    "has_requires": false,
+    "has_ensures": true
+  },
+  "probe:test/1.0.0/other/func_c()": {
+    "code-path": "src/other.rs",
+    "spec-text": {
+      "lines-start": 3,
+      "lines-end": 15
+    },
+    "context": "standalone",
+    "specified": false,
+    "has_requires": false,
+    "has_ensures": false
+  }
+}
