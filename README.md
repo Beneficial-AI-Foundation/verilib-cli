@@ -222,6 +222,12 @@ This command:
 3. Creates cert files for selected functions
 4. Updates `specified` status in stubs
 
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-n, --no-probe` | Skip running probe-verus specify and read existing specs.json |
+| `-c, --check-only` | Check if all stubs with specs have certs, error if any are missing |
+
 ### `verify`
 Run verification and update stubs with verification status.
 

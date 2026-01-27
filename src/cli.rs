@@ -91,6 +91,14 @@ pub enum Commands {
         /// Project root directory (default: current working directory)
         #[arg(default_value = ".")]
         project_root: PathBuf,
+
+        /// Skip running probe-verus specify and read specs.json from disk
+        #[arg(short = 'n', long)]
+        no_probe: bool,
+
+        /// Check if all stubs with specs have certs, error if any are missing
+        #[arg(short = 'c', long)]
+        check_only: bool,
     },
 
     /// Run verification and update stubs with verification status

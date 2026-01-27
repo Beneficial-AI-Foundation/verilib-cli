@@ -350,13 +350,17 @@ fn check_stubs_match(
     stubs: &HashMap<String, Value>,
     enriched: &HashMap<String, Value>,
 ) -> Result<()> {
+    use std::collections::HashSet;
+
     let mut mismatches: Vec<String> = Vec::new();
+    let mut mismatched_files: HashSet<String> = HashSet::new();
 
     for (file_path, stub_entry) in stubs {
         let enriched_entry = match enriched.get(file_path) {
             Some(e) => e,
             None => {
                 mismatches.push(format!("{}: missing from enriched stubs", file_path));
+                mismatched_files.insert(file_path.clone());
                 continue;
             }
         };
@@ -369,6 +373,7 @@ fn check_stubs_match(
                 "{}: code-name mismatch: .md has {:?}, enriched has {:?}",
                 file_path, stub_code_name, enriched_code_name
             ));
+            mismatched_files.insert(file_path.clone());
         }
 
         // Compare code-path
@@ -379,6 +384,7 @@ fn check_stubs_match(
                 "{}: code-path mismatch: .md has {:?}, enriched has {:?}",
                 file_path, stub_code_path, enriched_code_path
             ));
+            mismatched_files.insert(file_path.clone());
         }
 
         // Compare code-line (from stub) vs lines-start (from enriched code-text)
@@ -392,6 +398,7 @@ fn check_stubs_match(
                 "{}: code-line mismatch: .md has {:?}, enriched has {:?}",
                 file_path, stub_code_line, enriched_code_line
             ));
+            mismatched_files.insert(file_path.clone());
         }
     }
 
@@ -399,12 +406,19 @@ fn check_stubs_match(
         println!("All {} stub files match enriched stubs.", stubs.len());
         Ok(())
     } else {
-        eprintln!("Found {} mismatches:", mismatches.len());
+        eprintln!("Found {} mismatches in {} stub files:", mismatches.len(), mismatched_files.len());
         for mismatch in &mismatches {
             eprintln!("  {}", mismatch);
         }
+        eprintln!("\nStub files needing update:");
+        let mut files: Vec<_> = mismatched_files.iter().collect();
+        files.sort();
+        for file in files {
+            eprintln!("  {}", file);
+        }
         bail!(
-            "Stub files do not match enriched stubs. Run 'atomize --update-stubs' to update them."
+            "{} stub files do not match enriched stubs. Run 'atomize --update-stubs' to update them.",
+            mismatched_files.len()
         );
     }
 }

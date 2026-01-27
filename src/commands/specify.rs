@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 /// 5. Display menu and create certs for selected functions
 /// 6. Update specified status in stubs based on certification
 /// 7. Write updated stubs back to stubs.json
-pub async fn handle_specify(project_root: PathBuf) -> Result<()> {
+pub async fn handle_specify(project_root: PathBuf, no_probe: bool, check_only: bool) -> Result<()> {
     let project_root = project_root
         .canonicalize()
         .context("Failed to resolve project root")?;
@@ -31,9 +31,13 @@ pub async fn handle_specify(project_root: PathBuf) -> Result<()> {
     let mut stubs_data = read_stubs_json(&config.structure_json_path)?;
     println!("Loaded {} stubs from stubs.json", stubs_data.len());
 
-    // Run probe-verus specify to get spec info
+    // Run probe-verus specify or load from existing file
     let specs_path = config.verilib_path.join("specs.json");
-    let specs_data = run_probe_specify(&project_root, &specs_path, &config.atoms_path)?;
+    let specs_data = if no_probe {
+        load_specs_from_file(&specs_path)?
+    } else {
+        run_probe_specify(&project_root, &specs_path, &config.atoms_path)?
+    };
 
     // Enrich stubs with spec-text (only for functions where specified=true)
     incorporate_spec_text(&mut stubs_data, &specs_data);
@@ -42,6 +46,11 @@ pub async fn handle_specify(project_root: PathBuf) -> Result<()> {
     let existing_certs = get_existing_certs(&config.certs_specify_dir)?;
     println!("Found {} existing certs", existing_certs.len());
     let uncertified = find_uncertified_functions(&stubs_data, &existing_certs);
+
+    // If check_only, verify all stubs with specs have certs
+    if check_only {
+        return check_all_certified(&uncertified);
+    }
 
     // Display menu and create certs for selected functions
     let newly_certified = collect_certifications(&uncertified, &config.certs_specify_dir)?;
@@ -55,6 +64,40 @@ pub async fn handle_specify(project_root: PathBuf) -> Result<()> {
 
     println!("Done.");
     Ok(())
+}
+
+/// Check if all stubs with specs have certs.
+/// Returns Ok if all are certified, error with list of uncertified stubs otherwise.
+fn check_all_certified(uncertified: &HashMap<String, Value>) -> Result<()> {
+    if uncertified.is_empty() {
+        println!("All stubs with specs have certs.");
+        return Ok(());
+    }
+
+    eprintln!(
+        "Found {} stubs with specs missing certs:",
+        uncertified.len()
+    );
+
+    let mut uncertified_list: Vec<_> = uncertified.iter().collect();
+    uncertified_list.sort_by(|a, b| a.0.cmp(b.0));
+
+    for (stub_path, stub) in &uncertified_list {
+        let code_name = stub
+            .get("code-name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("?");
+        let display_name = stub
+            .get("display-name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("?");
+        eprintln!("  {}: {} ({})", stub_path, display_name, code_name);
+    }
+
+    bail!(
+        "{} stubs with specs are missing certs. Run 'specify' to certify them.",
+        uncertified.len()
+    );
 }
 
 /// Find stubs with spec-text that are not yet certified.
@@ -169,6 +212,24 @@ fn collect_certifications(
     );
 
     Ok(newly_certified)
+}
+
+/// Load specs from an existing specs.json file.
+fn load_specs_from_file(specs_path: &Path) -> Result<HashMap<String, Value>> {
+    if !specs_path.exists() {
+        bail!(
+            "specs.json not found at {}. Run without --no-probe first to generate it.",
+            specs_path.display()
+        );
+    }
+
+    println!("Loading specs from {}...", specs_path.display());
+    let content = std::fs::read_to_string(specs_path)
+        .with_context(|| format!("Failed to read {}", specs_path.display()))?;
+    let specs: HashMap<String, Value> = serde_json::from_str(&content)
+        .with_context(|| format!("Failed to parse {}", specs_path.display()))?;
+    println!("Loaded {} specs", specs.len());
+    Ok(specs)
 }
 
 /// Run probe-verus specify and return the results.
