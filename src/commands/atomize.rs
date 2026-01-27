@@ -13,7 +13,12 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 /// Run the atomize subcommand.
-pub async fn handle_atomize(project_root: PathBuf, update_stubs: bool, no_probe: bool) -> Result<()> {
+pub async fn handle_atomize(
+    project_root: PathBuf,
+    update_stubs: bool,
+    no_probe: bool,
+    check_only: bool,
+) -> Result<()> {
     let project_root = project_root
         .canonicalize()
         .context("Failed to resolve project root")?;
@@ -37,6 +42,12 @@ pub async fn handle_atomize(project_root: PathBuf, update_stubs: bool, no_probe:
     // Step 4: Enrich stubs with code-name and all atom metadata
     println!("Enriching stubs with atom metadata...");
     let enriched = enrich_stubs(&stubs, &probe_index, &probe_atoms)?;
+
+    // If check_only, compare .md stubs against enriched and report mismatches
+    if check_only {
+        println!("Checking .md stub files against enriched stubs...");
+        return check_stubs_match(&stubs, &enriched);
+    }
 
     // Step 5: Save enriched stubs.json
     println!(
@@ -331,6 +342,71 @@ fn build_enriched_entry(code_name: &str, atom: &Value) -> Value {
         "dependencies": dependencies,
         "display-name": display_name,
     })
+}
+
+/// Check if .md stub files match the enriched stubs.
+/// Compares code-name, code-path, and code-line fields.
+fn check_stubs_match(
+    stubs: &HashMap<String, Value>,
+    enriched: &HashMap<String, Value>,
+) -> Result<()> {
+    let mut mismatches: Vec<String> = Vec::new();
+
+    for (file_path, stub_entry) in stubs {
+        let enriched_entry = match enriched.get(file_path) {
+            Some(e) => e,
+            None => {
+                mismatches.push(format!("{}: missing from enriched stubs", file_path));
+                continue;
+            }
+        };
+
+        // Compare code-name
+        let stub_code_name = stub_entry.get("code-name").and_then(|v| v.as_str());
+        let enriched_code_name = enriched_entry.get("code-name").and_then(|v| v.as_str());
+        if stub_code_name != enriched_code_name {
+            mismatches.push(format!(
+                "{}: code-name mismatch: .md has {:?}, enriched has {:?}",
+                file_path, stub_code_name, enriched_code_name
+            ));
+        }
+
+        // Compare code-path
+        let stub_code_path = stub_entry.get("code-path").and_then(|v| v.as_str());
+        let enriched_code_path = enriched_entry.get("code-path").and_then(|v| v.as_str());
+        if stub_code_path != enriched_code_path {
+            mismatches.push(format!(
+                "{}: code-path mismatch: .md has {:?}, enriched has {:?}",
+                file_path, stub_code_path, enriched_code_path
+            ));
+        }
+
+        // Compare code-line (from stub) vs lines-start (from enriched code-text)
+        let stub_code_line = stub_entry.get("code-line").and_then(|v| v.as_u64());
+        let enriched_code_line = enriched_entry
+            .get("code-text")
+            .and_then(|ct| ct.get("lines-start"))
+            .and_then(|v| v.as_u64());
+        if stub_code_line != enriched_code_line {
+            mismatches.push(format!(
+                "{}: code-line mismatch: .md has {:?}, enriched has {:?}",
+                file_path, stub_code_line, enriched_code_line
+            ));
+        }
+    }
+
+    if mismatches.is_empty() {
+        println!("All {} stub files match enriched stubs.", stubs.len());
+        Ok(())
+    } else {
+        eprintln!("Found {} mismatches:", mismatches.len());
+        for mismatch in &mismatches {
+            eprintln!("  {}", mismatch);
+        }
+        bail!(
+            "Stub files do not match enriched stubs. Run 'atomize --update-stubs' to update them."
+        );
+    }
 }
 
 /// Update structure .md files with code-name field from enriched data.
