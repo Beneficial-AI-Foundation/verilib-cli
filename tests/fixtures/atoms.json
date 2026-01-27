@@ -1,0 +1,46 @@
+{
+  "probe:test/1.0.0/module/func_a()": {
+    "display-name": "func_a",
+    "dependencies": ["probe:test/1.0.0/module/helper()"],
+    "code-module": "module",
+    "code-path": "src/module.rs",
+    "code-text": {
+      "lines-start": 10,
+      "lines-end": 20
+    },
+    "mode": "exec"
+  },
+  "probe:test/1.0.0/module/func_b()": {
+    "display-name": "func_b",
+    "dependencies": [],
+    "code-module": "module",
+    "code-path": "src/module.rs",
+    "code-text": {
+      "lines-start": 25,
+      "lines-end": 35
+    },
+    "mode": "exec"
+  },
+  "probe:test/1.0.0/other/func_c()": {
+    "display-name": "func_c",
+    "dependencies": ["probe:test/1.0.0/module/func_a()"],
+    "code-module": "other",
+    "code-path": "src/other.rs",
+    "code-text": {
+      "lines-start": 5,
+      "lines-end": 15
+    },
+    "mode": "spec"
+  },
+  "probe:test/1.0.0/module/helper()": {
+    "display-name": "helper",
+    "dependencies": [],
+    "code-module": "module",
+    "code-path": "src/module.rs",
+    "code-text": {
+      "lines-start": 40,
+      "lines-end": 45
+    },
+    "mode": "exec"
+  }
+}

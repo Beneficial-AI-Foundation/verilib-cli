@@ -1,0 +1,26 @@
+{
+  "probe:test/1.0.0/module/func_a()": {
+    "code-path": "src/module.rs",
+    "code-line": 10,
+    "verified": true,
+    "status": "success"
+  },
+  "probe:test/1.0.0/module/func_b()": {
+    "code-path": "src/module.rs",
+    "code-line": 25,
+    "verified": false,
+    "status": "failure"
+  },
+  "probe:test/1.0.0/other/func_c()": {
+    "code-path": "src/other.rs",
+    "code-line": 5,
+    "verified": true,
+    "status": "success"
+  },
+  "probe:test/1.0.0/module/helper()": {
+    "code-path": "src/module.rs",
+    "code-line": 40,
+    "verified": false,
+    "status": "sorries"
+  }
+}
