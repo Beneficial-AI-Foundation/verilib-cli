@@ -10,7 +10,7 @@ use crate::commands::deploy::collect_deploy_info_with_path;
 use crate::commands::status::get_stored_api_key;
 use crate::commands::types::Config;
 use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
-use crate::download::{download_repo, handle_api_error, process_tree, wait_for_atomization};
+use crate::download::{handle_api_error};
 use crate::structure::create_gitignore;
 
 #[derive(serde::Deserialize, Debug)]
@@ -42,53 +42,13 @@ pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -
         println!("Repository created successfully!");
         println!("Repository ID: {}", repo_id);
         
-        fs::create_dir_all(".verilib")
-            .context("Failed to create .verilib directory")?;
-        
-        save_metadata(&repo_id, &url_base, true)?;
-        
-        println!();
-        wait_for_atomization(&repo_id, &url_base, &api_key).await?;
-        
-        println!("Atomization complete! Downloading repository structure...");
-        
-        let download_data = download_repo(&repo_id, &url_base, &api_key, debug).await?;
-        
-        // Update metadata with actual admin status from server
-        save_metadata(&repo_id, &url_base, download_data.data.is_admin)?;
-
-        println!("Creating files and folders...");
-        
-        let base_path = PathBuf::from(".verilib");
-        process_tree(&download_data.data.tree, &base_path, &download_data.data.layouts)?;
-        
-        println!("Repository successfully initialized!");
-        
-        return Ok(());
+        repo_id
     };
-    
-    println!("Downloading repository structure...");
-    
-    let download_data = download_repo(&repo_id, &url_base, &api_key, debug).await?;
-    
-    let verilib_path = PathBuf::from(".verilib");
-    if verilib_path.exists() {
-        println!("Cleaning existing .verilib directory...");
-        fs::remove_dir_all(&verilib_path)
-            .context("Failed to remove existing .verilib directory")?;
-    }
     
     fs::create_dir_all(".verilib")
         .context("Failed to create .verilib directory")?;
     
-    save_metadata(&repo_id, &url_base, download_data.data.is_admin)?;
-    
-    println!("Creating files and folders...");
-    
-    let base_path = PathBuf::from(".verilib");
-    process_tree(&download_data.data.tree, &base_path, &download_data.data.layouts)?;
-    
-    println!("Repository successfully initialized!");
+    save_config(&repo_id, &url_base, true)?;
     
     Ok(())
 }
@@ -220,7 +180,7 @@ async fn create_repo_from_git_url(git_url: &str, base_url: &str, api_key: &str, 
     Ok(create_response.data.id.to_string())
 }
 
-fn save_metadata(repo_id: &str, base_url: &str, is_admin: bool) -> Result<()> {
+fn save_config(repo_id: &str, base_url: &str, is_admin: bool) -> Result<()> {
     let config_path = PathBuf::from(".verilib/config.json");
     let verilib_path = PathBuf::from(".verilib");
 

@@ -39,21 +39,6 @@ pub enum Commands {
     },
     /// Reclone repository after checking for uncommitted changes
     Reclone,
-    /// Deploy repository to server
-    Deploy {
-        /// API base URL (defaults to production)
-        #[arg(long)]
-        url: Option<String>,
-    },
-    /// Pull repository updates from server
-    Pull,
-    /// Interactive mode to manage .verilib atoms
-    #[command(name = "status-update")]
-    StatusUpdate,
-    /// Programmatic API for managing .verilib files
-    #[command(subcommand)]
-    Api(ApiCommands),
-
     // ===== Structure Commands (merged from verilib-structure) =====
 
     /// Initialize structure files from source analysis

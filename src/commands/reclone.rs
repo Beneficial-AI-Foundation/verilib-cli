@@ -52,6 +52,13 @@ pub async fn handle_reclone(debug: bool) -> Result<()> {
         println!("Please commit or stash your changes before running reclone.");
         anyhow::bail!("Uncommitted changes detected");
     }
+
+    // Check for unpushed commits
+    if has_unpushed_commits()? {
+        println!("Warning: You have unpushed commits in your git repository.");
+        println!("Please push your changes before running reclone.");
+        anyhow::bail!("Unpushed commits detected");
+    }
     
     // Perform the reclone API call
     let api_key = get_stored_api_key()?;
@@ -161,4 +168,26 @@ fn has_uncommitted_changes() -> Result<bool> {
     
     // If git status --porcelain returns any output, there are uncommitted changes
     Ok(!output.stdout.is_empty())
+}
+
+fn has_unpushed_commits() -> Result<bool> {
+    let output = Command::new("git")
+        .args(["rev-list", "--count", "@{u}..HEAD"])
+        .output()
+        .context("Failed to run git rev-list to check pushed status")?;
+    
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        if stderr.contains("no upstream configured") {
+             anyhow::bail!("No upstream branch configured. Please push your branch first.");
+        }
+        anyhow::bail!("Git command failed: {}", stderr.trim());
+    }
+    
+    let count = String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .parse::<usize>()
+        .unwrap_or(0);
+        
+    Ok(count > 0)
 }
