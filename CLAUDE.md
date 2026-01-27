@@ -51,6 +51,10 @@ Local project config is stored in `.verilib/`:
 
 When adding, changing, or removing CLI options or commands, update `README.md` accordingly.
 
+## Testing
+
+When adding, changing, or removing features, update tests in `tests/` accordingly. Run `cargo test` to verify.
+
 ## Release Process
 
 Releases use cargo-dist. Tag with semver pattern to trigger GitHub Actions:
