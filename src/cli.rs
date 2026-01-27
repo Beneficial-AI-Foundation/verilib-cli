@@ -76,6 +76,10 @@ pub enum Commands {
         /// Update .md structure files with code-name from atoms
         #[arg(short = 's', long)]
         update_stubs: bool,
+
+        /// Skip running probe-verus atomize and read atoms.json from disk
+        #[arg(short = 'n', long)]
+        no_probe: bool,
     },
 
     /// Check specification status and manage spec certs
