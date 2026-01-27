@@ -303,9 +303,11 @@ verilib-cli --debug deploy
 
 ---
 
-## Case Study: Dalek-Lite
+## Workflows
 
-Complete workflow for setting up verification on the dalek-lite project:
+### 1. User Workflow
+
+Interactive workflow for setting up and managing verification on a project:
 
 ```bash
 # Clone and setup
@@ -313,17 +315,61 @@ git clone git@github.com:Beneficial-AI-Foundation/dalek-lite.git
 cd dalek-lite
 git checkout -b sl/structure
 
-# 1. Create structure files
+# Step 1: Create structure files
+# Creates .md stub files in .verilib/structure/ from functions_to_track.csv
 verilib-cli create
 
-# 2. Run atomization
+# Step 2: Run atomization
+# Generates stubs.json with atom dependencies from SCIP analysis
+# Updates .md files with code-name, code-path, and code-line
 verilib-cli atomize --update-stubs
 
-# 3. Manage specifications
+# Step 3: Manage specifications
+# Prompts user to certify functions with changed specs
+# Updates stubs.json with specification statuses
 verilib-cli specify
 
-# 4. Run verification
+# Step 4: Run verification
+# Runs Verus verification and updates stubs.json with proof statuses
 verilib-cli verify
+```
+
+### 2. CI Workflow
+
+Non-interactive workflow for continuous integration. Uses `--check-only` to validate without modifications:
+
+```bash
+# Step 1: Verify structure files are up to date
+# Fails if .md stub files don't match enriched stubs.json
+verilib-cli atomize --check-only
+
+# Step 2: Verify all specs are certified
+# Fails if any stub with specs is missing a cert
+verilib-cli specify --check-only
+
+# Step 3: Verify no failures
+# Fails if any stub has status "failure"
+verilib-cli verify --check-only
+```
+
+### 3. Server Workflow
+
+Workflow for server environments where `probe-verus` runs separately in job queues and Docker containers. Uses `--no-probe` to read from pre-generated JSON files and `--check-only` to validate:
+
+```bash
+# probe-verus commands run separately in Docker containers:
+#   probe-verus atomize ... -o .verilib/atoms.json
+#   probe-verus specify ... -o .verilib/specs.json
+#   probe-verus verify ... -o .verilib/proofs.json
+
+# Step 1: Verify structure files match atoms.json
+verilib-cli atomize --no-probe --check-only
+
+# Step 2: Verify all specs are certified from specs.json
+verilib-cli specify --no-probe --check-only
+
+# Step 3: Verify no failures from proofs.json
+verilib-cli verify --no-probe --check-only
 ```
 
 ---
