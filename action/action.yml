@@ -61,15 +61,39 @@ runs:
       shell: bash
       run: |
         PROJECT_PATH="${{ inputs.project-path }}"
-        CARGO_TOML="$PROJECT_PATH/Cargo.toml"
         
-        if [ ! -f "$CARGO_TOML" ]; then
-          echo "::error::Cargo.toml not found at $CARGO_TOML"
-          exit 1
+        # Find Cargo.toml with [package.metadata.verus] section
+        # First try root, then search in subdirectories (for workspaces)
+        CARGO_TOML=""
+        METADATA=""
+        
+        if [ -f "$PROJECT_PATH/Cargo.toml" ]; then
+          METADATA=$(awk '/^\[package.metadata.verus\]/{flag=1;next}/^\[.*\]/{flag=0}flag' "$PROJECT_PATH/Cargo.toml")
+          if [ -n "$METADATA" ]; then
+            CARGO_TOML="$PROJECT_PATH/Cargo.toml"
+            echo "Found verus metadata in $CARGO_TOML"
+          fi
         fi
         
-        # Extract [package.metadata.verus] section
-        METADATA=$(awk '/^\[package.metadata.verus\]/{flag=1;next}/^\[.*\]/{flag=0}flag' "$CARGO_TOML")
+        # If not found in root, search subdirectories (workspace members)
+        if [ -z "$METADATA" ]; then
+          echo "No verus metadata in root Cargo.toml, searching subdirectories..."
+          for toml in "$PROJECT_PATH"/*/Cargo.toml; do
+            if [ -f "$toml" ]; then
+              METADATA=$(awk '/^\[package.metadata.verus\]/{flag=1;next}/^\[.*\]/{flag=0}flag' "$toml")
+              if [ -n "$METADATA" ]; then
+                CARGO_TOML="$toml"
+                echo "Found verus metadata in $CARGO_TOML"
+                break
+              fi
+            fi
+          done
+        fi
+        
+        if [ -z "$CARGO_TOML" ]; then
+          echo "::error::No Cargo.toml with [package.metadata.verus] found in $PROJECT_PATH or its subdirectories"
+          exit 1
+        fi
         
         # Get Verus version
         VERUS_VERSION="${{ inputs.verus-version }}"
