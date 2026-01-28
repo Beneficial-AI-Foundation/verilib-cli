@@ -310,6 +310,10 @@ runs:
         verilib-cli verify
         
         echo "=== Generate complete ==="
+        
+        echo "=== Debug: listing .verilib contents ==="
+        ls -la .verilib/ || echo "WARNING: .verilib directory not found!"
+        pwd
 
     # Step 13: Extract results
     - name: Extract results
@@ -317,6 +321,13 @@ runs:
       shell: bash
       working-directory: ${{ inputs.project-path }}
       run: |
+        echo "=== Debug: Current directory ==="
+        pwd
+        echo "=== Debug: Listing directory contents ==="
+        ls -la
+        echo "=== Debug: Checking .verilib ==="
+        ls -la .verilib/ 2>/dev/null || echo ".verilib not found in $(pwd)"
+        
         RESULTS_PATH="$(pwd)/.verilib"
         echo "results_path=$RESULTS_PATH" >> $GITHUB_OUTPUT
         
