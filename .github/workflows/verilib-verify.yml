@@ -96,6 +96,7 @@ jobs:
           name: verilib-results
           path: ${{ inputs.project-path }}/.verilib/
           retention-days: 30
+          include-hidden-files: true
 
   # Deploy job - placeholder for future implementation
   # Uncomment and configure when verilib-cli deploy command is ready
