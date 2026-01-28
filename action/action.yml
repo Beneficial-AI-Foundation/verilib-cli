@@ -313,10 +313,6 @@ runs:
         verilib-cli verify
         
         echo "=== Generate complete ==="
-        
-        echo "=== Debug: listing .verilib contents ==="
-        ls -la .verilib/ || echo "WARNING: .verilib directory not found!"
-        pwd
 
     # Step 13: Extract results and create archive
     - name: Extract results
