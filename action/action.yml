@@ -51,6 +51,9 @@ outputs:
   results-path:
     description: 'Path to .verilib directory with results'
     value: ${{ steps.results.outputs.results_path }}
+  results-archive:
+    description: 'Path to archived .verilib results (tar.gz, safe for artifact upload)'
+    value: ${{ steps.results.outputs.results_archive }}
 
 runs:
   using: 'composite'
@@ -61,10 +64,10 @@ runs:
       shell: bash
       run: |
         PROJECT_PATH="${{ inputs.project-path }}"
-        
+
         # Find Cargo.toml with [package.metadata.verus] section
         # First try root, then search in subdirectories (for workspaces)
-        CARGO_TOML=""
+        CARGO_TOML=""                 
         METADATA=""
         
         if [ -f "$PROJECT_PATH/Cargo.toml" ]; then
@@ -315,19 +318,12 @@ runs:
         ls -la .verilib/ || echo "WARNING: .verilib directory not found!"
         pwd
 
-    # Step 13: Extract results
+    # Step 13: Extract results and create archive
     - name: Extract results
       id: results
       shell: bash
       working-directory: ${{ inputs.project-path }}
       run: |
-        echo "=== Debug: Current directory ==="
-        pwd
-        echo "=== Debug: Listing directory contents ==="
-        ls -la
-        echo "=== Debug: Checking .verilib ==="
-        ls -la .verilib/ 2>/dev/null || echo ".verilib not found in $(pwd)"
-        
         RESULTS_PATH="$(pwd)/.verilib"
         echo "results_path=$RESULTS_PATH" >> $GITHUB_OUTPUT
         
@@ -343,4 +339,13 @@ runs:
           echo "verified_count=0" >> $GITHUB_OUTPUT
           echo "total_count=0" >> $GITHUB_OUTPUT
           echo "No stubs.json found"
+        fi
+        
+        # Create archive for safe artifact upload
+        # (Structure filenames may contain <, >, etc. which are invalid for GitHub artifacts)
+        if [ -d ".verilib" ]; then
+          ARCHIVE_PATH="$(pwd)/verilib-results.tar.gz"
+          tar -czf "$ARCHIVE_PATH" -C "$(pwd)" .verilib
+          echo "results_archive=$ARCHIVE_PATH" >> $GITHUB_OUTPUT
+          echo "Created archive: $ARCHIVE_PATH"
         fi

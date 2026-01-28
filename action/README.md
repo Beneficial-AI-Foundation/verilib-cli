@@ -63,6 +63,9 @@ This runs:
 | `verified-count` | Number of functions verified |
 | `total-functions` | Total number of tracked functions |
 | `results-path` | Path to `.verilib/` directory |
+| `results-archive` | Path to archived results (`verilib-results.tar.gz`) - use this for artifact upload |
+
+> **Note**: Use `results-archive` instead of `results-path` for artifact uploads. Function signatures may contain characters like `<` and `>` that are invalid for GitHub artifact paths.
 
 ## Auto-Detection
 
@@ -106,7 +109,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           name: verilib-results
-          path: .verilib/
+          path: ${{ steps.verify.outputs.results-archive }}
 ```
 
 ## Requirements
