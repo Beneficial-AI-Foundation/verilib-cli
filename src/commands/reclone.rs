@@ -179,7 +179,14 @@ fn has_unpushed_commits() -> Result<bool> {
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         if stderr.contains("no upstream configured") {
-             anyhow::bail!("No upstream branch configured. Please push your branch first.");
+             // Fallback: Check if the current HEAD commit exists on any remote branch
+             let branch_output = Command::new("git")
+                 .args(["branch", "-r", "--contains", "HEAD"])
+                 .output()
+                 .context("Failed to check remote branches")?;
+             
+             // If output has content, commit is on some remote (safe)
+             return Ok(branch_output.stdout.is_empty());
         }
         anyhow::bail!("Git command failed: {}", stderr.trim());
     }
