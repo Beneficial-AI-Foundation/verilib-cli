@@ -8,7 +8,7 @@ use std::process::Command;
 use crate::constants::{auth_required_msg, init_required_msg};
 use crate::commands::status::get_stored_api_key;
 use crate::commands::types::Config;
-use crate::download::{handle_api_error, wait_for_atomization, download_repo, process_tree};
+use crate::download::handle_api_error;
 
 pub async fn handle_reclone(debug: bool) -> Result<()> {
     if debug {
@@ -104,44 +104,9 @@ pub async fn handle_reclone(debug: bool) -> Result<()> {
         println!("{}", serde_json::to_string_pretty(&json_response).unwrap_or_else(|_| "Failed to pretty print".to_string()));
     }
     
-    // Check for success
     if let Some(status) = json_response.get("status") {
         if status == "success" {
-            println!("Reclone completed successfully!");
-            
-            println!();
-            wait_for_atomization(&repo_id, &url_base, &api_key).await?;
-            
-            println!("Atomization complete! Downloading latest data...");
-            
-            let download_data = download_repo(&repo_id, &url_base, &api_key, debug).await?;
-            
-            let verilib_path = PathBuf::from(".verilib");
-            if verilib_path.exists() {
-                println!("Cleaning existing .verilib directory...");
-                fs::remove_dir_all(&verilib_path)
-                    .context("Failed to remove existing .verilib directory")?;
-            }
-            
-            fs::create_dir_all(".verilib")
-                .context("Failed to create .verilib directory")?;
-            
-            let mut config = config;
-            config.repo.is_admin = download_data.data.is_admin;
-
-            let config_content = serde_json::to_string_pretty(&config)
-                .context("Failed to serialize config to JSON")?;
-
-            fs::write(".verilib/config.json", &config_content)
-                .context("Failed to write config.json file")?;
-            
-            println!("Creating files and folders...");
-            
-            let base_path = PathBuf::from(".verilib");
-            process_tree(&download_data.data.tree, &base_path, &download_data.data.layouts)?;
-            
             println!("Repository successfully updated!");
-            
             return Ok(());
         }
     }

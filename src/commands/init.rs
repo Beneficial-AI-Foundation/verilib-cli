@@ -63,7 +63,25 @@ fn detect_git_url() -> Option<String> {
         let url = String::from_utf8(output.stdout).ok()?;
         let url = url.trim().to_string();
         if !url.is_empty() {
-            return Some(normalize_git_url(&url));
+            let mut normalized = normalize_git_url(&url);
+
+            // Get current branch
+            if let Ok(branch_output) = Command::new("git")
+                .args(&["rev-parse", "--abbrev-ref", "HEAD"])
+                .output()
+            {
+                if branch_output.status.success() {
+                    if let Ok(branch) = String::from_utf8(branch_output.stdout) {
+                        let branch = branch.trim();
+                        if !branch.is_empty() && branch != "HEAD" {
+                            normalized.push('@');
+                            normalized.push_str(branch);
+                        }
+                    }
+                }
+            }
+
+            return Some(normalized);
         }
     }
     
