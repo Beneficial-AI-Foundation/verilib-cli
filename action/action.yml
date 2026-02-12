@@ -63,11 +63,12 @@ runs:
       id: versions
       shell: bash
       run: |
+        set -euo pipefail
         PROJECT_PATH="${{ inputs.project-path }}"
 
         # Find Cargo.toml with [package.metadata.verus] section
         # First try root, then search in subdirectories (for workspaces)
-        CARGO_TOML=""                 
+        CARGO_TOML=""
         METADATA=""
         
         if [ -f "$PROJECT_PATH/Cargo.toml" ]; then
@@ -324,8 +325,8 @@ runs:
         echo "results_path=$RESULTS_PATH" >> $GITHUB_OUTPUT
         
         if [ -f ".verilib/stubs.json" ]; then
-          VERIFIED=$(cat .verilib/stubs.json | jq '[to_entries[] | select(.value.verified == true)] | length')
-          TOTAL=$(cat .verilib/stubs.json | jq 'length')
+          VERIFIED=$(jq '[to_entries[] | select(.value.verified == true)] | length' .verilib/stubs.json)
+          TOTAL=$(jq 'length' .verilib/stubs.json)
           echo "verified_count=$VERIFIED" >> $GITHUB_OUTPUT
           echo "total_count=$TOTAL" >> $GITHUB_OUTPUT
           echo ""
@@ -340,7 +341,7 @@ runs:
         # Create archive for safe artifact upload
         # (Structure filenames may contain <, >, etc. which are invalid for GitHub artifacts)
         if [ -d ".verilib" ]; then
-          ARCHIVE_PATH="$(pwd)/verilib-results.tar.gz"
+          ARCHIVE_PATH="$(pwd)/verilib-results-${GITHUB_RUN_ID:-unknown}-${GITHUB_JOB:-job}-${GITHUB_RUN_ATTEMPT:-1}-$(date +%s)-$RANDOM.tar.gz"
           tar -czf "$ARCHIVE_PATH" -C "$(pwd)" .verilib
           echo "results_archive=$ARCHIVE_PATH" >> $GITHUB_OUTPUT
           echo "Created archive: $ARCHIVE_PATH"

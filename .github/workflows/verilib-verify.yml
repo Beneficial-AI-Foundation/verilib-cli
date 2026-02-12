@@ -36,13 +36,13 @@ on:
         type: string
         default: ''
       deploy-enabled:
-        description: 'Enable deployment to verilib backend (requires VERILIB_API_KEY secret)'
+        description: 'Reserved for future use: will enable deployment to verilib backend once deploy is implemented (requires VERILIB_API_KEY secret). Currently has no effect.'
         required: false
         type: boolean
         default: false
     secrets:
       VERILIB_API_KEY:
-        description: 'API key for verilib backend (required if deploy-enabled is true)'
+        description: 'Reserved for future use: API key for verilib backend (used when deploy is implemented and deploy-enabled is true). Currently unused because deploy is not yet implemented.'
         required: false
     outputs:
       verified-count:
@@ -65,12 +65,12 @@ jobs:
 
       - name: Run verilib verification
         id: verilib
-        uses: beneficial-ai-foundation/verilib-cli/action@v1
+        uses: ./action
         with:
           project-path: ${{ inputs.project-path }}
           # On push to main/master: generate mode
           # On PR: check mode
-          mode: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && 'generate' || 'check' }}
+          mode: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') ? 'generate' : 'check' }}
           verus-version: ${{ inputs.verus-version }}
           rust-version: ${{ inputs.rust-version }}
           functions-to-track: ${{ inputs.functions-to-track }}
