@@ -117,7 +117,7 @@ jobs:
 - Linux runner (ubuntu-latest recommended)
 - Project must be a valid Verus/Rust project
 - `functions_to_track.csv` required for generate mode
-- Either provide versions via inputs or include `[package.metadata.verus]` in Cargo.toml
+- You must either provide versions via inputs or include `[package.metadata.verus]` in Cargo.toml; if neither is provided, the action will fail with an error during setup.
 
 ## License
 
