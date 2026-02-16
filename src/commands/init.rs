@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use dialoguer::Input;
+use dialoguer::{Input, Select};
 use reqwest::Client;
 use serde_json::Value;
 use std::fs;
@@ -11,7 +11,7 @@ use crate::commands::status::get_stored_api_key;
 use crate::commands::types::Config;
 use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
 use crate::download::{handle_api_error};
-use crate::structure::create_gitignore;
+use crate::structure::{create_gitignore, ExecutionMode};
 
 #[derive(serde::Deserialize, Debug)]
 struct CreateRepoResponse {
@@ -45,12 +45,30 @@ pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -
         repo_id
     };
     
+    let execution_mode = prompt_execution_mode()?;
+
     fs::create_dir_all(".verilib")
         .context("Failed to create .verilib directory")?;
     
-    save_config(&repo_id, &url_base, true)?;
+    save_config(&repo_id, &url_base, true, execution_mode)?;
     
     Ok(())
+}
+
+fn prompt_execution_mode() -> Result<ExecutionMode> {
+    let modes = vec!["Local (Default)", "Docker"];
+    let selection = Select::new()
+        .with_prompt("Select execution mode")
+        .items(&modes)
+        .default(0)
+        .interact()
+        .context("Failed to select execution mode")?;
+
+    match selection {
+        0 => Ok(ExecutionMode::Local),
+        1 => Ok(ExecutionMode::Docker),
+        _ => unreachable!(),
+    }
 }
 
 fn detect_git_url() -> Option<String> {
@@ -198,7 +216,12 @@ async fn create_repo_from_git_url(git_url: &str, base_url: &str, api_key: &str, 
     Ok(create_response.data.id.to_string())
 }
 
-fn save_config(repo_id: &str, base_url: &str, is_admin: bool) -> Result<()> {
+fn save_config(
+    repo_id: &str,
+    base_url: &str,
+    is_admin: bool,
+    execution_mode: ExecutionMode,
+) -> Result<()> {
     let config_path = PathBuf::from(".verilib/config.json");
     let verilib_path = PathBuf::from(".verilib");
 
@@ -210,7 +233,7 @@ fn save_config(repo_id: &str, base_url: &str, is_admin: bool) -> Result<()> {
     };
 
     // Check if config.json exists
-    let config_json = if config_path.exists() {
+    let mut config_json_value = if config_path.exists() {
         // Read existing config and preserve structure-root if present
         let existing_content =
             fs::read_to_string(&config_path).context("Failed to read existing config.json")?;
@@ -222,13 +245,20 @@ fn save_config(repo_id: &str, base_url: &str, is_admin: bool) -> Result<()> {
         existing_json["repo"] = serde_json::to_value(&repo_config)
             .context("Failed to serialize repo config")?;
 
-        serde_json::to_string_pretty(&existing_json).context("Failed to serialize config to JSON")?
+        existing_json
     } else {
         // Create new config with only repo field (no structure-root)
         let config = Config { repo: repo_config };
-
-        serde_json::to_string_pretty(&config).context("Failed to serialize config to JSON")?
+        
+        serde_json::to_value(&config).context("Failed to serialize config to Value")?
     };
+
+    // Add execution-mode
+    config_json_value["execution-mode"] = serde_json::to_value(&execution_mode)
+        .context("Failed to serialize execution mode")?;
+
+    let config_json = serde_json::to_string_pretty(&config_json_value)
+        .context("Failed to serialize config to JSON")?;
 
     fs::write(&config_path, &config_json).context("Failed to write config.json file")?;
 
