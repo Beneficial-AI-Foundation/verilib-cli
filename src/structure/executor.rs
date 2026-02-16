@@ -64,12 +64,41 @@ fn run_local(program: &str, args: &[&str], cwd: Option<&Path>) -> Result<Output>
     Ok(output)
 }
 
+fn ensure_image_pulled(image: &str) -> Result<()> {
+    let status = Command::new("docker")
+        .args(&["image", "inspect", image])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status();
+
+    if let Ok(status) = status {
+        if status.success() {
+            return Ok(());
+        }
+    }
+
+    println!("Docker image {} not found locally. Pulling...", image);
+    
+    let status = Command::new("docker")
+        .args(&["pull", "--platform", "linux/amd64", image])
+        .status()
+        .context(format!("Failed to pull docker image {}", image))?;
+
+    if !status.success() {
+        anyhow::bail!("Failed to pull docker image {}", image);
+    }
+    
+    Ok(())
+}
+
 fn run_docker(
     program: &str,
     args: &[&str],
     cwd: Option<&Path>,
     image: &str,
 ) -> Result<Output> {
+    ensure_image_pulled(image)?;
+
     let host_cwd = cwd
         .map(|p| p.to_path_buf())
         .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf()));
