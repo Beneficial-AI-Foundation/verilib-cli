@@ -4,7 +4,7 @@
 
 use crate::structure::{
     cleanup_intermediate_files, parse_frontmatter, require_probe_installed, run_command,
-    write_frontmatter, ConfigPaths, ATOMIZE_INTERMEDIATE_FILES,
+    write_frontmatter, CommandConfig, ConfigPaths, ATOMIZE_INTERMEDIATE_FILES,
 };
 use anyhow::{bail, Context, Result};
 use intervaltree::IntervalTree;
@@ -25,14 +25,19 @@ pub async fn handle_atomize(
     let config = ConfigPaths::load(&project_root)?;
 
     // Step 1: Generate stubs.json from .md files using probe-verus stubify
-    let stubs = generate_stubs(&config.structure_root, &config.structure_json_path)?;
+    let stubs = generate_stubs(
+        &project_root,
+        &config.structure_root,
+        &config.structure_json_path,
+        &config.command_config,
+    )?;
     println!("Loaded {} stubs from structure files", stubs.len());
 
     // Step 2: Generate or load atoms.json
     let probe_atoms = if no_probe {
         load_atoms_from_file(&config.atoms_path)?
     } else {
-        generate_probe_atoms(&project_root, &config.atoms_path)?
+        generate_probe_atoms(&project_root, &config.atoms_path, &config.command_config)?
     };
     println!("Loaded {} atoms", probe_atoms.len());
 
@@ -68,8 +73,13 @@ pub async fn handle_atomize(
 }
 
 /// Run probe-verus stubify to generate stubs.json from .md files.
-fn generate_stubs(structure_root: &Path, stubs_path: &Path) -> Result<HashMap<String, Value>> {
-    require_probe_installed()?;
+fn generate_stubs(
+    project_root: &Path,
+    structure_root: &Path,
+    stubs_path: &Path,
+    config: &CommandConfig,
+) -> Result<HashMap<String, Value>> {
+    require_probe_installed(config)?;
 
     if let Some(parent) = stubs_path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -84,11 +94,20 @@ fn generate_stubs(structure_root: &Path, stubs_path: &Path) -> Result<HashMap<St
         "probe-verus",
         &[
             "stubify",
-            structure_root.to_str().unwrap(),
+            structure_root
+                .strip_prefix(project_root)
+                .unwrap_or(structure_root)
+                .to_str()
+                .unwrap(),
             "-o",
-            stubs_path.to_str().unwrap(),
+            stubs_path
+                .strip_prefix(project_root)
+                .unwrap_or(stubs_path)
+                .to_str()
+                .unwrap(),
         ],
-        None,
+        Some(project_root),
+        config,
     )?;
 
     if !output.status.success() {
@@ -125,8 +144,8 @@ fn load_atoms_from_file(atoms_path: &Path) -> Result<HashMap<String, Value>> {
 }
 
 /// Run probe-verus atomize on the project and save results to atoms.json.
-fn generate_probe_atoms(project_root: &Path, atoms_path: &Path) -> Result<HashMap<String, Value>> {
-    require_probe_installed()?;
+fn generate_probe_atoms(project_root: &Path, atoms_path: &Path, config: &CommandConfig) -> Result<HashMap<String, Value>> {
+    require_probe_installed(config)?;
 
     if let Some(parent) = atoms_path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -141,12 +160,17 @@ fn generate_probe_atoms(project_root: &Path, atoms_path: &Path) -> Result<HashMa
         "probe-verus",
         &[
             "atomize",
-            project_root.to_str().unwrap(),
+            ".",
             "-o",
-            atoms_path.to_str().unwrap(),
+            atoms_path
+                .strip_prefix(project_root)
+                .unwrap_or(atoms_path)
+                .to_str()
+                .unwrap(),
             "-r",
         ],
-        None,
+        Some(project_root),
+        config,
     )?;
 
     if !output.status.success() {

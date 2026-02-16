@@ -1,15 +1,24 @@
 //! Configuration management for verilib structure.
 
+use super::executor::{CommandConfig, ExecutionMode};
+use crate::constants::DEFAULT_DOCKER_IMAGE;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 /// Configuration for structure files stored in .verilib/config.json
-/// This contains only the structure-root field.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StructureConfig {
     #[serde(rename = "structure-root")]
     pub structure_root: String,
+    #[serde(default, rename = "execution-mode")]
+    pub execution_mode: ExecutionMode,
+    #[serde(default = "default_docker_image", rename = "docker-image")]
+    pub docker_image: String,
+}
+
+fn default_docker_image() -> String {
+    DEFAULT_DOCKER_IMAGE.to_string()
 }
 
 /// Computed paths derived from config.
@@ -20,6 +29,7 @@ pub struct ConfigPaths {
     pub structure_json_path: PathBuf,
     pub atoms_path: PathBuf,
     pub certs_specify_dir: PathBuf,
+    pub command_config: CommandConfig,
 }
 
 impl StructureConfig {
@@ -27,11 +37,12 @@ impl StructureConfig {
     pub fn new(root: &str) -> Self {
         Self {
             structure_root: root.to_string(),
+            execution_mode: ExecutionMode::Local,
+            docker_image: default_docker_image(),
         }
     }
 
     /// Save config to .verilib/config.json
-    /// This only writes the structure-root field.
     pub fn save(&self, project_root: &Path) -> Result<PathBuf> {
         let verilib_path = project_root.join(".verilib");
         std::fs::create_dir_all(&verilib_path).context("Failed to create .verilib directory")?;
@@ -39,20 +50,21 @@ impl StructureConfig {
         let config_path = verilib_path.join("config.json");
 
         // If config exists, merge with existing content
-        let content = if config_path.exists() {
-            let existing = std::fs::read_to_string(&config_path)
+        // We read it into a Value to preserve other fields, but we should also respect our own fields.
+        let mut json: serde_json::Value = if config_path.exists() {
+             let existing = std::fs::read_to_string(&config_path)
                 .context("Failed to read existing config.json")?;
-            let mut json: serde_json::Value =
-                serde_json::from_str(&existing).unwrap_or(serde_json::json!({}));
-
-            // Set structure-root
-            json["structure-root"] = serde_json::Value::String(self.structure_root.clone());
-
-            serde_json::to_string_pretty(&json).context("Failed to serialize config")?
+             serde_json::from_str(&existing).unwrap_or(serde_json::json!({}))
         } else {
-            serde_json::to_string_pretty(self).context("Failed to serialize config")?
+             serde_json::json!({})
         };
 
+        // Update fields
+        json["structure-root"] = serde_json::Value::String(self.structure_root.clone());
+        json["execution-mode"] = serde_json::to_value(&self.execution_mode).unwrap_or(serde_json::Value::Null);
+        json["docker-image"] = serde_json::Value::String(self.docker_image.clone());
+
+        let content = serde_json::to_string_pretty(&json).context("Failed to serialize config")?;
         std::fs::write(&config_path, content).context("Failed to write config.json")?;
 
         Ok(config_path)
@@ -103,12 +115,48 @@ impl ConfigPaths {
 
         let structure_root = project_root.join(structure_root_str);
 
+        // Parse Execution Config
+        // 1. Defaults
+        let mut mode = ExecutionMode::Local;
+        let mut docker_image = default_docker_image();
+
+        // 2. Config File
+        if let Some(m) = json.get("execution-mode").and_then(|v| v.as_str()) {
+            if m.eq_ignore_ascii_case("docker") {
+                mode = ExecutionMode::Docker;
+            } else if m.eq_ignore_ascii_case("local") {
+                mode = ExecutionMode::Local;
+            }
+        }
+        if let Some(img) = json.get("docker-image").and_then(|v| v.as_str()) {
+            docker_image = img.to_string();
+        }
+
+        // 3. Environment Variables (Override)
+        if let Ok(env_mode) = std::env::var("VERILIB_EXECUTION_MODE") {
+            if env_mode.eq_ignore_ascii_case("docker") {
+                mode = ExecutionMode::Docker;
+            } else if env_mode.eq_ignore_ascii_case("local") {
+                mode = ExecutionMode::Local;
+            }
+        }
+        if let Ok(env_img) = std::env::var("VERILIB_DOCKER_IMAGE") {
+            docker_image = env_img;
+        }
+
+        let command_config = CommandConfig {
+            execution_mode: mode,
+            docker_image,
+        };
+
         Ok(Self {
             structure_root,
             structure_json_path: verilib_path.join("stubs.json"),
             atoms_path: verilib_path.join("atoms.json"),
             certs_specify_dir: verilib_path.join("certs").join("specs"),
             verilib_path,
+            command_config,
         })
     }
 }
+

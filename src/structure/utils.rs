@@ -1,29 +1,20 @@
 //! General utility functions for verilib structure.
 
-use anyhow::{Context, Result};
+use super::executor::{self, CommandConfig};
+use anyhow::Result;
 use serde_json::Value;
 use std::collections::HashSet;
 use std::io::{self, BufRead, Write};
 use std::path::Path;
-use std::process::Command;
 
 /// Run an external command and return its output.
 pub fn run_command(
     program: &str,
     args: &[&str],
     cwd: Option<&Path>,
+    config: &CommandConfig,
 ) -> Result<std::process::Output> {
-    let mut cmd = Command::new(program);
-    cmd.args(args);
-
-    if let Some(dir) = cwd {
-        cmd.current_dir(dir);
-    }
-
-    let output = cmd
-        .output()
-        .context(format!("Failed to run {}", program))?;
-    Ok(output)
+    executor::run_command(program, args, cwd, config)
 }
 
 /// Display a multiple choice menu and get user selections.

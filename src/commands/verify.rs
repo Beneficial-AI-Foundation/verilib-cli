@@ -4,7 +4,7 @@
 
 use crate::structure::{
     cleanup_intermediate_files, get_display_name, require_probe_installed, run_command,
-    ConfigPaths, VERIFY_INTERMEDIATE_FILES,
+    CommandConfig, ConfigPaths, VERIFY_INTERMEDIATE_FILES,
 };
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
@@ -50,6 +50,7 @@ pub async fn handle_verify(
             &proofs_path,
             &config.atoms_path,
             verify_only_module.as_deref(),
+            &config.command_config,
         )?
     };
 
@@ -223,8 +224,9 @@ fn run_probe_verify(
     proofs_path: &Path,
     atoms_path: &Path,
     verify_only_module: Option<&str>,
+    config: &CommandConfig,
 ) -> Result<HashMap<String, Value>> {
-    require_probe_installed()?;
+    require_probe_installed(config)?;
 
     if let Some(parent) = proofs_path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -232,11 +234,19 @@ fn run_probe_verify(
 
     let mut args = vec![
         "verify",
-        project_root.to_str().unwrap(),
+        ".",
         "-o",
-        proofs_path.to_str().unwrap(),
+        proofs_path
+            .strip_prefix(project_root)
+            .unwrap_or(proofs_path)
+            .to_str()
+            .unwrap(),
         "-a",
-        atoms_path.to_str().unwrap(),
+        atoms_path
+            .strip_prefix(project_root)
+            .unwrap_or(atoms_path)
+            .to_str()
+            .unwrap(),
     ];
 
     if let Some(module) = verify_only_module {
@@ -254,7 +264,7 @@ fn run_probe_verify(
         );
     }
 
-    let output = run_command("probe-verus", &args, Some(project_root))?;
+    let output = run_command("probe-verus", &args, Some(project_root), config)?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);

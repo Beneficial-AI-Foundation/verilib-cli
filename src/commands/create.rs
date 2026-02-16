@@ -2,7 +2,9 @@
 //!
 //! Initialize structure files from source analysis.
 
-use crate::structure::{parse_github_link, run_command, write_frontmatter, StructureConfig};
+use crate::structure::{
+    parse_github_link, run_command, write_frontmatter, CommandConfig, ExecutionMode, StructureConfig,
+};
 use anyhow::{bail, Context, Result};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
@@ -33,7 +35,13 @@ pub async fn handle_create(project_root: PathBuf, root: Option<PathBuf>) -> Resu
     }
 
     let tracked_output_path = verilib_path.join("tracked_functions.csv");
-    run_analyze_verus_specs_proofs(&project_root, &tracked_path, &tracked_output_path)?;
+
+    // This command uses 'uv' which we expect to be local.
+    let local_config = CommandConfig {
+        execution_mode: ExecutionMode::Local,
+        ..Default::default()
+    };
+    run_analyze_verus_specs_proofs(&project_root, &tracked_path, &tracked_output_path, &local_config)?;
 
     let tracked = read_tracked_csv(&tracked_output_path)?;
     let tracked = disambiguate_names(tracked);
@@ -52,6 +60,7 @@ fn run_analyze_verus_specs_proofs(
     project_root: &Path,
     seed_path: &Path,
     output_path: &Path,
+    config: &CommandConfig,
 ) -> Result<()> {
     let script_path = project_root
         .join("scripts")
@@ -83,6 +92,7 @@ fn run_analyze_verus_specs_proofs(
             output_relative.to_str().unwrap(),
         ],
         Some(project_root),
+        config,
     )?;
 
     if !output.status.success() {
