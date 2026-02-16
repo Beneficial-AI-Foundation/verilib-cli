@@ -13,4 +13,5 @@ pub fn init_required_msg() -> String {
 }
 
 // Docker configuration
-pub const DEFAULT_DOCKER_IMAGE: &str = "verilib/probe-verus:1";
+// We link to a specific tag that corresponds to the CLI version for compatibility
+pub const DEFAULT_DOCKER_IMAGE: &str = "ghcr.io/beneficial-ai-foundation/verilib-cli:v0.1.7";
