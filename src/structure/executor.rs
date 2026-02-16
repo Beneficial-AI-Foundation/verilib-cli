@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use crate::constants::DEFAULT_DOCKER_IMAGE;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use std::process::{Command, Output, Stdio};
+use std::process::{Command, Output};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -65,7 +65,7 @@ fn run_local(program: &str, args: &[&str], cwd: Option<&Path>) -> Result<Output>
 }
 
 fn run_docker(
-    _program: &str,
+    program: &str,
     args: &[&str],
     cwd: Option<&Path>,
     image: &str,
@@ -90,6 +90,7 @@ fn run_docker(
     let mut docker_args = vec![
         "run",
         "--rm",
+        "--entrypoint", program,
         "-u", &user_arg,
         "-v",
     ];

@@ -12,7 +12,12 @@ pub const REPO_URL: &str = "https://github.com/Beneficial-AI-Foundation/probe-ve
 /// Check if probe-verus is installed and bail with instructions if not.
 pub fn require_probe_installed(config: &CommandConfig) -> Result<()> {
     if config.execution_mode == ExecutionMode::Docker {
-        // Assume docker handles the tool availability (or image exists check happens later)
+        if which::which("docker").is_err() {
+             eprintln!("Error: Docker is not installed or not in PATH.");
+             eprintln!("Docker is required for execution mode 'docker'.");
+             eprintln!("Please install Docker: https://docs.docker.com/get-docker/");
+             bail!("docker not installed");
+        }
         return Ok(());
     }
 
