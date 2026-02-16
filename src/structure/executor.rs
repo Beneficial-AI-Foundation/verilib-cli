@@ -90,6 +90,7 @@ fn run_docker(
     let mut docker_args = vec![
         "run",
         "--rm",
+        "--platform", "linux/amd64",
         "--entrypoint", program,
         "-u", &user_arg,
         "-v",

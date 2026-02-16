@@ -272,6 +272,7 @@ fn run_probe_verify(
         if !stderr.is_empty() {
             eprintln!("{}", stderr);
         }
+        cleanup_intermediate_files(project_root, VERIFY_INTERMEDIATE_FILES);
         bail!("probe-verus verify failed");
     }
 

@@ -4,7 +4,7 @@
 
 use crate::structure::{
     create_cert, display_menu, get_existing_certs, require_probe_installed, run_command,
-    CommandConfig, ConfigPaths,
+    CommandConfig, ConfigPaths, ATOMIZE_INTERMEDIATE_FILES, cleanup_intermediate_files,
 };
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
@@ -283,6 +283,7 @@ fn run_probe_specify(
         if !stderr.is_empty() {
             eprintln!("{}", stderr);
         }
+        cleanup_intermediate_files(project_root, ATOMIZE_INTERMEDIATE_FILES);
         bail!("probe-verus specify failed");
     }
 

@@ -116,6 +116,7 @@ fn generate_stubs(
         if !stderr.is_empty() {
             eprintln!("{}", stderr);
         }
+        cleanup_intermediate_files(project_root, ATOMIZE_INTERMEDIATE_FILES);
         bail!("probe-verus stubify failed");
     }
 
@@ -179,6 +180,7 @@ fn generate_probe_atoms(project_root: &Path, atoms_path: &Path, config: &Command
         if !stderr.is_empty() {
             eprintln!("{}", stderr);
         }
+        cleanup_intermediate_files(project_root, ATOMIZE_INTERMEDIATE_FILES);
         bail!("probe-verus atomize failed");
     }
 

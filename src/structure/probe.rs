@@ -48,14 +48,10 @@ pub fn cleanup_intermediate_files(project_root: &Path, files: &[&str]) {
         }
     }
 
-    // Remove data directory if empty
+    // Remove data directory
     let data_dir = project_root.join("data");
     if data_dir.exists() && data_dir.is_dir() {
-        if let Ok(mut entries) = std::fs::read_dir(&data_dir) {
-            if entries.next().is_none() {
-                let _ = std::fs::remove_dir(&data_dir);
-            }
-        }
+        let _ = std::fs::remove_dir_all(&data_dir);
     }
 }
 
