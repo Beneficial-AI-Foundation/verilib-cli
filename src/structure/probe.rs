@@ -2,6 +2,7 @@
 //!
 //! Handles interaction with the probe-verus CLI tool.
 
+use crate::structure::{CommandConfig, ExecutionMode};
 use anyhow::{bail, Result};
 use std::path::Path;
 
@@ -9,7 +10,12 @@ use std::path::Path;
 pub const REPO_URL: &str = "https://github.com/Beneficial-AI-Foundation/probe-verus";
 
 /// Check if probe-verus is installed and bail with instructions if not.
-pub fn require_probe_installed() -> Result<()> {
+pub fn require_probe_installed(config: &CommandConfig) -> Result<()> {
+    if config.execution_mode == ExecutionMode::Docker {
+        // Assume docker handles the tool availability (or image exists check happens later)
+        return Ok(());
+    }
+
     if which::which("probe-verus").is_err() {
         eprintln!("Error: probe-verus is not installed.");
         eprintln!(

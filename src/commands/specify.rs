@@ -4,7 +4,7 @@
 
 use crate::structure::{
     create_cert, display_menu, get_existing_certs, require_probe_installed, run_command,
-    ConfigPaths,
+    CommandConfig, ConfigPaths,
 };
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
@@ -36,7 +36,12 @@ pub async fn handle_specify(project_root: PathBuf, no_probe: bool, check_only: b
     let specs_data = if no_probe {
         load_specs_from_file(&specs_path)?
     } else {
-        run_probe_specify(&project_root, &specs_path, &config.atoms_path)?
+        run_probe_specify(
+            &project_root,
+            &specs_path,
+            &config.atoms_path,
+            &config.command_config,
+        )?
     };
 
     // Enrich stubs with spec-text (only for functions where specified=true)
@@ -237,8 +242,9 @@ fn run_probe_specify(
     project_root: &Path,
     specs_path: &Path,
     atoms_path: &Path,
+    config: &CommandConfig,
 ) -> Result<HashMap<String, Value>> {
-    require_probe_installed()?;
+    require_probe_installed(config)?;
 
     if let Some(parent) = specs_path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -253,13 +259,22 @@ fn run_probe_specify(
         "probe-verus",
         &[
             "specify",
-            project_root.to_str().unwrap(),
+            ".",
             "-o",
-            specs_path.to_str().unwrap(),
+            specs_path
+                .strip_prefix(project_root)
+                .unwrap_or(specs_path)
+                .to_str()
+                .unwrap(),
             "-a",
-            atoms_path.to_str().unwrap(),
+            atoms_path
+                .strip_prefix(project_root)
+                .unwrap_or(atoms_path)
+                .to_str()
+                .unwrap(),
         ],
         Some(project_root),
+        config,
     )?;
 
     if !output.status.success() {
