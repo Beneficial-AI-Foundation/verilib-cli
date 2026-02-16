@@ -12,5 +12,5 @@ pub fn init_required_msg() -> String {
     format!("Project not initialized. Please run '{} init <repo_id>' first", CLI_NAME)
 }
 
-// Docker configuration
-pub const DEFAULT_DOCKER_IMAGE: &str = "verilib/probe-verus:1";
+pub const DEFAULT_DOCKER_IMAGE: &str = "ghcr.io/beneficial-ai-foundation/verilib-cli:v0.1.7";
+

@@ -6,6 +6,7 @@ on:
       - 'Dockerfile'
       - '.github/workflows/docker-publish.yml'
     branches: [ "main" ]
+    tags: [ 'docker-v*' ]
   workflow_dispatch:
 
 env:
@@ -45,7 +46,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=ref,event=tag
+            type=ref,event=tag,pattern={{version}}
             type=sha,format=long
 
       - name: Build and push Docker image
