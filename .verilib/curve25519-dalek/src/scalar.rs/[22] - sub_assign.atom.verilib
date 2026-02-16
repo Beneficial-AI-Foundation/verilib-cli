@@ -1,3 +1,0 @@
-    fn sub_assign(&mut self, _rhs: &'a Scalar) {
-        *self = *self - _rhs;
-    }

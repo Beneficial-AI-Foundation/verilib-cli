@@ -1,5 +1,0 @@
-    pub fn from_canonical_bytes(bytes: [u8; 32]) -> CtOption<Scalar> {
-        let high_bit_unset = (bytes[31] >> 7).ct_eq(&0);
-        let candidate = Scalar { bytes };
-        CtOption::new(candidate, high_bit_unset & candidate.is_canonical())
-    }

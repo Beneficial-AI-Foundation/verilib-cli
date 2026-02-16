@@ -1,3 +1,0 @@
-    pub(crate) fn unpack(&self) -> UnpackedScalar {
-        UnpackedScalar::from_bytes(&self.bytes)
-    }

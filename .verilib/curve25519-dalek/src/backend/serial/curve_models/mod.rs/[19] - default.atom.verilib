@@ -1,3 +1,0 @@
-    fn default() -> AffineNielsPoint {
-        AffineNielsPoint::identity()
-    }

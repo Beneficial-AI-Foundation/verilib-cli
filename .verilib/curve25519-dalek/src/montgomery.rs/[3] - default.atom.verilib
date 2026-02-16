@@ -1,3 +1,0 @@
-    fn default() -> ProjectivePoint {
-        ProjectivePoint::identity()
-    }

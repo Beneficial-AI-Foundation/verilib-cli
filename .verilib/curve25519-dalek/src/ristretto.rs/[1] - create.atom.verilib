@@ -1,3 +1,0 @@
-    pub fn create(basepoint: &RistrettoPoint) -> RistrettoBasepointTable {
-        RistrettoBasepointTable(EdwardsBasepointTable::create(&basepoint.0))
-    }

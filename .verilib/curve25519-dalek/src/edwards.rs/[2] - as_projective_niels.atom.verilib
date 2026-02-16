@@ -1,8 +1,0 @@
-    pub(crate) fn as_projective_niels(&self) -> ProjectiveNielsPoint {
-        ProjectiveNielsPoint {
-            Y_plus_X: &self.Y + &self.X,
-            Y_minus_X: &self.Y - &self.X,
-            Z: self.Z,
-            T2d: &self.T * &constants::EDWARDS_D2,
-        }
-    }

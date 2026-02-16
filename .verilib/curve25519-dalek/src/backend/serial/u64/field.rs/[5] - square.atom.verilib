@@ -1,3 +1,0 @@
-    pub fn square(&self) -> FieldElement51 {
-        self.pow2k(1)
-    }

@@ -1,7 +1,0 @@
-    pub fn as_projective(&self) -> ProjectivePoint {
-        ProjectivePoint {
-            X: &self.X * &self.T,
-            Y: &self.Y * &self.Z,
-            Z: &self.Z * &self.T,
-        }
-    }

@@ -1,3 +1,0 @@
-pub open spec fn p() -> nat {
-    (pow2(255) - 19) as nat
-}

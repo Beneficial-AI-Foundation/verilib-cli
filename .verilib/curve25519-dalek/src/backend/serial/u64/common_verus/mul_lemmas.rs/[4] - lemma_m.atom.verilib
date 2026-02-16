@@ -1,9 +1,0 @@
-pub proof fn lemma_m(x: u64, y: u64, bx: u64, by: u64)
-    requires
-        x < bx,
-        y < by
-    ensures
-        (x as u128) * (y as u128) < (bx as u128) * (by as u128)
-{
-    mul_lt(x as nat, bx as nat, y as nat, by as nat);
-}

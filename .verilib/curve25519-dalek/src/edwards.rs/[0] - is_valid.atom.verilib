@@ -1,6 +1,0 @@
-    fn is_valid(&self) -> bool {
-        let point_on_curve = self.as_projective().is_valid();
-        let on_segre_image = (&self.X * &self.Y) == (&self.Z * &self.T);
-
-        point_on_curve && on_segre_image
-    }

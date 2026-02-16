@@ -1,3 +1,0 @@
-pub open spec fn a1_0_val(a: [u64; 5]) -> u64 {
-    (c1_val(a) as u64) & mask51
-}

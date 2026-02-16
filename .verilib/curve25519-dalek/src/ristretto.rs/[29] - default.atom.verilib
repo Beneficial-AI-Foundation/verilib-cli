@@ -1,3 +1,0 @@
-    fn default() -> CompressedRistretto {
-        CompressedRistretto::identity()
-    }

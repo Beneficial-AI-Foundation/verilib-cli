@@ -1,7 +1,0 @@
-    fn identity() -> AffineNielsPoint {
-        AffineNielsPoint {
-            y_plus_x: FieldElement::ONE,
-            y_minus_x: FieldElement::ONE,
-            xy2d: FieldElement::ZERO,
-        }
-    }

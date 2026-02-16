@@ -1,8 +1,0 @@
-    fn conditional_select(a: &EdwardsPoint, b: &EdwardsPoint, choice: Choice) -> EdwardsPoint {
-        EdwardsPoint {
-            X: FieldElement::conditional_select(&a.X, &b.X, choice),
-            Y: FieldElement::conditional_select(&a.Y, &b.Y, choice),
-            Z: FieldElement::conditional_select(&a.Z, &b.Z, choice),
-            T: FieldElement::conditional_select(&a.T, &b.T, choice),
-        }
-    }

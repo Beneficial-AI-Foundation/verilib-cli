@@ -1,9 +1,0 @@
-    pub fn mul_base_clamped(bytes: [u8; 32]) -> Self {
-        // See reasoning in Self::mul_clamped why it is OK to make an unreduced Scalar here. We
-        // note that fixed-base multiplication is also defined for all values of `bytes` less than
-        // 2^255.
-        let s = Scalar {
-            bytes: clamp_integer(bytes),
-        };
-        Self::mul_base(&s)
-    }

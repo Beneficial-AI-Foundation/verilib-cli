@@ -1,3 +1,0 @@
-    fn identity() -> MontgomeryPoint {
-        MontgomeryPoint([0u8; 32])
-    }

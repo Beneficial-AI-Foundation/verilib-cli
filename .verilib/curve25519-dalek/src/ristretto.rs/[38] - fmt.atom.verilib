@@ -1,8 +1,0 @@
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let coset = self.coset4();
-        write!(
-            f,
-            "RistrettoPoint: coset \n{:?}\n{:?}\n{:?}\n{:?}",
-            coset[0], coset[1], coset[2], coset[3]
-        )
-    }

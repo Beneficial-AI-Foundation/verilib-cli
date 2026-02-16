@@ -1,3 +1,0 @@
-pub open spec fn c4_val(a: [u64;5]) -> u128{
-    (c4_0_val(a) + ((c3_val(a) >> 51) as u64) as u128) as u128
-}

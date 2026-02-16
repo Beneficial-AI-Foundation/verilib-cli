@@ -1,4 +1,0 @@
-    pub(crate) fn is_negative(&self) -> Choice {
-        let bytes = self.to_bytes();
-        (bytes[0] & 1).into()
-    }

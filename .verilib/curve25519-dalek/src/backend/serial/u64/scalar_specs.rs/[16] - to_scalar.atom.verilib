@@ -1,3 +1,0 @@
-spec fn to_scalar(limbs: &[u64; 5]) -> nat {
-    to_nat(limbs) % group_order()
-}

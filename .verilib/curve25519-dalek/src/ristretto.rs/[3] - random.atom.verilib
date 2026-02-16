@@ -1,5 +1,0 @@
-    pub fn random<R: CryptoRng + ?Sized>(rng: &mut R) -> Self {
-        Self::try_from_rng(rng)
-            .map_err(|_: Infallible| {})
-            .expect("[bug] unfallible rng failed")
-    }

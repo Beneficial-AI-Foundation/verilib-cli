@@ -1,3 +1,0 @@
-    fn neg(self) -> RistrettoPoint {
-        RistrettoPoint(-&self.0)
-    }

@@ -1,7 +1,0 @@
-pub proof fn pow255_gt_19()
-    ensures
-        pow2(255) > 19
-{
-    lemma2_to64(); // 2^5
-    lemma_pow2_strictly_increases(5, 255);
-}

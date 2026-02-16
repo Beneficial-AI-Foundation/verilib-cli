@@ -1,3 +1,0 @@
-    fn sub(self, other: &'a EdwardsPoint) -> EdwardsPoint {
-        (self - &other.as_projective_niels()).as_extended()
-    }

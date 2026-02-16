@@ -1,3 +1,0 @@
-    pub fn mul_by_cofactor(&self) -> EdwardsPoint {
-        self.mul_by_pow_2(3)
-    }

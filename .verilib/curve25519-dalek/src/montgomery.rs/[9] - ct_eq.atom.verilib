@@ -1,6 +1,0 @@
-    fn ct_eq(&self, other: &MontgomeryPoint) -> Choice {
-        let self_fe = FieldElement::from_bytes(&self.0);
-        let other_fe = FieldElement::from_bytes(&other.0);
-
-        self_fe.ct_eq(&other_fe)
-    }

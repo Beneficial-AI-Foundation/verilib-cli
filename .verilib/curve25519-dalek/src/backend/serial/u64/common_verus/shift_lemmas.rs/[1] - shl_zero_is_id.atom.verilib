@@ -1,7 +1,0 @@
-pub broadcast proof fn shl_zero_is_id(v: u64)
-    ensures
-        #![trigger v << 0]
-        v << 0 == v
-{
-    assert(v << 0 == v) by (bit_vector);
-}

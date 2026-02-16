@@ -1,7 +1,0 @@
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(
-            f,
-            "AffineNielsPoint{{\n\ty_plus_x: {:?},\n\ty_minus_x: {:?},\n\txy2d: {:?}\n}}",
-            &self.y_plus_x, &self.y_minus_x, &self.xy2d
-        )
-    }

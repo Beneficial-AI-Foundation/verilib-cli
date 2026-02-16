@@ -1,3 +1,0 @@
-    fn add_assign(&mut self, _rhs: &'a EdwardsPoint) {
-        *self = (self as &EdwardsPoint) + _rhs;
-    }

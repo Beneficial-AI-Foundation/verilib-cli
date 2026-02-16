@@ -1,9 +1,0 @@
-pub open spec fn bytes_wide_to_nat_rec(bytes: &[u8; 64], index: int) -> nat
-decreases 64 - index
-{
-    if index >= 64 {
-        0
-    } else {
-        (bytes[index] as nat) * pow2((index * 8) as nat) + bytes_wide_to_nat_rec(bytes, index + 1)
-    }
-}

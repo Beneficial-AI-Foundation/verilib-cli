@@ -1,6 +1,0 @@
-    pub(crate) fn to_affine(self) -> AffinePoint {
-        let recip = self.Z.invert();
-        let x = &self.X * &recip;
-        let y = &self.Y * &recip;
-        AffinePoint { x, y }
-    }

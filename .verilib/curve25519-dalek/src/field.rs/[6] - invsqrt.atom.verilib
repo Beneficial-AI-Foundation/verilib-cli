@@ -1,3 +1,0 @@
-    pub(crate) fn invsqrt(&self) -> (Choice, FieldElement) {
-        FieldElement::sqrt_ratio_i(&FieldElement::ONE, self)
-    }

@@ -1,5 +1,0 @@
-    fn neg(self) -> FieldElement51 {
-        let mut output = *self;
-        output.negate();
-        output
-    }

@@ -1,3 +1,0 @@
-fn is_capable_simd(arch: &str, bits: DalekBits) -> bool {
-    arch == "x86_64" && bits == DalekBits::Dalek64
-}

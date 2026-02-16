@@ -1,4 +1,0 @@
-    fn mul_assign(&mut self, scalar: &'a Scalar) {
-        let result = (self as &RistrettoPoint) * scalar;
-        *self = result;
-    }

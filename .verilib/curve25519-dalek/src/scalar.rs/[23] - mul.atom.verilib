@@ -1,3 +1,0 @@
-    fn mul(self, _rhs: &'a Scalar) -> Scalar {
-        UnpackedScalar::mul(&self.unpack(), &_rhs.unpack()).pack()
-    }

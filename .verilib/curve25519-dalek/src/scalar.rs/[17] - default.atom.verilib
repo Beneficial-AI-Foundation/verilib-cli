@@ -1,3 +1,0 @@
-    fn default() -> Scalar {
-        Scalar::ZERO
-    }

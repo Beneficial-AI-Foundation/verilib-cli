@@ -1,3 +1,0 @@
-pub open spec fn c0_val(a: [u64; 5]) -> u128 {
-    c0_0_val(a)
-}

@@ -1,6 +1,0 @@
-pub proof fn lemma_two_factoring_51(k : nat, ai: u64)
-    ensures
-        pow2(k + 51) * ai == pow2(k) * (pow2(51) * ai)
-{
-    lemma_two_factoring(k, 51, ai);
-}

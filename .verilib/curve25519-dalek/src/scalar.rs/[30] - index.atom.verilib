@@ -1,3 +1,0 @@
-    fn index(&self, _index: usize) -> &u8 {
-        &(self.bytes[_index])
-    }

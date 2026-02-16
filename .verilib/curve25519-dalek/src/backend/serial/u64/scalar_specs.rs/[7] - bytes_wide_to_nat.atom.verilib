@@ -1,4 +1,0 @@
-pub open spec fn bytes_wide_to_nat(bytes: &[u8; 64]) -> nat {
-    // Convert bytes to nat in little-endian order using recursive helper
-    bytes_wide_to_nat_rec(bytes, 0)
-}

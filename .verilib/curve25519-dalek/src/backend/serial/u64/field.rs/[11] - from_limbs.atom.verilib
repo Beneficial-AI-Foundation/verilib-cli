@@ -1,3 +1,0 @@
-    pub(crate) const fn from_limbs(limbs: [u64; 5]) -> FieldElement51 {
-        FieldElement51(limbs)
-    }

@@ -1,7 +1,0 @@
-pub proof fn lemma_two_factoring(a : nat, b: nat, v: u64)
-    ensures
-        pow2(a + b) * v == pow2(a) * (pow2(b) * v)
-{
-    lemma_pow2_adds(a, b);
-    lemma_mul_is_associative(pow2(a) as int, pow2(b) as int, v as int);
-}

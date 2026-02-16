@@ -1,3 +1,0 @@
-    pub fn invert(&self) -> Scalar {
-        self.unpack().invert().pack()
-    }

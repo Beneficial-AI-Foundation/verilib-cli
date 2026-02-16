@@ -1,3 +1,0 @@
-    fn eq(&self, other: &EdwardsPoint) -> bool {
-        self.ct_eq(other).into()
-    }

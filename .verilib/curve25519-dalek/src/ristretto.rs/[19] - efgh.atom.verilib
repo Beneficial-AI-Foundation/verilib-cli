@@ -1,3 +1,0 @@
-            fn efgh(&self) -> FieldElement {
-                &self.eg * &self.fh
-            }

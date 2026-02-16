@@ -1,5 +1,0 @@
-    pub fn compress(self) -> CompressedEdwardsY {
-        let mut s = self.y.to_bytes();
-        s[31] ^= self.x.is_negative().unwrap_u8() << 7;
-        CompressedEdwardsY(s)
-    }

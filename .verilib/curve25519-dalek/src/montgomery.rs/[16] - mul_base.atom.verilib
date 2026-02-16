@@ -1,3 +1,0 @@
-    pub fn mul_base(scalar: &Scalar) -> Self {
-        EdwardsPoint::mul_base(scalar).to_montgomery()
-    }

@@ -1,6 +1,0 @@
-    fn identity() -> ProjectivePoint {
-        ProjectivePoint {
-            U: FieldElement::ONE,
-            W: FieldElement::ZERO,
-        }
-    }

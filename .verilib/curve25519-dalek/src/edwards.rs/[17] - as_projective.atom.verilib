@@ -1,7 +1,0 @@
-    pub(crate) const fn as_projective(&self) -> ProjectivePoint {
-        ProjectivePoint {
-            X: self.X,
-            Y: self.Y,
-            Z: self.Z,
-        }
-    }

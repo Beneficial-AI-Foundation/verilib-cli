@@ -1,3 +1,0 @@
-    fn ct_eq(&self, other: &Self) -> Choice {
-        self.bytes.ct_eq(&other.bytes)
-    }

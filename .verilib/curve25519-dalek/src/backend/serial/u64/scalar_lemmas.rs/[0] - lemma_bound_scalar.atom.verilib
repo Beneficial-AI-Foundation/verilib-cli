@@ -1,6 +1,0 @@
-pub proof fn lemma_bound_scalar(a: &Scalar52)
-    requires limbs_bounded(a)
-    ensures to_nat(&a.limbs) < pow2((52 * (5) as nat))
-{
-    lemma_general_bound(a.limbs@);
-}

@@ -1,8 +1,0 @@
-pub proof fn lemma_borrow_and_mask_bounded(borrow: u64, mask: u64)
-    requires
-        mask == (1u64 << 52) - 1,
-    ensures
-        (borrow & mask) < (1u64 << 52),
-{
-    assert((borrow & mask) <= mask) by (bit_vector);
-}

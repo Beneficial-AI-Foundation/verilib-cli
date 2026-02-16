@@ -1,7 +1,0 @@
-    fn new<I>(static_points: I) -> Self
-    where
-        I: IntoIterator,
-        I::Item: Borrow<Self::Point>,
-    {
-        Self(crate::backend::VartimePrecomputedStraus::new(static_points))
-    }

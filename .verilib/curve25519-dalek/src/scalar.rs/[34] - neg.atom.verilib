@@ -1,3 +1,0 @@
-    fn neg(self) -> Scalar {
-        -&self
-    }
