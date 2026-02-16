@@ -1,0 +1,23 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/scalar.rs/is_canonical"
+  ],
+  "disabled": false,
+  "fingerprint": "72fd2f0775761c75c9eea8a9afdd65eccf208a95b9a445aac70a4adc711ee482",
+  "id": 460046,
+  "identifier": "from_canonical_bytes",
+  "index": 26,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/from_canonical_bytes",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn from_canonical_bytes(bytes: [u8; 32]) -> CtOption<Scalar> {\n        let high_bit_unset = (bytes[31] >> 7).ct_eq(&0);\n        let candidate = Scalar { bytes };\n        CtOption::new(candidate, high_bit_unset & candidate.is_canonical())\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

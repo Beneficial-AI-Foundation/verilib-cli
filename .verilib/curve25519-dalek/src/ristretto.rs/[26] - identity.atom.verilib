@@ -1,0 +1,3 @@
+    fn identity() -> CompressedRistretto {
+        CompressedRistretto([0u8; 32])
+    }

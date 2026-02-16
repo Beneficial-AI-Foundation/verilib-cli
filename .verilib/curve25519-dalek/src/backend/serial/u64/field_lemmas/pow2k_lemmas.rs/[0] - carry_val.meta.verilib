@@ -1,0 +1,23 @@
+{
+  "code_name": "field_core.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/c4_val"
+  ],
+  "disabled": false,
+  "fingerprint": "61745761e69e6e37187d32062714ce1bd19b1d4529b0c33609ad6acd76727903",
+  "id": 460239,
+  "identifier": "carry_val",
+  "index": 0,
+  "parent_id": 460238,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/carry_val",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn carry_val(a: [u64; 5]) -> u64 {\n    (c4_val(a) >> 51) as u64\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

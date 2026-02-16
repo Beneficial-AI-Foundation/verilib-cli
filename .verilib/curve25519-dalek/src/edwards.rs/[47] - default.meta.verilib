@@ -1,0 +1,23 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/edwards.rs/identity"
+  ],
+  "disabled": false,
+  "fingerprint": "5bbb4f948907f2adb39fc61c8c0d641da2267856d9c722abce32b345ed1ae48d",
+  "id": 460422,
+  "identifier": "default",
+  "index": 47,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/default",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn default() -> EdwardsPoint {\n        EdwardsPoint::identity()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

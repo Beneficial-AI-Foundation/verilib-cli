@@ -1,0 +1,4 @@
+    pub fn as_affine(&self) -> MontgomeryPoint {
+        let u = &self.U * &self.W.invert();
+        MontgomeryPoint(u.to_bytes())
+    }

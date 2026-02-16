@@ -1,0 +1,24 @@
+{
+  "code_name": "CHANGELOG.md",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/get_selected_backend",
+    "/curve25519-dalek/src/backend/serial/scalar_mul/straus.rs/multiscalar_mul"
+  ],
+  "disabled": false,
+  "fingerprint": "26771ec60a7fa09b76bf6a5e9ccd086c7715f040ad9f7a4b28f544490a4400c8",
+  "id": 460100,
+  "identifier": "straus_multiscalar_mul",
+  "index": 17,
+  "parent_id": 460082,
+  "path": "/curve25519-dalek/src/backend/mod.rs/straus_multiscalar_mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub fn straus_multiscalar_mul<I, J>(scalars: I, points: J) -> EdwardsPoint\nwhere\n    I: IntoIterator,\n    I::Item: core::borrow::Borrow<Scalar>,\n    J: IntoIterator,\n    J::Item: core::borrow::Borrow<EdwardsPoint>,\n{\n    use crate::traits::MultiscalarMul;\n\n    match get_selected_backend() {\n        // #[cfg(curve25519_dalek_backend = \"simd\")]\n        // BackendKind::Avx2 => {\n        //     vector::scalar_mul::straus::spec_avx2::Straus::multiscalar_mul::<I, J>(scalars, points)\n        // }\n        // #[cfg(all(curve25519_dalek_backend = \"unstable_avx512\", nightly))]\n        // BackendKind::Avx512 => {\n        //     vector::scalar_mul::straus::spec_avx512ifma_avx512vl::Straus::multiscalar_mul::<I, J>(\n        //         scalars, points,\n        //     )\n        // }\n        BackendKind::Serial => {\n            serial::scalar_mul::straus::Straus::multiscalar_mul::<I, J>(scalars, points)\n        }\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

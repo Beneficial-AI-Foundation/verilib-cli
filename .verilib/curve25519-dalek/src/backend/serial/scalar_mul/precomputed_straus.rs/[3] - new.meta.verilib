@@ -1,0 +1,23 @@
+{
+  "code_name": "CLAUDE.md",
+  "dependencies": [
+    "/curve25519-dalek/src/window.rs/from"
+  ],
+  "disabled": false,
+  "fingerprint": "96f6c2728fd798a85fbb26b5063a42dc9223387256905335baef0032909e7915",
+  "id": 460339,
+  "identifier": "new",
+  "index": 3,
+  "parent_id": 460335,
+  "path": "/curve25519-dalek/src/backend/serial/scalar_mul/precomputed_straus.rs/new",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn new<I>(static_points: I) -> Self\n    where\n        I: IntoIterator,\n        I::Item: Borrow<Self::Point>,\n    {\n        Self {\n            static_lookup_tables: static_points\n                .into_iter()\n                .map(|P| NafLookupTable8::<AffineNielsPoint>::from(P.borrow()))\n                .collect(),\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

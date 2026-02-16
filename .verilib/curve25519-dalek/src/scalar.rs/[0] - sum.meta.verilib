@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "c36aa3ee27499e389c184d57d4335f55b9aa7e9d281b2c32f9650d81f6e63842",
+  "id": 460020,
+  "identifier": "sum",
+  "index": 0,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/sum",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn sum<I>(iter: I) -> Self\n    where\n        I: Iterator<Item = T>,\n    {\n        iter.fold(Scalar::ZERO, |acc, item| acc + item.borrow())\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,26 @@
+{
+  "code_name": "field.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/from_bytes",
+    "/curve25519-dalek/src/edwards.rs/decompress",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/to_bytes",
+    "/curve25519-dalek/src/field.rs/invert"
+  ],
+  "disabled": false,
+  "fingerprint": "b3c41f3cac26b402d53a99afbe636c998b354e055956809c97ebd353e9105cf5",
+  "id": 460000,
+  "identifier": "to_edwards",
+  "index": 1,
+  "parent_id": 459998,
+  "path": "/curve25519-dalek/src/montgomery.rs/to_edwards",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn to_edwards(&self, sign: u8) -> Option<EdwardsPoint> {\n        // To decompress the Montgomery u coordinate to an\n        // `EdwardsPoint`, we apply the birational map to obtain the\n        // Edwards y coordinate, then do Edwards decompression.\n        //\n        // The birational map is y = (u-1)/(u+1).\n        //\n        // The exceptional points are the zeros of the denominator,\n        // i.e., u = -1.\n        //\n        // But when u = -1, v^2 = u*(u^2+486662*u+1) = 486660.\n        //\n        // Since this is nonsquare mod p, u = -1 corresponds to a point\n        // on the twist, not the curve, so we can reject it early.\n\n        let u = FieldElement::from_bytes(&self.0);\n\n        if u == FieldElement::MINUS_ONE {\n            return None;\n        }\n\n        let one = FieldElement::ONE;\n\n        let y = &(&u - &one) * &(&u + &one).invert();\n\n        let mut y_bytes = y.to_bytes();\n        y_bytes[31] ^= sign << 7;\n\n        CompressedEdwardsY(y_bytes).decompress()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

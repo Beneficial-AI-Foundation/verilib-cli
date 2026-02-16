@@ -1,0 +1,11 @@
+fn m(x: u64, y: u64) -> (r: u128)
+    ensures
+        (r as nat) == (x as nat) * (y as nat),
+        r <= u128::MAX
+
+{
+    proof {
+        mul_le(x as nat, u64::MAX as nat, y as nat, u64::MAX as nat);
+    }
+    (x as u128) * (y as u128)
+}

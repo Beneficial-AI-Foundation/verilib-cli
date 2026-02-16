@@ -1,0 +1,24 @@
+{
+  "code_name": "CHANGELOG.md",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/scalar_mul/vartime_double_base.rs/mul",
+    "/curve25519-dalek/src/backend/get_selected_backend"
+  ],
+  "disabled": false,
+  "fingerprint": "eb07c4cba1255f07cf2f7f0a3ec5e27012e1eacde78b7025dc48138b0dec22aa",
+  "id": 460085,
+  "identifier": "vartime_double_base_mul",
+  "index": 2,
+  "parent_id": 460082,
+  "path": "/curve25519-dalek/src/backend/mod.rs/vartime_double_base_mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub fn vartime_double_base_mul(a: &Scalar, A: &EdwardsPoint, b: &Scalar) -> EdwardsPoint {\n    match get_selected_backend() {\n        // #[cfg(curve25519_dalek_backend = \"simd\")]\n        // BackendKind::Avx2 => vector::scalar_mul::vartime_double_base::spec_avx2::mul(a, A, b),\n        // #[cfg(all(curve25519_dalek_backend = \"unstable_avx512\", nightly))]\n        // BackendKind::Avx512 => {\n        //     vector::scalar_mul::vartime_double_base::spec_avx512ifma_avx512vl::mul(a, A, b)\n        // }\n        BackendKind::Serial => serial::scalar_mul::vartime_double_base::mul(a, A, b),\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

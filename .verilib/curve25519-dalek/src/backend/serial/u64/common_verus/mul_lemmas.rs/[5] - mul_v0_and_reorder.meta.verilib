@@ -1,0 +1,23 @@
+{
+  "code_name": "bit_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/common_verus/mul_lemmas.rs/mul_5_terms"
+  ],
+  "disabled": false,
+  "fingerprint": "b8b9470411cc13dd20cb11a4e421e24bc6b44e1e8e0e0da3fe3cf5fea0869e7b",
+  "id": 460148,
+  "identifier": "mul_v0_and_reorder",
+  "index": 5,
+  "parent_id": 460142,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/mul_lemmas.rs/mul_v0_and_reorder",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn mul_v0_and_reorder(\n    v0: int,\n    s1: int, v1: int,\n    s2: int, v2: int,\n    s3: int, v3: int,\n    s4: int, v4: int\n)\n    ensures\n        v0 * (v0 + s1 * v1 + s2 * v2 + s3 * v3 + s4 * v4) ==\n        s4 * (v0 * v4) +\n        s3 * (v0 * v3) +\n        s2 * (v0 * v2) +\n        s1 * (v0 * v1) +\n             (v0 * v0)\n{\n    mul_5_terms(\n        v0,\n        v0,\n        s1 * v1,\n        s2 * v2,\n        s3 * v3,\n        s4 * v4\n    );\n\n    lemma_mul_is_associative(v0, v1, s1);\n    lemma_mul_is_associative(v0, v2, s2);\n    lemma_mul_is_associative(v0, v3, s3);\n    lemma_mul_is_associative(v0, v4, s4);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

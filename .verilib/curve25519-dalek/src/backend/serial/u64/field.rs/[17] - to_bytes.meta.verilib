@@ -1,0 +1,23 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/reduce"
+  ],
+  "disabled": false,
+  "fingerprint": "0f8d8f4cf5b4143bd6a2f2942871f442230a2f4c6fd8f6c705093dcc7e1d6201",
+  "id": 460283,
+  "identifier": "to_bytes",
+  "index": 17,
+  "parent_id": 460265,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field.rs/to_bytes",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn to_bytes(self) -> [u8; 32] {\n        // Let h = limbs[0] + limbs[1]*2^51 + ... + limbs[4]*2^204.\n        //\n        // Write h = pq + r with 0 <= r < p.\n        //\n        // We want to compute r = h mod p.\n        //\n        // If h < 2*p = 2^256 - 38,\n        // then q = 0 or 1,\n        //\n        // with q = 0 when h < p\n        //  and q = 1 when h >= p.\n        //\n        // Notice that h >= p <==> h + 19 >= p + 19 <==> h + 19 >= 2^255.\n        // Therefore q can be computed as the carry bit of h + 19.\n\n        // First, reduce the limbs to ensure h < 2*p.\n        let mut limbs = FieldElement51::reduce(self.0).0;\n\n        let mut q = (limbs[0] + 19) >> 51;\n        q = (limbs[1] + q) >> 51;\n        q = (limbs[2] + q) >> 51;\n        q = (limbs[3] + q) >> 51;\n        q = (limbs[4] + q) >> 51;\n\n        // Now we can compute r as r = h - pq = r - (2^255-19)q = r + 19q - 2^255q\n\n        limbs[0] += 19 * q;\n\n        // Now carry the result to compute r + 19q ...\n        let low_51_bit_mask = (1u64 << 51) - 1;\n        limbs[1] += limbs[0] >> 51;\n        limbs[0] &= low_51_bit_mask;\n        limbs[2] += limbs[1] >> 51;\n        limbs[1] &= low_51_bit_mask;\n        limbs[3] += limbs[2] >> 51;\n        limbs[2] &= low_51_bit_mask;\n        limbs[4] += limbs[3] >> 51;\n        limbs[3] &= low_51_bit_mask;\n        // ... but instead of carrying (limbs[4] >> 51) = 2^255q\n        // into another limb, discard it, subtracting the value\n        limbs[4] &= low_51_bit_mask;\n\n        // Now arrange the bits of the limbs.\n        let mut s = [0u8;32];\n        s[ 0] =   limbs[0]                           as u8;\n        s[ 1] =  (limbs[0] >>  8)                    as u8;\n        s[ 2] =  (limbs[0] >> 16)                    as u8;\n        s[ 3] =  (limbs[0] >> 24)                    as u8;\n        s[ 4] =  (limbs[0] >> 32)                    as u8;\n        s[ 5] =  (limbs[0] >> 40)                    as u8;\n        s[ 6] = ((limbs[0] >> 48) | (limbs[1] << 3)) as u8;\n        s[ 7] =  (limbs[1] >>  5)                    as u8;\n        s[ 8] =  (limbs[1] >> 13)                    as u8;\n        s[ 9] =  (limbs[1] >> 21)                    as u8;\n        s[10] =  (limbs[1] >> 29)                    as u8;\n        s[11] =  (limbs[1] >> 37)                    as u8;\n        s[12] = ((limbs[1] >> 45) | (limbs[2] << 6)) as u8;\n        s[13] =  (limbs[2] >>  2)                    as u8;\n        s[14] =  (limbs[2] >> 10)                    as u8;\n        s[15] =  (limbs[2] >> 18)                    as u8;\n        s[16] =  (limbs[2] >> 26)                    as u8;\n        s[17] =  (limbs[2] >> 34)                    as u8;\n        s[18] =  (limbs[2] >> 42)                    as u8;\n        s[19] = ((limbs[2] >> 50) | (limbs[3] << 1)) as u8;\n        s[20] =  (limbs[3] >>  7)                    as u8;\n        s[21] =  (limbs[3] >> 15)                    as u8;\n        s[22] =  (limbs[3] >> 23)                    as u8;\n        s[23] =  (limbs[3] >> 31)                    as u8;\n        s[24] =  (limbs[3] >> 39)                    as u8;\n        s[25] = ((limbs[3] >> 47) | (limbs[4] << 4)) as u8;\n        s[26] =  (limbs[4] >>  4)                    as u8;\n        s[27] =  (limbs[4] >> 12)                    as u8;\n        s[28] =  (limbs[4] >> 20)                    as u8;\n        s[29] =  (limbs[4] >> 28)                    as u8;\n        s[30] =  (limbs[4] >> 36)                    as u8;\n        s[31] =  (limbs[4] >> 44)                    as u8;\n\n        // High bit should be zero.\n        debug_assert!((s[31] & 0b1000_0000u8) == 0u8);\n\n        s\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

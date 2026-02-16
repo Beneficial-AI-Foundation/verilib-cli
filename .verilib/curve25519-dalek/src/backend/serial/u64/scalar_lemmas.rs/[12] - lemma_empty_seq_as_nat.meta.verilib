@@ -1,0 +1,23 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/seq_u64_to_nat"
+  ],
+  "disabled": false,
+  "fingerprint": "ba07c043ac6cd07d7a739d61b818c803fe3d98608849a9d5806a9c9e13736c08",
+  "id": 460313,
+  "identifier": "lemma_empty_seq_as_nat",
+  "index": 12,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_empty_seq_as_nat",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_empty_seq_as_nat(a: Seq<u64>)\n    ensures seq_u64_to_nat(a.subrange(0, 0)) == 0\n{\n    assert(seq_u64_to_nat(a.subrange(0, 0)) == 0);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

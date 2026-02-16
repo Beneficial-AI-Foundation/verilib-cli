@@ -1,0 +1,21 @@
+{
+  "specified": false,
+  "disabled": false,
+  "status_id": 2,
+  "code_name": "diagnostics.rs",
+  "dependencies": [],
+  "fingerprint": "d7450a558fad4e83f4028b6706417b181140d28ec221d59a251308079567b7a6",
+  "id": 460066,
+  "identifier": "fmt",
+  "index": 4,
+  "parent_id": 460061,
+  "path": "/curve25519-dalek/src/window.rs/fmt",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {\n        writeln!(f, \"NafLookupTable8([\")?;\n        for i in 0..64 {\n            writeln!(f, \"\\t{:?},\", &self.0[i])?;\n        }\n        write!(f, \"])\")\n    }",
+      "type_id": 2
+    }
+  ],
+  "statement_type": "function"
+}

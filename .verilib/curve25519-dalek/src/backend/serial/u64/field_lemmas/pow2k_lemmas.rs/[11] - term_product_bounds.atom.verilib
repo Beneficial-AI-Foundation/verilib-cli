@@ -1,0 +1,60 @@
+pub proof fn term_product_bounds(a: [u64; 5], bound: u64)
+    requires
+        19 * bound <= u64::MAX,
+        forall |i: int| 0 <= i < 5 ==> a[i] < bound
+    ensures
+        // c0
+        (a[0] as u128) * (a[0] as u128) < bound * bound,
+        (a[1] as u128) * ((19 * a[4]) as u128) < 19 * (bound * bound),
+        (a[2] as u128) * ((19 * a[3]) as u128) < 19 * (bound * bound),
+        // c1
+        (a[3] as u128) * ((19 * a[3]) as u128) < 19 * (bound * bound),
+        (a[0] as u128) * (a[1] as u128) < (bound * bound),
+        (a[2] as u128) * ((19 * a[4]) as u128) < 19 * (bound * bound),
+        // c2
+        (a[1] as u128) * (a[1] as u128) < (bound * bound),
+        (a[0] as u128) * (a[2] as u128) < (bound * bound),
+        (a[4] as u128) * ((19 * a[3]) as u128) < 19 * (bound * bound),
+        // c3
+        (a[4] as u128) * ((19 * a[4]) as u128) < 19 * (bound * bound),
+        (a[0] as u128) * (a[3] as u128) < (bound * bound),
+        (a[1] as u128) * (a[2] as u128) < (bound * bound),
+        // c4
+        (a[2] as u128) * (a[2] as u128) < (bound * bound),
+        (a[0] as u128) * (a[4] as u128) < (bound * bound),
+        (a[1] as u128) * (a[3] as u128) < (bound * bound)
+{
+    let bound19 = (19 * bound) as u64;
+
+    let a3_19 = (19 * a[3]) as u64;
+    let a4_19 = (19 * a[4]) as u64;
+
+    assert(bound * (19 * bound) == 19 * (bound * bound)) by {
+        lemma_mul_is_associative(19, bound as int, bound as int);
+    }
+
+    // c0
+    lemma_m(a[0], a[0], bound, bound);
+    lemma_m(a[1], a4_19, bound, bound19);
+    lemma_m(a[2], a3_19, bound, bound19);
+
+    // c1
+    lemma_m(a[3], a3_19, bound, bound19);
+    lemma_m(a[0],  a[1], bound, bound);
+    lemma_m(a[2], a4_19, bound, bound19);
+
+    // c2
+    lemma_m(a[1],  a[1], bound, bound);
+    lemma_m(a[0],  a[2], bound, bound);
+    lemma_m(a[4], a3_19, bound, bound19);
+
+    // c3
+    lemma_m(a[4], a4_19, bound, bound19);
+    lemma_m(a[0],  a[3], bound, bound);
+    lemma_m(a[1],  a[2], bound, bound);
+
+    // c4
+    lemma_m(a[2],  a[2], bound, bound);
+    lemma_m(a[0],  a[4], bound, bound);
+    lemma_m(a[1],  a[3], bound, bound);
+}

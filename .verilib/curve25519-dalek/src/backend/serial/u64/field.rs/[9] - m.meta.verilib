@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "24ffe9a282e799fa0493cc4a5c5b55418179770c8ce6168328b6b64dc036b1d0",
+  "id": 460275,
+  "identifier": "m",
+  "index": 9,
+  "parent_id": 460265,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field.rs/m",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "        fn m(x: u64, y: u64) -> u128 { (x as u128) * (y as u128) }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

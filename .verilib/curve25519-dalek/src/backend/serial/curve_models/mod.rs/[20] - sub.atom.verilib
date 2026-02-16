@@ -1,0 +1,16 @@
+    fn sub(self, other: &'a ProjectiveNielsPoint) -> CompletedPoint {
+        let Y_plus_X = &self.Y + &self.X;
+        let Y_minus_X = &self.Y - &self.X;
+        let PM = &Y_plus_X * &other.Y_minus_X;
+        let MP = &Y_minus_X * &other.Y_plus_X;
+        let TT2d = &self.T * &other.T2d;
+        let ZZ = &self.Z * &other.Z;
+        let ZZ2 = &ZZ + &ZZ;
+
+        CompletedPoint {
+            X: &PM - &MP,
+            Y: &PM + &MP,
+            Z: &ZZ2 - &TT2d,
+            T: &ZZ2 + &TT2d,
+        }
+    }

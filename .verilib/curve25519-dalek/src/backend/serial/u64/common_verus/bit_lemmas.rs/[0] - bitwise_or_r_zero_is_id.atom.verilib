@@ -1,0 +1,6 @@
+pub proof fn bitwise_or_r_zero_is_id(a: u64)
+    ensures
+        a | 0 == a
+{
+    assert( a | 0 == a) by (bit_vector);
+}

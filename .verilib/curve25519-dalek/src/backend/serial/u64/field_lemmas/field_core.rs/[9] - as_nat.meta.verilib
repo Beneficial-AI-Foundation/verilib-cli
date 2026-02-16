@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "16889c3b55749754251eadafa8d160a50a62df2d66f6a9106b5aa907f98186cb",
+  "id": 460237,
+  "identifier": "as_nat",
+  "index": 9,
+  "parent_id": 460227,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/field_core.rs/as_nat",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn as_nat(limbs: [u64; 5]) -> nat {\n    (limbs[0] as nat) +\n    pow2(51) * (limbs[1] as nat) +\n    pow2(102) * (limbs[2] as nat) +\n    pow2(153) * (limbs[3] as nat) +\n    pow2(204) * (limbs[4] as nat)\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

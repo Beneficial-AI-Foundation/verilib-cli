@@ -1,0 +1,21 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "1a9fabf715de856f5463c29b149ba2b2d79a20be9ceaa9b5305f6ec425b16fb7",
+  "id": 460497,
+  "identifier": "is_capable_simd",
+  "index": 12,
+  "parent_id": 459997,
+  "path": "/curve25519-dalek/src/is_capable_simd",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "fn is_capable_simd(arch: &str, bits: DalekBits) -> bool {\n    arch == \"x86_64\" && bits == DalekBits::Dalek64\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

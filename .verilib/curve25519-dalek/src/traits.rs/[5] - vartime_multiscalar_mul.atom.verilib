@@ -1,0 +1,14 @@
+    fn vartime_multiscalar_mul<I>(&self, static_scalars: I) -> Self::Point
+    where
+        I: IntoIterator,
+        I::Item: Borrow<Scalar>,
+    {
+        use core::iter;
+
+        Self::vartime_mixed_multiscalar_mul(
+            self,
+            static_scalars,
+            iter::empty::<Scalar>(),
+            iter::empty::<Self::Point>(),
+        )
+    }

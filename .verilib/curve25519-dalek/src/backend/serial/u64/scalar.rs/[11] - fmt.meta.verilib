@@ -1,0 +1,21 @@
+{
+  "code_name": "mask_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "eb1b1caf983470846d68b2e1cedf81f3afa9815220c051c6b5b9f3681d37533a",
+  "id": 460164,
+  "identifier": "fmt",
+  "index": 11,
+  "parent_id": 460152,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar.rs/fmt",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {\n        write!(f, \"Scalar52: {:?}\", self.limbs)\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

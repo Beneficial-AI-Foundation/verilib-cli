@@ -1,0 +1,24 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_lemma1",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_lemma2"
+  ],
+  "disabled": false,
+  "fingerprint": "e3001e16485fc145aa933894243ef9f5d57ec3ea692913ab3e9b6ecb32b3020d",
+  "id": 460217,
+  "identifier": "load8_lemma",
+  "index": 9,
+  "parent_id": 460207,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_lemma",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn load8_lemma(a: nat, b: u8, j: nat, k: nat)\n    requires\n        a < pow2(j),\n        j + 8 <= 64,\n        k < 64\n    ensures\n        (a + b * pow2(j)) as nat / pow2(k)\n        ==\n        a / pow2(k) + (b * pow2(j)) as nat / pow2(k)\n{\n    if ( k <= j) {\n        load8_lemma1(a, b, j, k);\n    }\n    else {\n        // j < k\n        load8_lemma2(a, b, j, k);\n\n        assert(a / pow2(k) == 0) by {\n            lemma_pow2_strictly_increases(j, k);\n            lemma_basic_div(a as int, pow2(k) as int);\n        }\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

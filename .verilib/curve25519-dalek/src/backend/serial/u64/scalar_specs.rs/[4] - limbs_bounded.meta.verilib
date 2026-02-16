@@ -1,0 +1,21 @@
+{
+  "code_name": "subtle_assumes.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "6b013d560f24e1a92ee3507f8f227913604acf3e74572e3da31a8cccfb701bed",
+  "id": 460178,
+  "identifier": "limbs_bounded",
+  "index": 4,
+  "parent_id": 460173,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/limbs_bounded",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn limbs_bounded(s: &Scalar52) -> bool {\n    forall|i: int| 0 <= i < 5 ==> s.limbs[i] < (1u64 << 52)\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,21 @@
+pub proof fn u8_times_pow2_fits_u64(a: u8, k: nat)
+    requires
+        k <= 56
+    ensures
+        (a as u64) * pow2(k) <= u64::MAX
+{
+    assert((a as u64) * pow2(k) <= (a as u64) * pow2(56)) by {
+        assert(pow2(k) <= pow2(56)) by {
+            if(k < 56) {
+                lemma_pow2_strictly_increases(k, 56);
+            }
+        }
+        mul_le(a as nat, a as nat, pow2(k), pow2(56));
+    }
+
+    pow2_mul_u8(a, 56);
+    assert(pow2(64) - pow2(56) <= u64::MAX) by {
+        lemma2_to64_rest();
+    }
+
+}

@@ -1,0 +1,24 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/nine_limbs_to_nat_aux",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/slice128_to_nat"
+  ],
+  "disabled": false,
+  "fingerprint": "3c36bfd8366be0a9a045c08cc5d81de360b03db43812277808580ddcea867a8e",
+  "id": 460310,
+  "identifier": "lemma_nine_limbs_equals_slice128_to_nat",
+  "index": 9,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_nine_limbs_equals_slice128_to_nat",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_nine_limbs_equals_slice128_to_nat(limbs: &[u128; 9])\nensures\n    nine_limbs_to_nat_aux(limbs) == slice128_to_nat(limbs)\n{\n\n    let seq = limbs@.map(|i, x| x as nat);\n\n    calc! {\n        (==)\n        slice128_to_nat(limbs); {\n        }\n        seq_to_nat(seq); {\n            reveal_with_fuel(seq_to_nat, 10);\n        }\n        (limbs[0] as nat) +\n        ((limbs[1] as nat) +\n            ((limbs[2] as nat) +\n            ((limbs[3] as nat) +\n            ((limbs[4] as nat) +\n            ((limbs[5] as nat) +\n                ((limbs[6] as nat) +\n                ((limbs[7] as nat) +\n                (limbs[8] as nat) * pow2(52)\n                ) * pow2(52)\n                ) * pow2(52)\n            ) * pow2(52)\n            ) * pow2(52)\n            ) * pow2(52)\n            ) * pow2(52)\n        ) * pow2(52); {\n        lemma_pow2_adds(52, 52);\n        lemma_pow2_adds(104, 52);\n        lemma_pow2_adds(156, 52);\n        lemma_pow2_adds(208, 52);\n        lemma_pow2_adds(260, 52);\n        lemma_pow2_adds(312, 52);\n        lemma_pow2_adds(364, 52);\n        broadcast use group_mul_is_distributive;\n        broadcast use lemma_mul_is_associative;\n        }\n        nine_limbs_to_nat_aux(limbs);\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

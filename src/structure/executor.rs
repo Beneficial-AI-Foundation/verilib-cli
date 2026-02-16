@@ -70,17 +70,12 @@ fn run_docker(
     cwd: Option<&Path>,
     image: &str,
 ) -> Result<Output> {
-    // Determine the working directory on host to mount
-    // We assume cwd is the project root or inside it.
-    // For simplicity, we mount the provided cwd as /workspace.
-    // If cwd is None, we use current directory.
     let host_cwd = cwd
         .map(|p| p.to_path_buf())
         .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf()));
     
     let host_cwd_str = host_cwd.to_string_lossy();
 
-    // Get current user ID and group ID for Linux/macOS using 'users' crate
     #[cfg(unix)]
     let user_arg = {
         let uid = users::get_current_uid();
@@ -97,13 +92,11 @@ fn run_docker(
         "--rm",
         "-u", &user_arg,
         "-v",
-        // We construct the mount string manually
     ];
 
     let mount_arg = format!("{}:/workspace:rw", host_cwd_str);
     docker_args.push(&mount_arg);
 
-    // Add tmpfs mounts
     docker_args.extend_from_slice(&[
         "--tmpfs", "/tmp",
         "--tmpfs", "/home/tooluser/.cache",
@@ -112,7 +105,6 @@ fn run_docker(
         image,
     ]);
 
-    // Append the actual tool arguments
     docker_args.extend_from_slice(args);
 
     let output = Command::new("docker")

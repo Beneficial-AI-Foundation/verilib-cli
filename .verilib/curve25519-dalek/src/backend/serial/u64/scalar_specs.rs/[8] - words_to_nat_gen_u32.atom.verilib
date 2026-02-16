@@ -1,0 +1,10 @@
+pub open spec fn words_to_nat_gen_u32(words: &[u32], num_words: int, bits_per_word: int) -> nat
+decreases num_words
+{
+    if num_words <= 0 {
+        0
+    } else {
+        let word_value = (words[num_words - 1] as nat) * pow2(((num_words - 1) * bits_per_word) as nat);
+        word_value + words_to_nat_gen_u32(words, num_words - 1, bits_per_word)
+    }
+}

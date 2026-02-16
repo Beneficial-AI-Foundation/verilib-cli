@@ -1,0 +1,21 @@
+{
+  "code_name": "pow2_51_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "ab97c1094ea65c633f24045e815c0ce3c8e33d053b6148dfb83f6e93e0a93b48",
+  "id": 460294,
+  "identifier": "main",
+  "index": 6,
+  "parent_id": 460287,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_verus.rs/main",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "fn main()\n{}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

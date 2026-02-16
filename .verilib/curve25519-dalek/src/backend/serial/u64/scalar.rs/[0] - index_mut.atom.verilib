@@ -1,0 +1,3 @@
+    fn index_mut(&mut self, _index: usize) -> &mut u64 {
+        &mut (self.limbs[_index])
+    }

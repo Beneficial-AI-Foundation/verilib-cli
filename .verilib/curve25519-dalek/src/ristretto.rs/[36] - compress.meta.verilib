@@ -1,0 +1,27 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/square",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/conditional_assign",
+    "/curve25519-dalek/src/field.rs/is_negative",
+    "/curve25519-dalek/src/field.rs/invsqrt",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/to_bytes"
+  ],
+  "disabled": false,
+  "fingerprint": "d39adee268d04642b6d833650841374934dcbdb9653995c3fbade396cb8569ac",
+  "id": 460474,
+  "identifier": "compress",
+  "index": 36,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/compress",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn compress(&self) -> CompressedRistretto {\n        let mut X = self.0.X;\n        let mut Y = self.0.Y;\n        let Z = &self.0.Z;\n        let T = &self.0.T;\n\n        let u1 = &(Z + &Y) * &(Z - &Y);\n        let u2 = &X * &Y;\n        // Ignore return value since this is always square\n        let (_, invsqrt) = (&u1 * &u2.square()).invsqrt();\n        let i1 = &invsqrt * &u1;\n        let i2 = &invsqrt * &u2;\n        let z_inv = &i1 * &(&i2 * T);\n        let mut den_inv = i2;\n\n        let iX = &X * &constants::SQRT_M1;\n        let iY = &Y * &constants::SQRT_M1;\n        let ristretto_magic = &constants::INVSQRT_A_MINUS_D;\n        let enchanted_denominator = &i1 * ristretto_magic;\n\n        let rotate = (T * &z_inv).is_negative();\n\n        X.conditional_assign(&iY, rotate);\n        Y.conditional_assign(&iX, rotate);\n        den_inv.conditional_assign(&enchanted_denominator, rotate);\n\n        Y.conditional_negate((&X * &z_inv).is_negative());\n\n        let mut s = &den_inv * &(Z - &Y);\n        let s_is_negative = s.is_negative();\n        s.conditional_negate(s_is_negative);\n\n        CompressedRistretto(s.to_bytes())\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

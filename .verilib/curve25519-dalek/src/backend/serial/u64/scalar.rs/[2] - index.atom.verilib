@@ -1,0 +1,3 @@
+    fn index(&self, _index: usize) -> &u64 {
+        &(self.limbs[_index])
+    }

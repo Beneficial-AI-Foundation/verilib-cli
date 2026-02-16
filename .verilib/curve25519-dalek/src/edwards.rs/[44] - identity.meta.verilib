@@ -1,0 +1,21 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "9c1bcd68d79b66515f95693d1f1045892f325559feea0b622f6a0a02d9ac1e2f",
+  "id": 460419,
+  "identifier": "identity",
+  "index": 44,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/identity",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn identity() -> CompressedEdwardsY {\n        CompressedEdwardsY([\n            1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n            0, 0, 0,\n        ])\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

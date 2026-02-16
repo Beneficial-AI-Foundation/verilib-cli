@@ -1,0 +1,24 @@
+{
+  "specified": true,
+  "disabled": true,
+  "status_id": 0,
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/is_capable_simd",
+    "/curve25519-dalek/src/build.rs/determine_curve25519_dalek_bits"
+  ],
+  "fingerprint": "51904d917432d4159be185ee820465964d772d087365e66c2f5214894788e8d8",
+  "id": 459996,
+  "identifier": "main",
+  "index": 0,
+  "parent_id": 459995,
+  "path": "/curve25519-dalek/Vortex Core/main",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "fn main() {\n    let target_arch = match std::env::var(\"CARGO_CFG_TARGET_ARCH\") {\n        Ok(arch) => arch,\n        _ => \"\".to_string(),\n    };\n\n    let curve25519_dalek_bits = match std::env::var(\"CARGO_CFG_CURVE25519_DALEK_BITS\").as_deref() {\n        Ok(\"32\") => DalekBits::Dalek32,\n        Ok(\"64\") => DalekBits::Dalek64,\n        _ => deterministic::determine_curve25519_dalek_bits(&target_arch),\n    };\n\n    println!(\"cargo:rustc-cfg=curve25519_dalek_bits=\\\"{curve25519_dalek_bits}\\\"\");\n\n    let nightly = if rustc_version::version_meta()\n        .expect(\"failed to detect rustc version\")\n        .channel\n        == rustc_version::Channel::Nightly\n    {\n        println!(\"cargo:rustc-cfg=nightly\");\n        true\n    } else {\n        false\n    };\n\n    let rustc_version = rustc_version::version().expect(\"failed to detect rustc version\");\n    if rustc_version.major == 1 && rustc_version.minor <= 64 {\n        // Old versions of Rust complain when you have an `unsafe fn` and you use `unsafe {}` inside,\n        // so for those we want to apply the `#[allow(unused_unsafe)]` attribute to get rid of that warning.\n        println!(\"cargo:rustc-cfg=allow_unused_unsafe\");\n    }\n\n    // Backend overrides / defaults\n    let curve25519_dalek_backend = match std::env::var(\"CARGO_CFG_CURVE25519_DALEK_BACKEND\")\n        .as_deref()\n    {\n        Ok(\"fiat\") => \"fiat\",\n        Ok(\"serial\") => \"serial\",\n        Ok(\"simd\") => {\n            // simd can only be enabled on x86_64 & 64bit target_pointer_width\n            match is_capable_simd(&target_arch, curve25519_dalek_bits) {\n                true => \"simd\",\n                // If override is not possible this must result to compile error\n                // See: issues/532\n                false => panic!(\"Could not override curve25519_dalek_backend to simd\"),\n            }\n        }\n        Ok(\"unstable_avx512\") if nightly => {\n            // simd can only be enabled on x86_64 & 64bit target_pointer_width\n            match is_capable_simd(&target_arch, curve25519_dalek_bits) {\n                true => {\n                    // In addition enable Avx2 fallback through simd stable backend\n                    // NOTE: Compiler permits duplicate / multi value on the same key\n                    println!(\"cargo:rustc-cfg=curve25519_dalek_backend=\\\"simd\\\"\");\n\n                    \"unstable_avx512\"\n                }\n                // If override is not possible this must result to compile error\n                // See: issues/532\n                false => panic!(\"Could not override curve25519_dalek_backend to unstable_avx512\"),\n            }\n        }\n        Ok(\"unstable_avx512\") if !nightly => {\n            panic!(\n                \"Could not override curve25519_dalek_backend to unstable_avx512, as this is nightly only\"\n            );\n        }\n        // default between serial / simd (if potentially capable)\n        _ => match is_capable_simd(&target_arch, curve25519_dalek_bits) {\n            true => \"simd\",\n            false => \"serial\",\n        },\n    };\n    println!(\"cargo:rustc-cfg=curve25519_dalek_backend=\\\"{curve25519_dalek_backend}\\\"\");\n}",
+      "type_id": 2
+    }
+  ],
+  "statement_type": "function"
+}

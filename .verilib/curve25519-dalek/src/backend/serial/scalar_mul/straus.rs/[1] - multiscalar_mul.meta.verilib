@@ -1,0 +1,24 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/edwards.rs/mul_by_pow_2",
+    "/curve25519-dalek/src/edwards.rs/identity"
+  ],
+  "disabled": false,
+  "fingerprint": "300eac887fca2a0f0b006d4c37065626ee8a22434b492e3b7c9858bfd3833ac2",
+  "id": 460344,
+  "identifier": "multiscalar_mul",
+  "index": 1,
+  "parent_id": 460342,
+  "path": "/curve25519-dalek/src/backend/serial/scalar_mul/straus.rs/multiscalar_mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn multiscalar_mul<I, J>(scalars: I, points: J) -> EdwardsPoint\n    where\n        I: IntoIterator,\n        I::Item: Borrow<Scalar>,\n        J: IntoIterator,\n        J::Item: Borrow<EdwardsPoint>,\n    {\n        use crate::backend::serial::curve_models::ProjectiveNielsPoint;\n        use crate::traits::Identity;\n        use crate::window::LookupTable;\n\n        let lookup_tables: Vec<_> = points\n            .into_iter()\n            .map(|point| LookupTable::<ProjectiveNielsPoint>::from(point.borrow()))\n            .collect();\n\n        // This puts the scalar digits into a heap-allocated Vec.\n        // To ensure that these are erased, pass ownership of the Vec into a\n        // Zeroizing wrapper.\n        #[cfg_attr(not(feature = \"zeroize\"), allow(unused_mut))]\n        let mut scalar_digits: Vec<_> = scalars\n            .into_iter()\n            .map(|s| s.borrow().as_radix_16())\n            .collect();\n\n        let mut Q = EdwardsPoint::identity();\n        for j in (0..64).rev() {\n            Q = Q.mul_by_pow_2(4);\n            let it = scalar_digits.iter().zip(lookup_tables.iter());\n            for (s_i, lookup_table_i) in it {\n                // R_i = s_{i,j} * P_i\n                let R_i = lookup_table_i.select(s_i[j]);\n                // Q = Q + R_i\n                Q = (&Q + &R_i).as_extended();\n            }\n        }\n\n        // #[cfg(feature = \"zeroize\")]\n        // zeroize::Zeroize::zeroize(&mut scalar_digits);\n\n        Q\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

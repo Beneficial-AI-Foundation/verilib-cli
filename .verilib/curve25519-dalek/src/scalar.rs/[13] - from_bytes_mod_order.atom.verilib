@@ -1,0 +1,10 @@
+    pub fn from_bytes_mod_order(bytes: [u8; 32]) -> Scalar {
+        // Temporarily allow s_unreduced.bytes > 2^255 ...
+        let s_unreduced = Scalar { bytes };
+
+        // Then reduce mod the group order and return the reduced representative.
+        let s = s_unreduced.reduce();
+        debug_assert_eq!(0u8, s[31] >> 7);
+
+        s
+    }

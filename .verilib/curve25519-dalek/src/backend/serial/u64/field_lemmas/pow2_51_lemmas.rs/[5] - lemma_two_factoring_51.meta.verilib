@@ -1,0 +1,23 @@
+{
+  "code_name": "negate_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/common_verus/pow_lemmas.rs/lemma_two_factoring"
+  ],
+  "disabled": false,
+  "fingerprint": "10fdb83417702c31132951a70b376566faaf2945240394abdeac27f028a8fc7d",
+  "id": 460198,
+  "identifier": "lemma_two_factoring_51",
+  "index": 5,
+  "parent_id": 460192,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2_51_lemmas.rs/lemma_two_factoring_51",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_two_factoring_51(k : nat, ai: u64)\n    ensures\n        pow2(k + 51) * ai == pow2(k) * (pow2(51) * ai)\n{\n    lemma_two_factoring(k, 51, ai);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

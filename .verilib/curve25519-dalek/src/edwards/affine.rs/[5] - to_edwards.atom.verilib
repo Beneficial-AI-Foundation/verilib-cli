@@ -1,0 +1,8 @@
+    pub fn to_edwards(self) -> EdwardsPoint {
+        EdwardsPoint {
+            X: self.x,
+            Y: self.y,
+            Z: FieldElement::ONE,
+            T: &self.x * &self.y,
+        }
+    }

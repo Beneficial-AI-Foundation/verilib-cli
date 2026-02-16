@@ -1,0 +1,19 @@
+pub proof fn lemma_carry_bounded_after_mask(carry: u64, mask: u64)
+    requires
+        mask == (1u64 << 52) - 1,
+        carry < (1u64 << 53),
+    ensures
+        (carry & mask) < (1u64 << 52),
+        (carry >> 52) <= 1,
+{
+    assert((carry & mask) <= mask) by (bit_vector);
+    assert((1u64 << 53) == 2 * (1u64 << 52)) by (bit_vector);
+    broadcast use lemma_u64_shr_is_div;
+    lemma_pow2_pos(52);
+    shift_is_pow2(52);
+    assert(carry >> 52 == carry / (1u64 << 52));
+    lemma_fundamental_div_mod(carry as int, (1u64 << 52) as int);
+    let q = carry / (1u64 << 52);
+    let r = carry % (1u64 << 52);
+    lemma_mul_strict_inequality_converse(q as int, 2int, (1u64 << 52) as int);
+}

@@ -1,0 +1,3 @@
+    pub fn basepoint(&self) -> RistrettoPoint {
+        RistrettoPoint(self.0.basepoint())
+    }

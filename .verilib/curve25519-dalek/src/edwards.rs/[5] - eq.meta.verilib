@@ -1,0 +1,23 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/edwards.rs/ct_eq"
+  ],
+  "disabled": false,
+  "fingerprint": "2d766e61029ce066ccc2a119f029b1e12def3cad1c35ecf93e0045bf2fb67a0b",
+  "id": 460380,
+  "identifier": "eq",
+  "index": 5,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/eq",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn eq(&self, other: &EdwardsPoint) -> bool {\n        self.ct_eq(other).into()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

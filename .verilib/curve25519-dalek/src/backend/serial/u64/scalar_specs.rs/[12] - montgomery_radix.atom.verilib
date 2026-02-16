@@ -1,0 +1,3 @@
+pub open spec fn montgomery_radix() -> nat {
+    pow2(260)
+}

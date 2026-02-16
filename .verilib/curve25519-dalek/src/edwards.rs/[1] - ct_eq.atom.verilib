@@ -1,0 +1,3 @@
+    fn ct_eq(&self, other: &CompressedEdwardsY) -> Choice {
+        self.as_bytes().ct_eq(other.as_bytes())
+    }

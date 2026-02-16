@@ -1,0 +1,3 @@
+    fn mul(self, scalar: &'a Scalar) -> EdwardsPoint {
+        crate::backend::variable_base_mul(self, scalar)
+    }

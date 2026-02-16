@@ -1,0 +1,8 @@
+pub proof fn l51_bit_mask_lt()
+    ensures
+        mask51 == low_bits_mask(51),
+        mask51 < (1u64 << 51) as nat,
+{
+    lemma2_to64_rest();
+    assert(mask51 < (1u64 << 51) as nat) by (compute);
+}

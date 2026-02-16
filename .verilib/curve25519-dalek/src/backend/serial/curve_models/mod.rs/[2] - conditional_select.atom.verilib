@@ -1,0 +1,7 @@
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        AffineNielsPoint {
+            y_plus_x: FieldElement::conditional_select(&a.y_plus_x, &b.y_plus_x, choice),
+            y_minus_x: FieldElement::conditional_select(&a.y_minus_x, &b.y_minus_x, choice),
+            xy2d: FieldElement::conditional_select(&a.xy2d, &b.xy2d, choice),
+        }
+    }

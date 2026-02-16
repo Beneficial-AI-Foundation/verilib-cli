@@ -1,0 +1,18 @@
+    pub fn to_montgomery_batch(eds: &[Self]) -> Vec<MontgomeryPoint> {
+        // Do the same thing as the above function. u = (1+y)/(1-y) = (Z+Y)/(Z-Y).
+        // We will do this in a batch, ie compute (Z-Y) for all the input
+        // points, then invert them all at once
+
+        // Compute the denominators in a batch
+        let mut denominators = eds.iter().map(|p| &p.Z - &p.Y).collect::<Vec<_>>();
+        FieldElement::batch_invert(&mut denominators);
+
+        // Now compute the Montgomery u coordinate for every point
+        let mut ret = Vec::with_capacity(eds.len());
+        for (ed, d) in eds.iter().zip(denominators.iter()) {
+            let u = &(&ed.Z + &ed.Y) * d;
+            ret.push(MontgomeryPoint(u.to_bytes()));
+        }
+
+        ret
+    }

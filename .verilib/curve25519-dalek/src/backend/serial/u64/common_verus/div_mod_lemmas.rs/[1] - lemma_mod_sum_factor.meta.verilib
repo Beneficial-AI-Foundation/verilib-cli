@@ -1,0 +1,21 @@
+{
+  "code_name": "pow2k_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "f88ffcf1d1226e0a1ff02fc8f5a4df4e3e718a234a0a328b009be9f73be597a2",
+  "id": 460135,
+  "identifier": "lemma_mod_sum_factor",
+  "index": 1,
+  "parent_id": 460133,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/div_mod_lemmas.rs/lemma_mod_sum_factor",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_mod_sum_factor(a: int, b: int, m: int)\n    requires\n        m > 0\n    ensures\n        (a * m + b) % m == b % m\n{\n    // (a * m + b) % m == ((a * m) % m + b % m) % m\n    lemma_add_mod_noop(a * m, b, m);\n    // (a * m) % m == 0\n    lemma_mod_multiples_basic(a, m);\n    // b % m % m = b % m\n    lemma_mod_twice(b, m);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

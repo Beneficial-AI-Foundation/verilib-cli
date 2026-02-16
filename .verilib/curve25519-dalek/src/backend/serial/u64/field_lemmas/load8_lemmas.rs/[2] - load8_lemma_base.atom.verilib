@@ -1,0 +1,33 @@
+pub proof fn load8_lemma_base(a: nat, b: u8, j: nat, k: nat)
+    requires
+        a < pow2(j),
+        j + 8 <= 64
+    ensures
+        a + (b * pow2(j)) == pow2(k) * (a / pow2(k) + (b * pow2(j)) as nat / pow2(k)) + (a % pow2(k) + (b * pow2(j)) as nat % pow2(k)),
+        pow2(k) > 0,
+{
+    let cb = (b * pow2(j)) as nat;
+
+    // No div by 0
+    assert(pow2(k) > 0) by {
+        lemma_pow2_pos(k);
+    }
+
+    assert( a == pow2(k) * (a / pow2(k)) + a % pow2(k)) by {
+        lemma_fundamental_div_mod(a as int, pow2(k) as int);
+    }
+
+    assert( cb == pow2(k) * (cb / pow2(k)) + cb % pow2(k)) by {
+        lemma_fundamental_div_mod(cb as int, pow2(k) as int);
+    }
+
+    assert(a + cb == pow2(k) * (a / pow2(k) + cb / pow2(k)) + (a % pow2(k) + cb % pow2(k))) by {
+        lemma_mul_is_distributive_add( pow2(k) as int, (a / pow2(k)) as int, (cb / pow2(k)) as int);
+        lemma_mul_is_associative(
+            (pow2(k) * (a / pow2(k) + cb / pow2(k))) as int,
+            (a % pow2(k)) as int,
+            (cb % pow2(k)) as int
+        );
+    }
+
+}

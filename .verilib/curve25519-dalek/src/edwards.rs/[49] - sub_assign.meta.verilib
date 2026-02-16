@@ -1,0 +1,21 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "36284da24ef0d43158e1a6a92fdf7d8311acff58bbba6b9e23771db5c68b2b91",
+  "id": 460424,
+  "identifier": "sub_assign",
+  "index": 49,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/sub_assign",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn sub_assign(&mut self, _rhs: &'a EdwardsPoint) {\n        *self = (self as &EdwardsPoint) - _rhs;\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

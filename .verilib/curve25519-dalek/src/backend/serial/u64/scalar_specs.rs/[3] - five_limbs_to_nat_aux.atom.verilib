@@ -1,0 +1,7 @@
+pub open spec fn five_limbs_to_nat_aux(limbs: [u64; 5]) -> nat {
+    (limbs[0] as nat) +
+    pow2(52) * (limbs[1] as nat) +
+    pow2(104) * (limbs[2] as nat) +
+    pow2(156) * (limbs[3] as nat) +
+    pow2(208) * (limbs[4] as nat)
+}

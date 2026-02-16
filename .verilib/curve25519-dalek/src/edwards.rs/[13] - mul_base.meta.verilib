@@ -1,0 +1,21 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "b924d60fae108b39ec40d97b6cc93af40eba4008b5d797d235736f41d9d97fd6",
+  "id": 460388,
+  "identifier": "mul_base",
+  "index": 13,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/mul_base",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn mul_base(scalar: &Scalar) -> Self {\n        #[cfg(not(feature = \"precomputed-tables\"))]\n        {\n            scalar * constants::ED25519_BASEPOINT_POINT\n        }\n\n        #[cfg(feature = \"precomputed-tables\")]\n        {\n            scalar * constants::ED25519_BASEPOINT_TABLE\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

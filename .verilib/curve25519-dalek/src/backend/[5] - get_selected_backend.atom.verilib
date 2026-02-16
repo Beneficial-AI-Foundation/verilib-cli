@@ -1,0 +1,21 @@
+fn get_selected_backend() -> BackendKind {
+    // #[cfg(all(curve25519_dalek_backend = "unstable_avx512", nightly))]
+    // {
+    //     cpufeatures::new!(cpuid_avx512, "avx512ifma", "avx512vl");
+    //     let token_avx512: cpuid_avx512::InitToken = cpuid_avx512::init();
+    //     if token_avx512.get() {
+    //         return BackendKind::Avx512;
+    //     }
+    // }
+
+    // #[cfg(curve25519_dalek_backend = "simd")]
+    // {
+    //     cpufeatures::new!(cpuid_avx2, "avx2");
+    //     let token_avx2: cpuid_avx2::InitToken = cpuid_avx2::init();
+    //     if token_avx2.get() {
+    //         return BackendKind::Avx2;
+    //     }
+    // }
+
+    BackendKind::Serial
+}

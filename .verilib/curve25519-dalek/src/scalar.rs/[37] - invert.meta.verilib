@@ -1,0 +1,25 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/from_montgomery",
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/as_montgomery",
+    "/curve25519-dalek/src/scalar.rs/montgomery_invert"
+  ],
+  "disabled": false,
+  "fingerprint": "e6cf00a9b70740b44b87c742ebf6c6446aaa0002edf0d344e1afc7989abf977b",
+  "id": 460057,
+  "identifier": "invert",
+  "index": 37,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/invert",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn invert(&self) -> UnpackedScalar {\n        self.as_montgomery().montgomery_invert().from_montgomery()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

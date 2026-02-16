@@ -1,0 +1,18 @@
+pub proof fn shr_nonincreasing(v: u64, a: nat, b: nat)
+    requires
+        a <= b <= 64
+    ensures
+        v >> b <= v >> a
+{
+    if (b == 64) {
+        assert(v >> 64 == 0) by (bit_vector);
+    }
+    else {
+        let d = (b - a) as u64;
+        // v >> b = (v >> (b - a)) >> a
+        shr_decomposition(v, d as nat, a);
+        assert(v >> d <= v) by (bit_vector);
+        // a <= b => a >> x <= b >> x
+        lemma_shr_le_u64(v >> d, v, a);
+    }
+}

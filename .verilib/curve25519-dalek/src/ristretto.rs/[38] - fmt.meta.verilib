@@ -1,0 +1,25 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/ristretto.rs/coset4",
+    "/curve25519-dalek/src/ristretto.rs/step_2",
+    "/curve25519-dalek/src/ristretto.rs/step_1"
+  ],
+  "disabled": false,
+  "fingerprint": "75fac7b0efc0249bf7b57d76cf318ece3ccc22d66692eba2d8cd3b3e731295cd",
+  "id": 460476,
+  "identifier": "fmt",
+  "index": 38,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/fmt",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {\n        let coset = self.coset4();\n        write!(\n            f,\n            \"RistrettoPoint: coset \\n{:?}\\n{:?}\\n{:?}\\n{:?}\",\n            coset[0], coset[1], coset[2], coset[3]\n        )\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

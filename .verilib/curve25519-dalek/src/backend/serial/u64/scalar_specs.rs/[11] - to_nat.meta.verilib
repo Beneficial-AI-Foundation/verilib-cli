@@ -1,0 +1,23 @@
+{
+  "code_name": "subtle_assumes.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/seq_to_nat"
+  ],
+  "disabled": false,
+  "fingerprint": "4e30c3ee72b20bbeb6e4846b8be059e8effd9be57564153787869df547ea5a24",
+  "id": 460185,
+  "identifier": "to_nat",
+  "index": 11,
+  "parent_id": 460173,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/to_nat",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn to_nat(limbs: &[u64]) -> nat\n{\n    seq_to_nat(limbs@.map(|i, x| x as nat))\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

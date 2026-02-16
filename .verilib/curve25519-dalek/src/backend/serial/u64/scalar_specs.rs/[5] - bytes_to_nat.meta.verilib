@@ -1,0 +1,23 @@
+{
+  "code_name": "subtle_assumes.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/bytes_to_nat_rec"
+  ],
+  "disabled": false,
+  "fingerprint": "7bc8e2120da7b1868a887779593f40c2aa6117ed044c28112d15f7c7adf3af38",
+  "id": 460179,
+  "identifier": "bytes_to_nat",
+  "index": 5,
+  "parent_id": 460173,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/bytes_to_nat",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn bytes_to_nat(bytes: &[u8; 32]) -> nat {\n    // Convert bytes to nat in little-endian order using recursive helper\n    bytes_to_nat_rec(bytes, 0)\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

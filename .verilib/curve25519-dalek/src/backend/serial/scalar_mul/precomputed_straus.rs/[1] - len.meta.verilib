@@ -1,0 +1,21 @@
+{
+  "code_name": "CLAUDE.md",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "b2ff0a58e0c00c244257016d3231fcf0c15b573d481e42ca6d67188ef78b859c",
+  "id": 460337,
+  "identifier": "len",
+  "index": 1,
+  "parent_id": 460335,
+  "path": "/curve25519-dalek/src/backend/serial/scalar_mul/precomputed_straus.rs/len",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn len(&self) -> usize {\n        self.static_lookup_tables.len()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

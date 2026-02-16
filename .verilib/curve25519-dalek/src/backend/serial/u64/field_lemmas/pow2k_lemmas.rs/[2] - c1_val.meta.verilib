@@ -1,0 +1,24 @@
+{
+  "code_name": "field_core.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/c0_val",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/c1_0_val"
+  ],
+  "disabled": false,
+  "fingerprint": "564e65299085cf4b6b088276ec5fbdb136dd44410ad9dbb1696227e8744490e7",
+  "id": 460241,
+  "identifier": "c1_val",
+  "index": 2,
+  "parent_id": 460238,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/c1_val",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn c1_val(a: [u64; 5]) -> u128 {\n    (c1_0_val(a) + ((c0_val(a) >> 51) as u64) as u128) as u128\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

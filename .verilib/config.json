@@ -1,0 +1,10 @@
+{
+  "docker-image": "verilib/probe-verus:1",
+  "execution-mode": "local",
+  "repo": {
+    "id": "3461",
+    "is_admin": true,
+    "url": "http://localhost:8080"
+  },
+  "structure-root": ".verilib/structure"
+}

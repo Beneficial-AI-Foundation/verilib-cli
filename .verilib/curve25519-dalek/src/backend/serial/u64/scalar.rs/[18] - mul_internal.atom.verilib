@@ -1,0 +1,25 @@
+    pub (crate) fn mul_internal(a: &Scalar52, b: &Scalar52) -> (z: [u128; 9])
+    requires
+        limbs_bounded(a),
+        limbs_bounded(b),
+    ensures
+        slice128_to_nat(&z) == to_nat(&a.limbs) * to_nat(&b.limbs),
+    {
+        proof {lemma_mul_internal_no_overflow()}
+
+        let mut z = [0u128; 9];
+
+        z[0] = m(a.limbs[0], b.limbs[0]);
+        z[1] = m(a.limbs[0], b.limbs[1]) + m(a.limbs[1], b.limbs[0]);
+        z[2] = m(a.limbs[0], b.limbs[2]) + m(a.limbs[1], b.limbs[1]) + m(a.limbs[2], b.limbs[0]);
+        z[3] = m(a.limbs[0], b.limbs[3]) + m(a.limbs[1], b.limbs[2]) + m(a.limbs[2], b.limbs[1]) + m(a.limbs[3], b.limbs[0]);
+        z[4] = m(a.limbs[0], b.limbs[4]) + m(a.limbs[1], b.limbs[3]) + m(a.limbs[2], b.limbs[2]) + m(a.limbs[3], b.limbs[1]) + m(a.limbs[4], b.limbs[0]);
+        z[5] =                 m(a.limbs[1], b.limbs[4]) + m(a.limbs[2], b.limbs[3]) + m(a.limbs[3], b.limbs[2]) + m(a.limbs[4], b.limbs[1]);
+        z[6] =                                 m(a.limbs[2], b.limbs[4]) + m(a.limbs[3], b.limbs[3]) + m(a.limbs[4], b.limbs[2]);
+        z[7] =                                                 m(a.limbs[3], b.limbs[4]) + m(a.limbs[4], b.limbs[3]);
+        z[8] =                                                                 m(a.limbs[4], b.limbs[4]);
+
+        proof {lemma_mul_internal_correct(&a.limbs, &b.limbs, &z);}
+
+        z
+    }

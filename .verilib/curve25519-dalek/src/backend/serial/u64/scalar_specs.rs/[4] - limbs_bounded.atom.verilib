@@ -1,0 +1,3 @@
+pub open spec fn limbs_bounded(s: &Scalar52) -> bool {
+    forall|i: int| 0 <= i < 5 ==> s.limbs[i] < (1u64 << 52)
+}

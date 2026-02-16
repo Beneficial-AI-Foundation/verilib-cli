@@ -1,0 +1,11 @@
+pub proof fn lemma_reorder_mul(a: int, b: int)
+    ensures
+        2 * (a * (19 * b)) == 19 * (2 * (a * b))
+{
+    // 2*( a * (19 * b)) = (2 * a) * (19 * b)
+    lemma_mul_is_associative(2, a, 19 * b);
+    // (2 * a) * (19 * b) = (19 * b) * (2 * a) = 19 * (b * (2 * a))
+    lemma_mul_is_associative(19, b, 2 * a);
+    // (b * (2 * a)) = (b * (a * 2)) = 2 * (a * b)
+    lemma_mul_is_associative(b, a, 2);
+}

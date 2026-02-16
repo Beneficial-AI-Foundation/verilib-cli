@@ -1,0 +1,26 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/square",
+    "/curve25519-dalek/src/field.rs/is_zero",
+    "/curve25519-dalek/src/field.rs/invsqrt",
+    "/curve25519-dalek/src/field.rs/is_negative"
+  ],
+  "disabled": false,
+  "fingerprint": "6656de273501848eae9a693d1971074172fb248d19c7d19c4af5f0c54817136a",
+  "id": 460456,
+  "identifier": "step_2",
+  "index": 18,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/step_2",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub(super) fn step_2(s: FieldElement) -> (Choice, Choice, Choice, RistrettoPoint) {\n        // Step 2.  Compute (X:Y:Z:T).\n        let one = FieldElement::ONE;\n        let ss = s.square();\n        let u1 = &one - &ss; //  1 + as²\n        let u2 = &one + &ss; //  1 - as²    where a=-1\n        let u2_sqr = u2.square(); // (1 - as²)²\n\n        // v == ad(1+as²)² - (1-as²)²            where d=-121665/121666\n        let v = &(&(-&constants::EDWARDS_D) * &u1.square()) - &u2_sqr;\n\n        let (ok, I) = (&v * &u2_sqr).invsqrt(); // 1/sqrt(v*u_2²)\n\n        let Dx = &I * &u2; // 1/sqrt(v)\n        let Dy = &I * &(&Dx * &v); // 1/u2\n\n        // x == | 2s/sqrt(v) | == + sqrt(4s²/(ad(1+as²)² - (1-as²)²))\n        let mut x = &(&s + &s) * &Dx;\n        let x_neg = x.is_negative();\n        x.conditional_negate(x_neg);\n\n        // y == (1-as²)/(1+as²)\n        let y = &u1 * &Dy;\n\n        // t == ((1+as²) sqrt(4s²/(ad(1+as²)² - (1-as²)²)))/(1-as²)\n        let t = &x * &y;\n\n        (\n            ok,\n            t.is_negative(),\n            y.is_zero(),\n            RistrettoPoint(EdwardsPoint {\n                X: x,\n                Y: y,\n                Z: one,\n                T: t,\n            }),\n        )\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

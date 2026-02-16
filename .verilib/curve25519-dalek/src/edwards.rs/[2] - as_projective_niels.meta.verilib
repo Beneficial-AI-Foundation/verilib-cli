@@ -1,0 +1,21 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "3dcb2a4359564c8671a31b53f8cc1e1cfa8a0883b88fb0dcff63d6fdacfb34f2",
+  "id": 460377,
+  "identifier": "as_projective_niels",
+  "index": 2,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/as_projective_niels",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub(crate) fn as_projective_niels(&self) -> ProjectiveNielsPoint {\n        ProjectiveNielsPoint {\n            Y_plus_X: &self.Y + &self.X,\n            Y_minus_X: &self.Y - &self.X,\n            Z: self.Z,\n            T2d: &self.T * &constants::EDWARDS_D2,\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,23 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/edwards.rs/identity"
+  ],
+  "disabled": false,
+  "fingerprint": "e51ba971629749df93a09be9972a111efd8f9bb0937429a6b38f5ed6b4880f04",
+  "id": 460385,
+  "identifier": "sum",
+  "index": 10,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/sum",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn sum<I>(iter: I) -> Self\n    where\n        I: Iterator<Item = T>,\n    {\n        iter.fold(EdwardsPoint::identity(), |acc, item| acc + item.borrow())\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

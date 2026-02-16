@@ -1,0 +1,21 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "cd049ad178bef9b4aff8f5313eb82474ca62e6586c092481706d48b6530ce69c",
+  "id": 460323,
+  "identifier": "lemma_52_52",
+  "index": 22,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_52_52",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_52_52(x: u64, y: u64)\nrequires\n    x < (1u64 << 52),\n    y < (1u64 << 52),\nensures (x as u128) * (y as u128) < (1u128 << 104)\n{\n    assert(1u128 << 52 == 1u64 << 52) by (bit_vector);\n    calc! {\n        (<)\n        (x as u128) * (y as u128); (<=) {\n            if x > 0 {\n                lemma_mul_strict_inequality(y as int, (1u128 << 52) as int, x as int);\n                assert( x * y < x * (1u128 << 52)  );\n            } else {\n                assert((0 as u128) * (y as u128) == 0);\n            }\n        }\n        (x as u128) * (1u128 << 52); (<) {\n            lemma_mul_strict_inequality(x as int, (1u128 << 52) as int, (1u128 << 52) as int);\n        }\n        (1u128 << 52) * (1u128 << 52);\n    }\n    assert((1u128 << 52) * (1u128 << 52) == (1u128 << 104)) by (compute);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,3 @@
+    fn identity() -> RistrettoPoint {
+        RistrettoPoint(EdwardsPoint::identity())
+    }

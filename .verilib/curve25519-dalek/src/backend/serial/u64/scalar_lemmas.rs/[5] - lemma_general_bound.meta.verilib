@@ -1,0 +1,24 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/seq_to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/seq_u64_to_nat"
+  ],
+  "disabled": false,
+  "fingerprint": "7f0784e364e4f181e2d8ecc4ecf945eb2c83cd49e35792390dd9cc83434dcf8f",
+  "id": 460306,
+  "identifier": "lemma_general_bound",
+  "index": 5,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_general_bound",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_general_bound(a: Seq<u64>)\n    requires forall|i: int| 0 <= i < a.len() ==> a[i] < (1u64 << 52)\n    ensures seq_u64_to_nat(a) < pow2((52 * a.len() as nat))\n    decreases a.len()\n{\n    if a.len() == 0 {\n        assert(seq_u64_to_nat(a) == 0);\n        lemma2_to64(); // Gives us pow2(0) == 1 among other facts\n        assert(pow2(0) == 1);\n    } else {\n        // Inductive case\n        let tail = a.subrange(1, a.len() as int);\n\n        // Apply induction hypothesis on tail\n        assert(forall|i: int| 0 <= i < tail.len() ==> tail[i] < (1u64 << 52)) by {\n            assert(forall|i: int| 0 <= i < tail.len() ==> tail[i] == a[i + 1]);\n        };\n\n        assert(tail.len() == a.len() - 1);\n\n        // Apply induction hypothesis\n        lemma_general_bound(tail);\n        assert(seq_u64_to_nat(tail) < pow2((52 * tail.len() as nat)));\n\n        // Now prove for the full sequence\n        assert(seq_u64_to_nat(a) == seq_to_nat(a.map(|i, x| x as nat)));\n        assert(a.map(|i, x| x as nat).len() == a.len());\n        assert(a.map(|i, x| x as nat)[0] == a[0] as nat);\n        assert(a.map(|i, x| x as nat).subrange(1, a.len() as int) == a.subrange(1, a.len() as int).map(|i, x| x as nat));\n        // Therefore:\n        assert(seq_u64_to_nat(a) == a[0] as nat + seq_u64_to_nat(a.subrange(1, a.len() as int)) * pow2(52));\n\n        assert(a.subrange(1, a.len() as int) == tail);\n\n        // From precondition\n        assert(a[0] < (1u64 << 52));\n        lemma2_to64_rest();\n        assert(0x10000000000000 == 1u64 << 52) by (compute_only);\n        assert(0x10000000000000 == pow2(52));\n        assert((1u64 << 52) == pow2(52));\n\n        // We have seq_u64_to_nat(a) == a[0] + seq_u64_to_nat(tail) * pow2(52)\n        // We know a[0] < pow2(52) and seq_u64_to_nat(tail) < pow2(52 * (a.len() - 1))\n\n\n        assert(a[0] as nat <= pow2(52) - 1);\n        assert(seq_u64_to_nat(tail) <= pow2(52 * (a.len() - 1) as nat) - 1);\n\n        assert(seq_u64_to_nat(a) <= (pow2(52) - 1) + (pow2(52 * (a.len() - 1) as nat) - 1) * pow2(52)) by {\n            lemma_mul_inequality((pow2(52 * (a.len() - 1) as nat) - 1) as int, pow2(52 * (a.len() - 1) as nat) as int, pow2(52) as int);\n        };\n\n        // Expand the right side\n        assert((pow2(52) - 1) + (pow2(52 * (a.len() - 1) as nat) - 1) * pow2(52) ==\n               pow2(52) - 1 + pow2(52 * (a.len() - 1) as nat) * pow2(52) - pow2(52)) by {\n            broadcast use lemma_mul_is_distributive_sub;\n        };\n\n        assert(pow2(52) - 1 + pow2(52 * (a.len() - 1) as nat) * pow2(52) - pow2(52) ==\n               pow2(52 * (a.len() - 1) as nat) * pow2(52) - 1);\n\n        lemma_pow2_adds(52 * (a.len() - 1) as nat, 52);\n        assert(pow2(52 * (a.len() - 1) as nat) * pow2(52) == pow2(52 * (a.len() - 1) as nat + 52));\n        assert(52 * (a.len() - 1) as nat + 52 == 52 * a.len() as nat);\n\n        assert(seq_u64_to_nat(a) <= pow2(52 * a.len() as nat) - 1);\n        assert(seq_u64_to_nat(a) < pow2(52 * a.len() as nat));\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

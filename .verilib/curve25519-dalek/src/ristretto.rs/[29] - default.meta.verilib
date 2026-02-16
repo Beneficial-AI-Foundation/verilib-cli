@@ -1,0 +1,23 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/ristretto.rs/identity"
+  ],
+  "disabled": false,
+  "fingerprint": "8fa422b000cf7784db87b31000500cb98d784b04cb4565ae5912876776d70284",
+  "id": 460467,
+  "identifier": "default",
+  "index": 29,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/default",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn default() -> CompressedRistretto {\n        CompressedRistretto::identity()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

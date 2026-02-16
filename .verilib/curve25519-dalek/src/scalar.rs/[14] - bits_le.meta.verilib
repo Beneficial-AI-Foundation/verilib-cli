@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "ec3a3be631e0d0758223a7009b69e741a18eba31eeaf41b5c7378f3518268742",
+  "id": 460034,
+  "identifier": "bits_le",
+  "index": 14,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/bits_le",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub(crate) fn bits_le(&self) -> impl DoubleEndedIterator<Item = bool> + '_ {\n        (0..256).map(|i| {\n            // As i runs from 0..256, the bottom 3 bits index the bit, while the upper bits index\n            // the byte. Since self.bytes is little-endian at the byte level, this iterator is\n            // little-endian on the bit level\n            ((self.bytes[i >> 3] >> (i & 7)) & 1u8) == 1\n        })\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

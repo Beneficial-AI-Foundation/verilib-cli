@@ -1,0 +1,23 @@
+{
+  "code_name": "lib.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/edwards/affine.rs/ct_eq"
+  ],
+  "disabled": false,
+  "fingerprint": "8a204b7f899a1c7f904c5da40745f3261883de0a83d324822cb208086f4f271c",
+  "id": 460430,
+  "identifier": "eq",
+  "index": 1,
+  "parent_id": 460428,
+  "path": "/curve25519-dalek/src/edwards/affine.rs/eq",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn eq(&self, other: &Self) -> bool {\n        self.ct_eq(other).into()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

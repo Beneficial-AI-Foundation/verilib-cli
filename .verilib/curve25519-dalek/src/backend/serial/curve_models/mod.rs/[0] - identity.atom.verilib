@@ -1,0 +1,8 @@
+    fn identity() -> ProjectiveNielsPoint {
+        ProjectiveNielsPoint {
+            Y_plus_X: FieldElement::ONE,
+            Y_minus_X: FieldElement::ONE,
+            Z: FieldElement::ONE,
+            T2d: FieldElement::ZERO,
+        }
+    }

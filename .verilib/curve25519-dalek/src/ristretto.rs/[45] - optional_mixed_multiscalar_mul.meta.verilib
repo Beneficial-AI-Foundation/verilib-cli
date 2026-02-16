@@ -1,0 +1,23 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/mod.rs/optional_mixed_multiscalar_mul"
+  ],
+  "disabled": false,
+  "fingerprint": "d72333388c8cea4f59681c64581cc2479f393297bbedcc4f17d1baac84b6a30e",
+  "id": 460483,
+  "identifier": "optional_mixed_multiscalar_mul",
+  "index": 45,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/optional_mixed_multiscalar_mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn optional_mixed_multiscalar_mul<I, J, K>(\n        &self,\n        static_scalars: I,\n        dynamic_scalars: J,\n        dynamic_points: K,\n    ) -> Option<Self::Point>\n    where\n        I: IntoIterator,\n        I::Item: Borrow<Scalar>,\n        J: IntoIterator,\n        J::Item: Borrow<Scalar>,\n        K: IntoIterator<Item = Option<Self::Point>>,\n    {\n        self.0\n            .optional_mixed_multiscalar_mul(\n                static_scalars,\n                dynamic_scalars,\n                dynamic_points.into_iter().map(|P_opt| P_opt.map(|P| P.0)),\n            )\n            .map(RistrettoPoint)\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,23 @@
+{
+  "code_name": "Makefile",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/conditional_select"
+  ],
+  "disabled": false,
+  "fingerprint": "05d8ee9d93c7e2b5a10274256b479343130585946d9c7c62a749f9f15b23da3c",
+  "id": 460351,
+  "identifier": "conditional_select",
+  "index": 2,
+  "parent_id": 460348,
+  "path": "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/conditional_select",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {\n        AffineNielsPoint {\n            y_plus_x: FieldElement::conditional_select(&a.y_plus_x, &b.y_plus_x, choice),\n            y_minus_x: FieldElement::conditional_select(&a.y_minus_x, &b.y_minus_x, choice),\n            xy2d: FieldElement::conditional_select(&a.xy2d, &b.xy2d, choice),\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

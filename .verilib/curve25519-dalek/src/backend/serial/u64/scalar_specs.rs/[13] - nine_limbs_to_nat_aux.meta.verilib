@@ -1,0 +1,21 @@
+{
+  "code_name": "subtle_assumes.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "600a215774231bbf7588c5042ada47911d96223e985a45ab09feed6ecc178427",
+  "id": 460187,
+  "identifier": "nine_limbs_to_nat_aux",
+  "index": 13,
+  "parent_id": 460173,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/nine_limbs_to_nat_aux",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn nine_limbs_to_nat_aux(limbs: &[u128; 9]) -> nat {\n    (limbs[0] as nat) +\n    (limbs[1] as nat) * pow2(52) +\n    (limbs[2] as nat) * pow2(104) +\n    (limbs[3] as nat) * pow2(156) +\n    (limbs[4] as nat) * pow2(208) +\n    (limbs[5] as nat) * pow2(260) +\n    (limbs[6] as nat) * pow2(312) +\n    (limbs[7] as nat) * pow2(364) +\n    (limbs[8] as nat) * pow2(416)\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

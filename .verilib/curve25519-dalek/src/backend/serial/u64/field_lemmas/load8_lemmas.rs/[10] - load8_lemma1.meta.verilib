@@ -1,0 +1,23 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_lemma_base"
+  ],
+  "disabled": false,
+  "fingerprint": "e1443f22c85024a5a4fe86b136b150624d7868be7644288f0221359024d66eb3",
+  "id": 460218,
+  "identifier": "load8_lemma1",
+  "index": 10,
+  "parent_id": 460207,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_lemma1",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn load8_lemma1(a: nat, b: u8, j: nat, k: nat)\n    requires\n        a < pow2(j),\n        j + 8 <= 64,\n        k <= j\n    ensures\n        (a + b * pow2(j)) as nat / pow2(k)\n        ==\n        a / pow2(k) + (b * pow2(j)) as nat / pow2(k)\n\n{\n    let cb = (b * pow2(j)) as nat;\n\n    load8_lemma_base(a, b, j, k);\n\n    assert(cb % pow2(k) == 0) by {\n            lemma_pow2_adds((j - k) as nat, k);\n            lemma_mul_is_associative(b as int, pow2((j - k) as nat) as int, pow2(k) as int);\n            lemma_mod_multiples_basic(b * pow2((j - k) as nat), pow2(k) as int);\n        }\n\n    assert((a % pow2(k) + cb % pow2(k)) < pow2(k)) by {\n        lemma_mod_division_less_than_divisor(a as int, pow2(k) as int);\n    }\n\n    lemma_div_multiples_vanish_fancy(\n        (a / pow2(k) + cb / pow2(k)) as int,\n        (a % pow2(k) + cb % pow2(k)) as int,\n        pow2(k) as int\n    );\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

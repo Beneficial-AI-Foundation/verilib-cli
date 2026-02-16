@@ -1,0 +1,25 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/scalar.rs/pack",
+    "/curve25519-dalek/src/scalar.rs/unpack",
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/sub"
+  ],
+  "disabled": false,
+  "fingerprint": "047eac696c6ccfe15ffe8948a6dc761db7c9e77a5972c4f475040f29481cbca3",
+  "id": 460030,
+  "identifier": "sub",
+  "index": 10,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/sub",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn sub(self, rhs: &'a Scalar) -> Scalar {\n        // The UnpackedScalar::sub function produces reduced outputs if the inputs are reduced. By\n        // Scalar invariant #1, this is always the case.\n        UnpackedScalar::sub(&self.unpack(), &rhs.unpack()).pack()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

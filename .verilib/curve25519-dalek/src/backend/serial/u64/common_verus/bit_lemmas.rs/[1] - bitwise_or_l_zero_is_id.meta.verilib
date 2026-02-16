@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "cfe5303f39d5c445dfee8e9a07100f74b2ae6f52375f345f2ee1ff8eac2732ce",
+  "id": 460140,
+  "identifier": "bitwise_or_l_zero_is_id",
+  "index": 1,
+  "parent_id": 460138,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/bit_lemmas.rs/bitwise_or_l_zero_is_id",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn bitwise_or_l_zero_is_id(a: u64)\n    ensures\n        0 | a == a\n{\n    assert( 0 | a == a) by (bit_vector);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

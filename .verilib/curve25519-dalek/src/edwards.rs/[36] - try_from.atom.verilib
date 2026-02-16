@@ -1,0 +1,3 @@
+    fn try_from(slice: &[u8]) -> Result<CompressedEdwardsY, TryFromSliceError> {
+        Self::from_slice(slice)
+    }

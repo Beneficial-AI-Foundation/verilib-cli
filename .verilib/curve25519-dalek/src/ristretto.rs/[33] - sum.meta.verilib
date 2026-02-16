@@ -1,0 +1,23 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/ristretto.rs/identity"
+  ],
+  "disabled": false,
+  "fingerprint": "4d205a9be4a4c449b8f7f4c1bc441453b5094087567e33ef77c06cce199c5387",
+  "id": 460471,
+  "identifier": "sum",
+  "index": 33,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/sum",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn sum<I>(iter: I) -> Self\n    where\n        I: Iterator<Item = T>,\n    {\n        iter.fold(RistrettoPoint::identity(), |acc, item| acc + item.borrow())\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

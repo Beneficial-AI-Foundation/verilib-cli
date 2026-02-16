@@ -1,0 +1,6 @@
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Do a round trip through a `FieldElement`. `as_bytes` is guaranteed to give a canonical
+        // 32-byte encoding
+        let canonical_bytes = FieldElement::from_bytes(&self.0).to_bytes();
+        canonical_bytes.hash(state);
+    }

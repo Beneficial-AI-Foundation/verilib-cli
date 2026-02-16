@@ -1,0 +1,21 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "1554182a8f7a3fb85a6147778ddc2745fcdd1d3f2aacfe84cc7ae195993656c2",
+  "id": 460470,
+  "identifier": "mul_base",
+  "index": 32,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/mul_base",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn mul_base(scalar: &Scalar) -> Self {\n        #[cfg(not(feature = \"precomputed-tables\"))]\n        {\n            scalar * constants::RISTRETTO_BASEPOINT_POINT\n        }\n\n        #[cfg(feature = \"precomputed-tables\")]\n        {\n            scalar * constants::RISTRETTO_BASEPOINT_TABLE\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

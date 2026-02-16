@@ -1,0 +1,21 @@
+{
+  "code_name": "subtle_assumes.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "9764afb7d7aa347c86df50d764f2af734f99e11c2df70aea8233c6c5bbd14198",
+  "id": 460176,
+  "identifier": "bytes_wide_to_nat_rec",
+  "index": 2,
+  "parent_id": 460173,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/bytes_wide_to_nat_rec",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn bytes_wide_to_nat_rec(bytes: &[u8; 64], index: int) -> nat\ndecreases 64 - index\n{\n    if index >= 64 {\n        0\n    } else {\n        (bytes[index] as nat) * pow2((index * 8) as nat) + bytes_wide_to_nat_rec(bytes, index + 1)\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

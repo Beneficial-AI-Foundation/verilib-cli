@@ -1,0 +1,3 @@
+    fn len(&self) -> usize {
+        self.static_lookup_tables.len()
+    }

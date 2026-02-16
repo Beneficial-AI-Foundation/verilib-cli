@@ -1,0 +1,21 @@
+{
+  "code_name": "ristretto.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "e59aae3eedbd2e494c93c62294471a0d87347e11c994ee6ecdb23888502da6f5",
+  "id": 460487,
+  "identifier": "vartime_mixed_multiscalar_mul",
+  "index": 2,
+  "parent_id": 460484,
+  "path": "/curve25519-dalek/src/traits.rs/vartime_mixed_multiscalar_mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn vartime_mixed_multiscalar_mul<I, J, K>(\n        &self,\n        static_scalars: I,\n        dynamic_scalars: J,\n        dynamic_points: K,\n    ) -> Self::Point\n    where\n        I: IntoIterator,\n        I::Item: Borrow<Scalar>,\n        J: IntoIterator,\n        J::Item: Borrow<Scalar>,\n        K: IntoIterator,\n        K::Item: Borrow<Self::Point>,\n    {\n        Self::optional_mixed_multiscalar_mul(\n            self,\n            static_scalars,\n            dynamic_scalars,\n            dynamic_points.into_iter().map(|P| Some(P.borrow().clone())),\n        )\n        .expect(\"should return some point\")\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

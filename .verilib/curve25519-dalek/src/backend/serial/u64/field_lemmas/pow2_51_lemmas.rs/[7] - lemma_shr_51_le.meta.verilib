@@ -1,0 +1,21 @@
+{
+  "code_name": "negate_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "061515715b191133f4e3f71124c72228c84ad5e21d05bd14141bcf36d19cba0a",
+  "id": 460200,
+  "identifier": "lemma_shr_51_le",
+  "index": 7,
+  "parent_id": 460192,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2_51_lemmas.rs/lemma_shr_51_le",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_shr_51_le(a: u128, b: u128)\n    requires\n        a <= b\n    ensures\n        (a >> 51) <= (b >> 51)\n{\n    lemma_pow2_pos(51);\n    lemma2_to64_rest(); // pow2(51) value\n    lemma_u128_shr_is_div(a, 51);\n    lemma_u128_shr_is_div(b, 51);\n    lemma_div_is_ordered(a as int, b as int, 51);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

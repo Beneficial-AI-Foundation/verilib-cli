@@ -1,0 +1,16 @@
+            fn from(P: &'a RistrettoPoint) -> BatchCompressState {
+                let XX = P.0.X.square();
+                let YY = P.0.Y.square();
+                let ZZ = P.0.Z.square();
+                let dTT = &P.0.T.square() * &constants::EDWARDS_D;
+
+                let e = &P.0.X * &(&P.0.Y + &P.0.Y); // = 2*X*Y
+                let f = &ZZ + &dTT;                  // = Z^2 + d*T^2
+                let g = &YY + &XX;                   // = Y^2 - a*X^2
+                let h = &ZZ - &dTT;                  // = Z^2 - d*T^2
+
+                let eg = &e * &g;
+                let fh = &f * &h;
+
+                BatchCompressState{ e, f, g, h, eg, fh }
+            }

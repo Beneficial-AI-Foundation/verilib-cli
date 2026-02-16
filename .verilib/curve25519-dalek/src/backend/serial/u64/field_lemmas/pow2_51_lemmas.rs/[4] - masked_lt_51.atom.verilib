@@ -1,0 +1,7 @@
+pub proof fn masked_lt_51(v: u64)
+    ensures
+        v & mask51 < (1u64 << 51),
+{
+    l51_bit_mask_lt(); // mask51 == low_bits_mask(51)
+    masked_lt(v, 51);
+}

@@ -1,0 +1,33 @@
+{
+  "code_name": "mask_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/group_order",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/limbs_bounded",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_add_loop_bounds",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_add_loop_invariant",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_add_carry_and_sum_bounds",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_add_sum_simplify",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_l_equals_group_order",
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/sub",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/seq_u64_to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_l_value_properties"
+  ],
+  "disabled": false,
+  "fingerprint": "ec9f9378ab0ba893af2968cc9218087802bb532ad2defe5431d7fa09f96e9293",
+  "id": 460161,
+  "identifier": "add",
+  "index": 8,
+  "parent_id": 460152,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar.rs/add",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn add(a: &Scalar52, b: &Scalar52) -> (s: Scalar52)\n    requires\n        limbs_bounded(a),\n        limbs_bounded(b),\n        to_nat(&a.limbs) < group_order(),\n        to_nat(&b.limbs) < group_order(),\n    ensures\n        to_nat(&s.limbs) == (to_nat(&a.limbs) + to_nat(&b.limbs)) % group_order(),\n    {\n        let mut sum = Scalar52 { limbs: [0u64, 0u64, 0u64, 0u64, 0u64] };\n        proof { assert(1u64 << 52 > 0) by (bit_vector); }\n        let mask = (1u64 << 52) - 1;\n\n        // a + b\n        let mut carry: u64 = 0;\n        proof {\n            // Base case: empty subrange has value 0\n            assert(seq_u64_to_nat(a.limbs@.subrange(0, 0 as int)) == 0);\n            assert(seq_u64_to_nat(b.limbs@.subrange(0, 0 as int)) == 0);\n            assert(seq_u64_to_nat(sum.limbs@.subrange(0, 0 as int)) == 0);\n            assert((carry >> 52) == 0) by (bit_vector) requires carry == 0;\n            lemma2_to64();\n            assert(pow2(0) == 1);\n        }\n        for i in 0..5\n           invariant\n                    forall|j: int| 0 <= j < i ==> sum.limbs[j] < 1u64 << 52,\n                    limbs_bounded(a),\n                    limbs_bounded(b),\n                    mask == (1u64 << 52) - 1,\n                    i == 0 ==> carry == 0,\n                    i >= 1 ==> (carry >> 52) < 2,\n                    seq_u64_to_nat(a.limbs@.subrange(0, i as int)) + seq_u64_to_nat(b.limbs@.subrange(0, i as int)) ==\n                    seq_u64_to_nat(sum.limbs@.subrange(0, i as int)) + (carry >> 52) * pow2((52 * (i) as nat))\n        {\n            proof {lemma_add_loop_bounds(i as int, carry, a.limbs[i as int], b.limbs[i as int]);}\n            let ghost old_carry = carry;\n            carry = a.limbs[i] + b.limbs[i] + (carry >> 52);\n            let ghost sum_loop_start = sum;\n            sum.limbs[i] = carry & mask;\n            assert(sum_loop_start.limbs@.subrange(0, i as int) == sum.limbs@.subrange(0, i as int));\n            proof {\n                lemma_add_loop_invariant(sum, carry, i, a, b, old_carry, mask, sum_loop_start);\n            }\n            proof {lemma_add_carry_and_sum_bounds(carry, mask);}\n        }\n\n        assert(seq_u64_to_nat(a.limbs@.subrange(0, 5 as int)) + seq_u64_to_nat(b.limbs@.subrange(0, 5 as int)) ==\n               seq_u64_to_nat(sum.limbs@.subrange(0, 5 as int)) + (carry >> 52) * pow2((52 * (5) as nat)));\n\n        proof {lemma_add_sum_simplify(a, b, &sum, carry);}\n\n        // subtract l if the sum is >= l\n        proof { lemma_l_value_properties(&constants::L, &sum); }\n        assert(group_order() > to_nat(&sum.limbs) - group_order() >= -group_order());\n        proof{lemma_l_equals_group_order();}\n        proof{lemma_mod_sub_multiples_vanish(to_nat(&sum.limbs) as int, group_order() as int);}\n        Scalar52::sub(&sum, &constants::L)\n\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

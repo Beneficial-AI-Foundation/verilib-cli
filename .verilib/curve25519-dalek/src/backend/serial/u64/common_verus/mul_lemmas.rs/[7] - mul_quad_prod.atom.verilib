@@ -1,0 +1,13 @@
+pub proof fn mul_quad_prod(a1: int, b1: int, a2: int, b2: int)
+    ensures
+        (a1 * b1) * (a2 * b2) == (a1 * a2) * (b1 * b2)
+{
+    // commutativity is baked-in
+
+    // (a1 * b1) * (a2 * b2) =  ((a1 * b1) * a2) * b2
+    lemma_mul_is_associative(a1 * b1, a2, b2);
+    // (a1 * b1) * a2 = a2 * (a1 * b1) = (a2 * a1) * b1
+    lemma_mul_is_associative(a2, a1, b1);
+    // ((a2 * a1) * b1) * b2 = (a2 * a1) * (b1 * b2)
+    lemma_mul_is_associative(a2 * a1, b1, b2);
+}

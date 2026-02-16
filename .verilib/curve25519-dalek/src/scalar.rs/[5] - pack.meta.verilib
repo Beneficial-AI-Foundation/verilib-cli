@@ -1,0 +1,23 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/to_bytes"
+  ],
+  "disabled": false,
+  "fingerprint": "b45b0f8f998055646598bceb1b98eb0f6d649a72f2c17c078c5e0d6d88ff53b8",
+  "id": 460025,
+  "identifier": "pack",
+  "index": 5,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/pack",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn pack(&self) -> Scalar {\n        Scalar {\n            bytes: self.to_bytes(),\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

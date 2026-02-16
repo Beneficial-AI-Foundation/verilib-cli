@@ -1,0 +1,5 @@
+    fn add_assign(&mut self, _rhs: &'a FieldElement51) {
+        for i in 0..5 {
+            self.0[i] += _rhs.0[i];
+        }
+    }

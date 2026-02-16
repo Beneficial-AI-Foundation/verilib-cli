@@ -1,0 +1,6 @@
+    fn identity() -> CompressedEdwardsY {
+        CompressedEdwardsY([
+            1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ])
+    }

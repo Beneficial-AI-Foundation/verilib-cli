@@ -1,0 +1,21 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "e1364f4f391a05fbbda298deb73ce70114163438d921d4b083fd076e54c23a69",
+  "id": 460496,
+  "identifier": "determine_curve25519_dalek_bits_warning",
+  "index": 11,
+  "parent_id": 459997,
+  "path": "/curve25519-dalek/src/determine_curve25519_dalek_bits_warning",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn determine_curve25519_dalek_bits_warning(cause: &str) {\n        println!(\"cargo:warning=\\\"Defaulting to curve25519_dalek_bits=32: {cause}\\\"\");\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

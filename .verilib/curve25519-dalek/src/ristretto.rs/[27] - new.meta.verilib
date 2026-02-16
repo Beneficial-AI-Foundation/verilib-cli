@@ -1,0 +1,23 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/mod.rs/new"
+  ],
+  "disabled": false,
+  "fingerprint": "65f787a449365e0bcc97ab09d1e59e4b39b753ca59a6c6138979d1f32c809b86",
+  "id": 460465,
+  "identifier": "new",
+  "index": 27,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/new",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn new<I>(static_points: I) -> Self\n    where\n        I: IntoIterator,\n        I::Item: Borrow<Self::Point>,\n    {\n        Self(crate::backend::VartimePrecomputedStraus::new(\n            static_points.into_iter().map(|P| P.borrow().0),\n        ))\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

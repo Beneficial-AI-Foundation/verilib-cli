@@ -1,0 +1,21 @@
+{
+  "code_name": "diagnostics.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "610056a83d1acd5b3a71c0362c61abff55ecd6ac6a0df3c4b7edc53a6dded9cb",
+  "id": 460063,
+  "identifier": "select",
+  "index": 1,
+  "parent_id": 460061,
+  "path": "/curve25519-dalek/src/window.rs/select",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn select(&self, x: usize) -> T {\n        debug_assert_eq!(x & 1, 1);\n        debug_assert!(x < 128);\n\n        self.0[x / 2]\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

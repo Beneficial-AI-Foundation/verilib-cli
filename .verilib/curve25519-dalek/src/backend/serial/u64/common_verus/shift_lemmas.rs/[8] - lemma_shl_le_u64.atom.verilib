@@ -1,0 +1,12 @@
+pub proof fn lemma_shl_le_u64(a: u64, b: u64, k: nat)
+    requires
+        a <= b,
+        k < 64,
+        (b * pow2(k)) <= u64::MAX,
+    ensures
+        (a << k) <= (b << k)
+{
+    mul_le(a as nat, b as nat, pow2(k), pow2(k));
+    lemma_u64_shl_is_mul(a, k as u64);
+    lemma_u64_shl_is_mul(b, k as u64);
+}

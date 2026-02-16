@@ -1,0 +1,26 @@
+{
+  "code_name": "pow2_51_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_at_versions_equivalent",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/field_core.rs/load8_at_spec",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/plus_version_is_spec",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/rec_version_is_exec"
+  ],
+  "disabled": false,
+  "fingerprint": "25b467b8f9e2cf815a473ba5cf56e2048157335bdd08d4616ab0dcaf008f4e3e",
+  "id": 460291,
+  "identifier": "load8_at",
+  "index": 3,
+  "parent_id": 460287,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_verus.rs/load8_at",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "const fn load8_at(input: &[u8], i: usize) -> (r: u64)\n    requires\n        i + 7 < input.len(),\n    ensures\n        r as nat == load8_at_spec(input, i)\n{\n    proof {\n        rec_version_is_exec(input, i);\n        load8_at_versions_equivalent(input, i, 7);\n        plus_version_is_spec(input, i);\n    }\n        (input[i] as u64)\n    | ((input[i + 1] as u64) << 8)\n    | ((input[i + 2] as u64) << 16)\n    | ((input[i + 3] as u64) << 24)\n    | ((input[i + 4] as u64) << 32)\n    | ((input[i + 5] as u64) << 40)\n    | ((input[i + 6] as u64) << 48)\n    | ((input[i + 7] as u64) << 56)\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

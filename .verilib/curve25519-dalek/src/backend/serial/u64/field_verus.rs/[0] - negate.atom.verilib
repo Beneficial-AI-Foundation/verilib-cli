@@ -1,0 +1,49 @@
+    pub fn negate(&mut self)
+        requires
+            forall|i: int| 0 <= i < 5 ==> old(self).limbs[i] < (1u64 << 51),
+        ensures
+            forall|i: int| 0 <= i < 5 ==> self.limbs[i] < (1u64 << 52),
+            // Assume we start with l = (l0, l1, l2, l3, l4).
+            // Using c0 = 2^51 - 19 and c = 2^51 - 1, we can see that
+            // ( 36028797018963664u64 - l0,
+            //   36028797018963952u64 - l1,
+            //   36028797018963952u64 - l2,
+            //   36028797018963952u64 - l3,
+            //   36028797018963952u64 - l4 )
+            // is just 16 * (c0, c, c, c, c) - l (in vector notation)
+            // Further, as_nat((c0, c, c, c, c)) = p, so
+            // as_nat(16 * (c0, c, c, c, c) - l) is 16p - as_nat(l)
+            // We know as_nat(reduce(v)) = as_nat(v) - p * (v4 >> 51) for any v.
+            // This gives us the identity
+            // as_nat(negate(l)) = as_nat(reduce(16 * (c0, c, c, c, c) - l))
+            //                   = 16p - as_nat(l) - p * ((16c - l4) >> 51)
+            // Note that (16c - l4) >> 51 is either 14 or 15, in either case < 16.
+            as_nat(self.limbs) == 16 * p() - as_nat(old(self).limbs) - p() * ((36028797018963952u64 - old(self).limbs[4]) as u64 >> 51),
+            (as_nat(self.limbs) + as_nat(old(self).limbs)) % p() == 0
+    {
+        proof {
+            lemma_neg_no_underflow(self.limbs);
+            negate_proof(self.limbs);
+        }
+        // See commentary in the Sub impl: (copied below)
+            // To avoid underflow, first add a multiple of p.
+            // Choose 16*p = p << 4 to be larger than 54-bit _rhs.
+            //
+            // If we could statically track the bitlengths of the limbs
+            // of every FieldElement51, we could choose a multiple of p
+            // just bigger than _rhs and avoid having to do a reduction.
+            //
+            // Since we don't yet have type-level integers to do this, we
+            // have to add an explicit reduction call here.
+        // Note on "magic numbers":
+        // 36028797018963664u64 = 2^55 - 304 = 16 * (2^51 - 19)
+        // 36028797018963952u64 = 2^55 - 16 =  16 * (2^51 - 1)
+        let neg = FieldElement51::reduce([
+            36028797018963664u64 - self.limbs[0],
+            36028797018963952u64 - self.limbs[1],
+            36028797018963952u64 - self.limbs[2],
+            36028797018963952u64 - self.limbs[3],
+            36028797018963952u64 - self.limbs[4],
+        ]);
+        self.limbs = neg.limbs;
+    }

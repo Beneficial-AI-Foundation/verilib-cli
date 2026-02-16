@@ -1,0 +1,23 @@
+{
+  "code_name": "lib.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/edwards/affine.rs/to_edwards"
+  ],
+  "disabled": false,
+  "fingerprint": "567b82dc55b627a39cc41fabdd7008da1b1d52b79828a17f92af3515fadd0c93",
+  "id": 460433,
+  "identifier": "mul",
+  "index": 4,
+  "parent_id": 460428,
+  "path": "/curve25519-dalek/src/edwards/affine.rs/mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn mul(self, rhs: AffinePoint) -> EdwardsPoint {\n        self * &rhs\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

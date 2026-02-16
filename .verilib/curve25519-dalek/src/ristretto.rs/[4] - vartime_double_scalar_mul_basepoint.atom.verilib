@@ -1,0 +1,9 @@
+    pub fn vartime_double_scalar_mul_basepoint(
+        a: &Scalar,
+        A: &RistrettoPoint,
+        b: &Scalar,
+    ) -> RistrettoPoint {
+        RistrettoPoint(EdwardsPoint::vartime_double_scalar_mul_basepoint(
+            a, &A.0, b,
+        ))
+    }

@@ -1,0 +1,21 @@
+{
+  "code_name": "Makefile",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "2fb5ec7043d4b92f5da7e98b1c2fda78fb66e8f2dee9072ef555bd3c18077b99",
+  "id": 460367,
+  "identifier": "identity",
+  "index": 18,
+  "parent_id": 460348,
+  "path": "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/identity",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn identity() -> ProjectivePoint {\n        ProjectivePoint {\n            X: FieldElement::ZERO,\n            Y: FieldElement::ONE,\n            Z: FieldElement::ONE,\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

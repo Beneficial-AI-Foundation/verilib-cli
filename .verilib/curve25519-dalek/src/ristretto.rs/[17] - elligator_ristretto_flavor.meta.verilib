@@ -1,0 +1,27 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/as_extended",
+    "/curve25519-dalek/src/field.rs/sqrt_ratio_i",
+    "/curve25519-dalek/src/field.rs/is_negative",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/square",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/conditional_assign"
+  ],
+  "disabled": false,
+  "fingerprint": "18f4665e7227feeb10c93faf679f886c4814343149309629ad550c580413d53a",
+  "id": 460455,
+  "identifier": "elligator_ristretto_flavor",
+  "index": 17,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/elligator_ristretto_flavor",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub(crate) fn elligator_ristretto_flavor(r_0: &FieldElement) -> RistrettoPoint {\n        let i = &constants::SQRT_M1;\n        let d = &constants::EDWARDS_D;\n        let one_minus_d_sq = &constants::ONE_MINUS_EDWARDS_D_SQUARED;\n        let d_minus_one_sq = &constants::EDWARDS_D_MINUS_ONE_SQUARED;\n        let mut c = constants::MINUS_ONE;\n\n        let one = FieldElement::ONE;\n\n        let r = i * &r_0.square();\n        let N_s = &(&r + &one) * one_minus_d_sq;\n        let D = &(&c - &(d * &r)) * &(&r + d);\n\n        let (Ns_D_is_sq, mut s) = FieldElement::sqrt_ratio_i(&N_s, &D);\n        let mut s_prime = &s * r_0;\n        let s_prime_is_pos = !s_prime.is_negative();\n        s_prime.conditional_negate(s_prime_is_pos);\n\n        s.conditional_assign(&s_prime, !Ns_D_is_sq);\n        c.conditional_assign(&r, !Ns_D_is_sq);\n\n        let N_t = &(&(&c * &(&r - &one)) * d_minus_one_sq) - &D;\n        let s_sq = s.square();\n\n        use crate::backend::serial::curve_models::CompletedPoint;\n\n        // The conversion from W_i is exactly the conversion from P1xP1.\n        RistrettoPoint(\n            CompletedPoint {\n                X: &(&s + &s) * &D,\n                Z: &N_t * &constants::SQRT_AD_MINUS_ONE,\n                Y: &FieldElement::ONE - &s_sq,\n                T: &FieldElement::ONE + &s_sq,\n            }\n            .as_extended(),\n        )\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

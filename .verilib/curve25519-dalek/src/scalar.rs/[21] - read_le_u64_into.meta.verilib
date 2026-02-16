@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "f6b22c2fff9bab0fe5388fff0b7152f33aa4aeb400434400f209423cbd4a6b6c",
+  "id": 460041,
+  "identifier": "read_le_u64_into",
+  "index": 21,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/read_le_u64_into",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "fn read_le_u64_into(src: &[u8], dst: &mut [u64]) {\n    assert!(\n        src.len() == 8 * dst.len(),\n        \"src.len() = {}, dst.len() = {}\",\n        src.len(),\n        dst.len()\n    );\n    for (bytes, val) in src.chunks(8).zip(dst.iter_mut()) {\n        *val = u64::from_le_bytes(\n            bytes\n                .try_into()\n                .expect(\"Incorrect src length, should be 8 * dst.len()\"),\n        );\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

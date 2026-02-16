@@ -1,0 +1,27 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/seq_u64_to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/limbs_bounded",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/group_order",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_pow2_260_greater_than_2_group_order"
+  ],
+  "disabled": false,
+  "fingerprint": "0cbb6a52757f79e03a682c57759b37641d171a927e661b7c2ced9c6d0aee3aca",
+  "id": 460303,
+  "identifier": "lemma_add_sum_simplify",
+  "index": 2,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_add_sum_simplify",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_add_sum_simplify(a: &Scalar52, b: &Scalar52, sum: &Scalar52, carry: u64)\n    requires\n        limbs_bounded(a),\n        limbs_bounded(b),\n        to_nat(&a.limbs) < group_order(),\n        to_nat(&b.limbs) < group_order(),\n        forall|j: int| 0 <= j < 5 ==> sum.limbs[j] < (1u64 << 52),\n        (carry >> 52) < 2,\n        seq_u64_to_nat(a.limbs@.subrange(0, 5 as int)) + seq_u64_to_nat(b.limbs@.subrange(0, 5 as int)) ==\n               seq_u64_to_nat(sum.limbs@.subrange(0, 5 as int)) + (carry >> 52) as nat * pow2((52 * (5) as nat))\n    ensures\n        to_nat(&a.limbs) + to_nat(&b.limbs) == to_nat(&sum.limbs)\n{\n    // First establish the relationship between the different representations\n    assert(seq_u64_to_nat(a.limbs@.subrange(0, 5 as int)) == to_nat(&a.limbs)) by {\n        assert(a.limbs@ == a.limbs@.subrange(0, 5 as int));\n        assert(seq_u64_to_nat(a.limbs@) == to_nat(&a.limbs));\n    }\n    assert(seq_u64_to_nat(b.limbs@.subrange(0, 5 as int)) == to_nat(&b.limbs)) by {\n        assert(b.limbs@ == b.limbs@.subrange(0, 5 as int));\n        assert(seq_u64_to_nat(b.limbs@) == to_nat(&b.limbs));\n    }\n    assert(seq_u64_to_nat(sum.limbs@.subrange(0, 5 as int)) == to_nat(&sum.limbs)) by {\n        assert(sum.limbs@ == sum.limbs@.subrange(0, 5 as int));\n        assert(seq_u64_to_nat(sum.limbs@) == to_nat(&sum.limbs));\n    }\n\n    assert(to_nat(&a.limbs) + to_nat(&b.limbs) == to_nat(&sum.limbs) + (carry >> 52) * pow2((52 * (5) as nat)));\n\n    // From the loop invariant, we have: a + b == sum + (carry >> 52) * 2^260\n    assert(52 * 5 == 260) by (compute);\n    assert(pow2((52 * 5) as nat) == pow2(260));\n    assert(to_nat(&a.limbs) + to_nat(&b.limbs) == to_nat(&sum.limbs) + (carry >> 52) as nat * pow2(260));\n\n    // Since a < group_order() and b < group_order(), we have a + b < 2 * group_order()\n    // This is just basic arithmetic: if x < A and y < A, then x + y < A + A = 2*A\n    assert(to_nat(&a.limbs) + to_nat(&b.limbs) < group_order() + group_order());\n    assert(group_order() + group_order() == 2 * group_order());\n    assert(to_nat(&a.limbs) + to_nat(&b.limbs) < 2 * group_order());\n\n    // Therefore: sum + (carry >> 52) * 2^260 < 2 * group_order()\n    assert(to_nat(&sum.limbs) + (carry >> 52) as nat * pow2(260) < 2 * group_order());\n\n    // Prove a contradiction if carry is nonzero\n    assert((carry >> 52) as nat * pow2(260) < 2 * group_order());\n    if carry >> 52 == 1 {\n        lemma_pow2_260_greater_than_2_group_order();\n        assert(1 as nat * pow2(260) < 2 * group_order());\n        assert(false);\n    }\n    assert(carry >> 52 == 0);\n\n    // Since carry >> 52 >= 0 and pow2(260) > 0, we have (carry >> 52) * pow2(260) >= 0\n    // Therefore sum < sum + (carry >> 52) * pow2(260) < 2 * group_order()\n    lemma_pow2_pos(260);\n    assert(pow2(260) > 0);\n    assert((carry >> 52) as nat * pow2(260) >= 0);\n    assert(to_nat(&sum.limbs) <= to_nat(&sum.limbs) + (carry >> 52) as nat * pow2(260));\n    assert(to_nat(&sum.limbs) < 2 * group_order());\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

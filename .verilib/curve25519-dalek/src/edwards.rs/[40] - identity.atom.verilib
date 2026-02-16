@@ -1,0 +1,8 @@
+    fn identity() -> EdwardsPoint {
+        EdwardsPoint {
+            X: FieldElement::ZERO,
+            Y: FieldElement::ONE,
+            Z: FieldElement::ONE,
+            T: FieldElement::ZERO,
+        }
+    }

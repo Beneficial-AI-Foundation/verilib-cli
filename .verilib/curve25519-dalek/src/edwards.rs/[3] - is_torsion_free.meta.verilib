@@ -1,0 +1,23 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/traits.rs/is_identity"
+  ],
+  "disabled": false,
+  "fingerprint": "6a048d50b9210b2eb1909c7f75e71ba842afb8539b13b34191cd60fbb1738ff5",
+  "id": 460378,
+  "identifier": "is_torsion_free",
+  "index": 3,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/is_torsion_free",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn is_torsion_free(&self) -> bool {\n        (self * constants::BASEPOINT_ORDER).is_identity()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,23 @@
+{
+  "code_name": "CHANGELOG.md",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/scalar_mul/precomputed_straus.rs/is_empty"
+  ],
+  "disabled": false,
+  "fingerprint": "9268ce4630976cd514104e0d3c5adfb803a416b9230fa173b9cd88864c7c7d13",
+  "id": 460370,
+  "identifier": "is_empty",
+  "index": 2,
+  "parent_id": 460081,
+  "path": "/curve25519-dalek/src/backend/is_empty",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn is_empty(&self) -> bool {\n        use crate::traits::VartimePrecomputedMultiscalarMul;\n\n        match self {\n            // #[cfg(curve25519_dalek_backend = \"simd\")]\n            // VartimePrecomputedStraus::Avx2(inner) => inner.is_empty(),\n            // #[cfg(all(curve25519_dalek_backend = \"unstable_avx512\", nightly))]\n            // VartimePrecomputedStraus::Avx512ifma(inner) => inner.is_empty(),\n            VartimePrecomputedStraus::Scalar(inner) => inner.is_empty(),\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

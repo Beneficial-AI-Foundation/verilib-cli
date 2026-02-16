@@ -1,0 +1,10 @@
+        const fn load8_at(input: &[u8], i: usize) -> u64 {
+               (input[i] as u64)
+            | ((input[i + 1] as u64) << 8)
+            | ((input[i + 2] as u64) << 16)
+            | ((input[i + 3] as u64) << 24)
+            | ((input[i + 4] as u64) << 32)
+            | ((input[i + 5] as u64) << 40)
+            | ((input[i + 6] as u64) << 48)
+            | ((input[i + 7] as u64) << 56)
+        }

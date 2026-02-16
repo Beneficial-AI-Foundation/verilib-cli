@@ -1,0 +1,23 @@
+{
+  "code_name": "field_verus.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/common_verus/mul_lemmas.rs/mul_le"
+  ],
+  "disabled": false,
+  "fingerprint": "b1a0917257eed63670d37b3e2b547a3e32c9db5700117d435f3302f2294ac836",
+  "id": 460112,
+  "identifier": "pow2_mul_u8",
+  "index": 4,
+  "parent_id": 460107,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/pow_lemmas.rs/pow2_mul_u8",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn pow2_mul_u8(a: u8, k: nat)\n    ensures\n        pow2(k) * a <= pow2(k + 8) - pow2(k)\n{\n    assert(a <= pow2(8) - 1) by {\n        lemma2_to64();\n    }\n\n    mul_le(a as nat, (pow2(8) - 1) as nat, pow2(k), pow2(k));\n    assert((pow2(8) - 1) * pow2(k) == pow2(k + 8) - pow2(k)) by {\n        lemma_mul_is_distributive_sub(pow2(k) as int, pow2(8) as int, 1);\n        lemma_pow2_adds(k, 8);\n    }\n\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,23 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/negate"
+  ],
+  "disabled": false,
+  "fingerprint": "75f448aa0d2dc30b204e3a39699647ce6aa4bfa7a5c2a0b37fb9e8d031c873a5",
+  "id": 460274,
+  "identifier": "neg",
+  "index": 8,
+  "parent_id": 460265,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field.rs/neg",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn neg(self) -> FieldElement51 {\n        let mut output = *self;\n        output.negate();\n        output\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

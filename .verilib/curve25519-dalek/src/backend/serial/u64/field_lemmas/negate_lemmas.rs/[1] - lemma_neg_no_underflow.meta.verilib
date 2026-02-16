@@ -1,0 +1,24 @@
+{
+  "code_name": "variable_base.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/negate_lemmas.rs/all_neg_limbs_positive",
+    "/curve25519-dalek/src/backend/serial/u64/common_verus/shift_lemmas.rs/shift_is_pow2"
+  ],
+  "disabled": false,
+  "fingerprint": "b0389188311df9c580406802f6207138b2ffc0ec071bf60510514312f954a2b7",
+  "id": 460224,
+  "identifier": "lemma_neg_no_underflow",
+  "index": 1,
+  "parent_id": 460222,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/negate_lemmas.rs/lemma_neg_no_underflow",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_neg_no_underflow(limbs: [u64; 5])\n    requires\n        forall|i: int| 0 <= i < 5 ==> limbs[i] < (1u64 << 51)\n    ensures\n        all_neg_limbs_positive(limbs)\n\n{\n    lemma2_to64_rest(); // pow2(51)\n    assert forall |i: int| 0 <= i < 5 implies limbs[i] < 16 * (pow2(51) - 19) by {\n        shift_is_pow2(51);\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

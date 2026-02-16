@@ -1,0 +1,23 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_at_or_version_rec"
+  ],
+  "disabled": false,
+  "fingerprint": "5f39bf131cdcf15a05b610e0f2f0ed02241b4eded1bd0f96e1374d6812a93f1e",
+  "id": 460209,
+  "identifier": "rec_version_is_exec",
+  "index": 1,
+  "parent_id": 460207,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/rec_version_is_exec",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn rec_version_is_exec(input: &[u8], i: usize)\n    ensures\n        load8_at_or_version_rec(input, i, 7)\n        ==\n        (input[i as int] as u64)\n        | ((input[i + 1] as u64) << 8)\n        | ((input[i + 2] as u64) << 16)\n        | ((input[i + 3] as u64) << 24)\n        | ((input[i + 4] as u64) << 32)\n        | ((input[i + 5] as u64) << 40)\n        | ((input[i + 6] as u64) << 48)\n        | ((input[i + 7] as u64) << 56)\n{\n    assert(load8_at_or_version_rec(input, i, 0) == (input[i as int] as u64));\n\n    assert forall |j: nat| 1 <= j <= 7 implies\n        #[trigger] load8_at_or_version_rec(input, i, j) ==\n        load8_at_or_version_rec(input, i, (j - 1) as nat)\n        | ((input[i + j] as u64) << 8 * j)\n    by {\n        reveal_with_fuel(load8_at_or_version_rec, 1);\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,25 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/limbs_bounded",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_general_bound"
+  ],
+  "disabled": false,
+  "fingerprint": "8f27a3204a402ddd1fc7a4eabc375328b259d751915d8cd63dc260e672586f02",
+  "id": 460301,
+  "identifier": "lemma_bound_scalar",
+  "index": 0,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_bound_scalar",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_bound_scalar(a: &Scalar52)\n    requires limbs_bounded(a)\n    ensures to_nat(&a.limbs) < pow2((52 * (5) as nat))\n{\n    lemma_general_bound(a.limbs@);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

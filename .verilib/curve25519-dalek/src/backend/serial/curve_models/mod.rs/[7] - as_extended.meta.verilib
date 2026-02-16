@@ -1,0 +1,21 @@
+{
+  "code_name": "Makefile",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "0d5e86910a07e1afbb16811d34a640c0231f8aa6056e55162f22a4b7f7f70009",
+  "id": 460356,
+  "identifier": "as_extended",
+  "index": 7,
+  "parent_id": 460348,
+  "path": "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/as_extended",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn as_extended(&self) -> EdwardsPoint {\n        EdwardsPoint {\n            X: &self.X * &self.T,\n            Y: &self.Y * &self.Z,\n            Z: &self.Z * &self.T,\n            T: &self.X * &self.Y,\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

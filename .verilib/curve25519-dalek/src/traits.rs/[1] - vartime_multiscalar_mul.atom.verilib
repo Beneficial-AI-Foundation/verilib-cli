@@ -1,0 +1,14 @@
+    fn vartime_multiscalar_mul<I, J>(scalars: I, points: J) -> Self::Point
+    where
+        I: IntoIterator,
+        I::Item: Borrow<Scalar>,
+        J: IntoIterator,
+        J::Item: Borrow<Self::Point>,
+        Self::Point: Clone,
+    {
+        Self::optional_multiscalar_mul(
+            scalars,
+            points.into_iter().map(|P| Some(P.borrow().clone())),
+        )
+        .expect("should return some point")
+    }

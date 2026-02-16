@@ -1,0 +1,21 @@
+{
+  "code_name": "mask_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "61a03f598c27c46366f4a3e8a16b954e046253ddaad1aef81228e2e09b9abd09",
+  "id": 460153,
+  "identifier": "index_mut",
+  "index": 0,
+  "parent_id": 460152,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar.rs/index_mut",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn index_mut(&mut self, _index: usize) -> &mut u64 {\n        &mut (self.limbs[_index])\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

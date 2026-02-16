@@ -1,0 +1,5 @@
+    fn conditional_assign(&mut self, other: &Self, choice: Choice) {
+        self.y_plus_x.conditional_assign(&other.y_plus_x, choice);
+        self.y_minus_x.conditional_assign(&other.y_minus_x, choice);
+        self.xy2d.conditional_assign(&other.xy2d, choice);
+    }

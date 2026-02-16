@@ -1,0 +1,23 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/mod.rs/variable_base_mul"
+  ],
+  "disabled": false,
+  "fingerprint": "ba88fbbbc008347015f6d4600b6d4031901fd6979f55d2774a381c977d8ae44d",
+  "id": 460379,
+  "identifier": "mul",
+  "index": 4,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn mul(self, scalar: &'a Scalar) -> EdwardsPoint {\n        crate::backend::variable_base_mul(self, scalar)\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,41 @@
+    fn new<I>(static_points: I) -> Self
+    where
+        I: IntoIterator,
+        I::Item: Borrow<Self::Point>;
+
+    /// Return the number of static points in the precomputation.
+    fn len(&self) -> usize;
+
+    /// Determine if the precomputation is empty.
+    fn is_empty(&self) -> bool;
+
+    /// Given `static_scalars`, an iterator of public scalars
+    /// \\(b_i\\), compute
+    /// $$
+    /// Q = b_1 B_1 + \cdots + b_m B_m,
+    /// $$
+    /// where the \\(B_j\\) are the points that were supplied to `new`.
+    ///
+    /// It is valid for \\(b_i\\) to have a shorter length than \\(B_j\\).
+    /// In this case, any "unused" points are ignored in the computation.
+    /// It is an error to call this function if \\(b_i\\) has a longer
+    /// length than \\(B_j\\).
+    ///
+    /// The trait bound aims for maximum flexibility: the input must
+    /// be convertible to iterators (`I: IntoIter`), and the
+    /// iterator's items must be `Borrow<Scalar>`, to allow iterators
+    /// returning either `Scalar`s or `&Scalar`s.
+    fn vartime_multiscalar_mul<I>(&self, static_scalars: I) -> Self::Point
+    where
+        I: IntoIterator,
+        I::Item: Borrow<Scalar>,
+    {
+        use core::iter;
+
+        Self::vartime_mixed_multiscalar_mul(
+            self,
+            static_scalars,
+            iter::empty::<Scalar>(),
+            iter::empty::<Self::Point>(),
+        )
+    }

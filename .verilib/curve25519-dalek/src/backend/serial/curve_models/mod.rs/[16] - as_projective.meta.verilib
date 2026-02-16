@@ -1,0 +1,21 @@
+{
+  "code_name": "Makefile",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "557b9e22c9e620c6546e995c2aaa70dff043ffd08d2ee97ef0e1e74e8e4f8646",
+  "id": 460365,
+  "identifier": "as_projective",
+  "index": 16,
+  "parent_id": 460348,
+  "path": "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/as_projective",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn as_projective(&self) -> ProjectivePoint {\n        ProjectivePoint {\n            X: &self.X * &self.T,\n            Y: &self.Y * &self.Z,\n            Z: &self.Z * &self.T,\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

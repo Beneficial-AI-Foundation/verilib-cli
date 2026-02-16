@@ -1,0 +1,23 @@
+{
+  "specified": false,
+  "disabled": false,
+  "status_id": 0,
+  "code_name": "CHANGELOG.md",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/scalar_mul/precomputed_straus.rs/len"
+  ],
+  "fingerprint": "c2429760dd877fad8316dcc75a7777e252fe81a6c15288ee17d1cb5977d3ca7c",
+  "id": 460372,
+  "identifier": "len",
+  "index": 4,
+  "parent_id": 460081,
+  "path": "/curve25519-dalek/src/backend/len",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn len(&self) -> usize {\n        use crate::traits::VartimePrecomputedMultiscalarMul;\n\n        match self {\n            // #[cfg(curve25519_dalek_backend = \"simd\")]\n            // VartimePrecomputedStraus::Avx2(inner) => inner.len(),\n            // #[cfg(all(curve25519_dalek_backend = \"unstable_avx512\", nightly))]\n            // VartimePrecomputedStraus::Avx512ifma(inner) => inner.len(),\n            VartimePrecomputedStraus::Scalar(inner) => inner.len(),\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "statement_type": "function"
+}

@@ -1,0 +1,5 @@
+    fn from(x: u8) -> Scalar {
+        let mut s_bytes = [0u8; 32];
+        s_bytes[0] = x;
+        Scalar { bytes: s_bytes }
+    }

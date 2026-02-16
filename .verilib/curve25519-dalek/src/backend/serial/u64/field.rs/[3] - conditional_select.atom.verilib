@@ -1,0 +1,13 @@
+    fn conditional_select(
+        a: &FieldElement51,
+        b: &FieldElement51,
+        choice: Choice,
+    ) -> FieldElement51 {
+        FieldElement51([
+            u64::conditional_select(&a.0[0], &b.0[0], choice),
+            u64::conditional_select(&a.0[1], &b.0[1], choice),
+            u64::conditional_select(&a.0[2], &b.0[2], choice),
+            u64::conditional_select(&a.0[3], &b.0[3], choice),
+            u64::conditional_select(&a.0[4], &b.0[4], choice),
+        ])
+    }

@@ -1,0 +1,8 @@
+    pub fn as_extended(&self) -> EdwardsPoint {
+        EdwardsPoint {
+            X: &self.X * &self.Z,
+            Y: &self.Y * &self.Z,
+            Z: self.Z.square(),
+            T: &self.X * &self.Y,
+        }
+    }

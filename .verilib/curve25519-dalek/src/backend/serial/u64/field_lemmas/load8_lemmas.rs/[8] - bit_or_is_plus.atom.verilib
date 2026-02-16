@@ -1,0 +1,10 @@
+pub proof fn bit_or_is_plus(a: u64, b: u8, k: u64)
+    by (bit_vector)
+    requires
+        k + 8 <= 64,
+        a < 1u64 << k
+    ensures
+        a | ((b as u64) << (k as u64)) == a + ((b as u64) << (k as u64)),
+        a + ((b as u64) << (k as u64)) <= u64::MAX
+{
+}

@@ -1,0 +1,23 @@
+pub proof fn rec_version_is_exec(input: &[u8], i: usize)
+    ensures
+        load8_at_or_version_rec(input, i, 7)
+        ==
+        (input[i as int] as u64)
+        | ((input[i + 1] as u64) << 8)
+        | ((input[i + 2] as u64) << 16)
+        | ((input[i + 3] as u64) << 24)
+        | ((input[i + 4] as u64) << 32)
+        | ((input[i + 5] as u64) << 40)
+        | ((input[i + 6] as u64) << 48)
+        | ((input[i + 7] as u64) << 56)
+{
+    assert(load8_at_or_version_rec(input, i, 0) == (input[i as int] as u64));
+
+    assert forall |j: nat| 1 <= j <= 7 implies
+        #[trigger] load8_at_or_version_rec(input, i, j) ==
+        load8_at_or_version_rec(input, i, (j - 1) as nat)
+        | ((input[i + j] as u64) << 8 * j)
+    by {
+        reveal_with_fuel(load8_at_or_version_rec, 1);
+    }
+}

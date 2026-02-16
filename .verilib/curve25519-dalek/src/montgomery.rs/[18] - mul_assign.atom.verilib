@@ -1,0 +1,3 @@
+    fn mul_assign(&mut self, scalar: &Scalar) {
+        *self = (self as &MontgomeryPoint) * scalar;
+    }

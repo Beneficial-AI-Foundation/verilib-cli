@@ -1,0 +1,8 @@
+    fn coset4(&self) -> [EdwardsPoint; 4] {
+        [
+            self.0,
+            self.0 + constants::EIGHT_TORSION[2],
+            self.0 + constants::EIGHT_TORSION[4],
+            self.0 + constants::EIGHT_TORSION[6],
+        ]
+    }

@@ -1,0 +1,21 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "036e0ba9a232d52d0231fbf3732162b03fa2f4214d877139823ee172f755c601",
+  "id": 460398,
+  "identifier": "to_bytes",
+  "index": 23,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/to_bytes",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub const fn to_bytes(&self) -> [u8; 32] {\n        self.0\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

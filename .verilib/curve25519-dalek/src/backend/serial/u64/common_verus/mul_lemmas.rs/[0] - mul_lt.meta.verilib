@@ -1,0 +1,21 @@
+{
+  "code_name": "bit_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "4de456d72a3905c45b7e5a4a602a7375f08ef94ed208618942a8869d8fd86792",
+  "id": 460143,
+  "identifier": "mul_lt",
+  "index": 0,
+  "parent_id": 460142,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/mul_lemmas.rs/mul_lt",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn mul_lt(a1:nat, b1:nat, a2:nat, b2:nat)\n    requires\n        a1 < b1,\n        a2 < b2,\n    ensures\n        a1 * a2 < b1 * b2,\n{\n    if (a2 == 0) {\n        assert(b1 * b2 > 0) by {\n            // a * b != 0 <==> a != 0 /\\ b != 0\n            lemma_mul_nonzero(b1 as int, b2 as int);\n        }\n    }\n    else {\n        // a1 < b1 /\\ a2 > 0 ==> a1 * a2 < b1 * a2\n        lemma_mul_strict_inequality(a1 as int, b1  as int, a2 as int);\n        // a2 < b2 /\\ b2 > 0 ==> a2 * b1 < b2 * b1\n        lemma_mul_strict_inequality(a2 as int, b2 as int, b1 as int);\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

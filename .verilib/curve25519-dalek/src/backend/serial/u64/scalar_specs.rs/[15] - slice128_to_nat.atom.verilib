@@ -1,0 +1,4 @@
+pub open spec fn slice128_to_nat(limbs: &[u128]) -> nat
+{
+    seq_to_nat(limbs@.map(|i, x| x as nat))
+}

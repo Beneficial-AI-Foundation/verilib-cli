@@ -1,0 +1,24 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/field_core.rs/pre_reduce_limbs",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/field_core.rs/spec_reduce"
+  ],
+  "disabled": false,
+  "fingerprint": "504786ec27328fed850d9dae644a5e7a55013f36987ed1a6f5d21f740e232f3f",
+  "id": 460229,
+  "identifier": "spec_negate",
+  "index": 1,
+  "parent_id": 460227,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/field_core.rs/spec_negate",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn spec_negate(limbs: [u64; 5]) -> [u64; 5]\n{\n    let r = spec_reduce(pre_reduce_limbs(limbs));\n    r\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

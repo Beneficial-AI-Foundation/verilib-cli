@@ -1,0 +1,24 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/is_valid",
+    "/curve25519-dalek/src/edwards.rs/as_projective"
+  ],
+  "disabled": false,
+  "fingerprint": "f427278b53823f414994aac87fc2f21caa425c783bd673d251baf25ce81184ba",
+  "id": 460375,
+  "identifier": "is_valid",
+  "index": 0,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/is_valid",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn is_valid(&self) -> bool {\n        let point_on_curve = self.as_projective().is_valid();\n        let on_segre_image = (&self.X * &self.Y) == (&self.Z * &self.T);\n\n        point_on_curve && on_segre_image\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

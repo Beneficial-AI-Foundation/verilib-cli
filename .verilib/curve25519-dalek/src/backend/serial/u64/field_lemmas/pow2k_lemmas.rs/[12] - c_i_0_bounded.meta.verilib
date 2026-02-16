@@ -1,0 +1,28 @@
+{
+  "code_name": "field_core.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/term_product_bounds",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/c0_0_val",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/c2_0_val",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/c3_0_val",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/c4_0_val",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/c1_0_val"
+  ],
+  "disabled": false,
+  "fingerprint": "c4dfdcb6ca03579674a8e4bb7681497671fbb7966bd9f9bacaf005844773b0a7",
+  "id": 460251,
+  "identifier": "c_i_0_bounded",
+  "index": 12,
+  "parent_id": 460238,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/c_i_0_bounded",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn c_i_0_bounded(a: [u64; 5], bound: u64)\n    requires\n        19 * bound <= u64::MAX,\n        forall |i: int| 0 <= i < 5 ==> a[i] < bound\n    ensures\n        c0_0_val(a) < 77 * (bound * bound),\n        c1_0_val(a) < 59 * (bound * bound),\n        c2_0_val(a) < 41 * (bound * bound),\n        c3_0_val(a) < 23 * (bound * bound),\n        c4_0_val(a) <  5 * (bound * bound)\n{\n    term_product_bounds(a, bound);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

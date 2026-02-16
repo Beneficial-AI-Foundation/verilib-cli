@@ -1,0 +1,24 @@
+{
+  "code_name": "field.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/to_bytes",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/from_bytes"
+  ],
+  "disabled": false,
+  "fingerprint": "94f56b1257d8ba0a8d5ef68d876421ff74bd8c2f49cd742e62c16276707f1940",
+  "id": 459999,
+  "identifier": "hash",
+  "index": 0,
+  "parent_id": 459998,
+  "path": "/curve25519-dalek/src/montgomery.rs/hash",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn hash<H: Hasher>(&self, state: &mut H) {\n        // Do a round trip through a `FieldElement`. `as_bytes` is guaranteed to give a canonical\n        // 32-byte encoding\n        let canonical_bytes = FieldElement::from_bytes(&self.0).to_bytes();\n        canonical_bytes.hash(state);\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

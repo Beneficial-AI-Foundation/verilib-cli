@@ -1,0 +1,21 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "a1259f94c7ac9dd4cb540e252e39c52f1696d4e741177b1a0f7849d106e6c416",
+  "id": 460449,
+  "identifier": "from_slice",
+  "index": 11,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/from_slice",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn from_slice(bytes: &[u8]) -> Result<CompressedRistretto, TryFromSliceError> {\n        bytes.try_into().map(CompressedRistretto)\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

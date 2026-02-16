@@ -1,0 +1,6 @@
+    pub fn select(&self, x: usize) -> T {
+        debug_assert_eq!(x & 1, 1);
+        debug_assert!(x < 128);
+
+        self.0[x / 2]
+    }

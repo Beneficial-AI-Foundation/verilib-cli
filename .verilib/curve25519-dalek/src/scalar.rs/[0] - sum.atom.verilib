@@ -1,0 +1,6 @@
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = T>,
+    {
+        iter.fold(Scalar::ZERO, |acc, item| acc + item.borrow())
+    }

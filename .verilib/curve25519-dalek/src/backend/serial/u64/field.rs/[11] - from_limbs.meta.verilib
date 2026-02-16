@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "3c178bc75266f24eb44f84a0214eba8846d9803140d4cd2e2c44a01f974cb7a9",
+  "id": 460277,
+  "identifier": "from_limbs",
+  "index": 11,
+  "parent_id": 460265,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field.rs/from_limbs",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub(crate) const fn from_limbs(limbs: [u64; 5]) -> FieldElement51 {\n        FieldElement51(limbs)\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,3 @@
+    pub fn is_small_order(&self) -> bool {
+        self.mul_by_cofactor().is_identity()
+    }

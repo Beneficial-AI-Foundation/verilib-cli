@@ -1,0 +1,23 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/len"
+  ],
+  "disabled": false,
+  "fingerprint": "4e6f25de854d79dce25ccedea94d9b730d57e0bb8d2d700da5e9d24659a30ffb",
+  "id": 460445,
+  "identifier": "len",
+  "index": 7,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/len",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn len(&self) -> usize {\n        self.0.len()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

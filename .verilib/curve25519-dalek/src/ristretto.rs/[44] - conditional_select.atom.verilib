@@ -1,0 +1,7 @@
+    fn conditional_select(
+        a: &RistrettoPoint,
+        b: &RistrettoPoint,
+        choice: Choice,
+    ) -> RistrettoPoint {
+        RistrettoPoint(EdwardsPoint::conditional_select(&a.0, &b.0, choice))
+    }

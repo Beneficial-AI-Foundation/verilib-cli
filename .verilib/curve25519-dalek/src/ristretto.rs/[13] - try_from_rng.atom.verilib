@@ -1,0 +1,6 @@
+    pub fn try_from_rng<R: TryCryptoRng + ?Sized>(rng: &mut R) -> Result<Self, R::Error> {
+        let mut uniform_bytes = [0u8; 64];
+        rng.try_fill_bytes(&mut uniform_bytes)?;
+
+        Ok(RistrettoPoint::from_uniform_bytes(&uniform_bytes))
+    }

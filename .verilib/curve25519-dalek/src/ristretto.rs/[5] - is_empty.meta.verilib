@@ -1,0 +1,23 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/is_empty"
+  ],
+  "disabled": false,
+  "fingerprint": "f4d81f10820e81f64e820085242cd94d40579f18bbf9da11b8a885243771ac0f",
+  "id": 460443,
+  "identifier": "is_empty",
+  "index": 5,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/is_empty",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn is_empty(&self) -> bool {\n        self.0.is_empty()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

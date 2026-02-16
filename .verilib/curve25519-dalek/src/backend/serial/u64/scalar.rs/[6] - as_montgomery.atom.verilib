@@ -1,0 +1,14 @@
+    pub fn as_montgomery(&self) -> (result: Scalar52)
+    requires
+        limbs_bounded(self),
+    ensures
+        limbs_bounded(&result),
+        to_nat(&result.limbs) == (to_nat(&self.limbs) * montgomery_radix()) % group_order(),
+    {
+        proof {
+            lemma_rr_limbs_bounded();
+        }
+        let result = Scalar52::montgomery_mul(self, &constants::RR);
+        assume(to_nat(&result.limbs) == (to_nat(&self.limbs) * montgomery_radix()) % group_order());
+        result
+    }

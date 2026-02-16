@@ -1,0 +1,42 @@
+    pub fn to_bytes(self) -> (s: [u8; 32])
+    ensures bytes_to_nat(&s) == to_nat(&self.limbs)
+    {
+        let mut s = [0u8; 32];
+
+        s[ 0] =  (self.limbs[ 0] >>  0)                      as u8;
+        s[ 1] =  (self.limbs[ 0] >>  8)                      as u8;
+        s[ 2] =  (self.limbs[ 0] >> 16)                      as u8;
+        s[ 3] =  (self.limbs[ 0] >> 24)                      as u8;
+        s[ 4] =  (self.limbs[ 0] >> 32)                      as u8;
+        s[ 5] =  (self.limbs[ 0] >> 40)                      as u8;
+        s[ 6] = ((self.limbs[ 0] >> 48) | (self.limbs[ 1] << 4)) as u8;
+        s[ 7] =  (self.limbs[ 1] >>  4)                      as u8;
+        s[ 8] =  (self.limbs[ 1] >> 12)                      as u8;
+        s[ 9] =  (self.limbs[ 1] >> 20)                      as u8;
+        s[10] =  (self.limbs[ 1] >> 28)                      as u8;
+        s[11] =  (self.limbs[ 1] >> 36)                      as u8;
+        s[12] =  (self.limbs[ 1] >> 44)                      as u8;
+        s[13] =  (self.limbs[ 2] >>  0)                      as u8;
+        s[14] =  (self.limbs[ 2] >>  8)                      as u8;
+        s[15] =  (self.limbs[ 2] >> 16)                      as u8;
+        s[16] =  (self.limbs[ 2] >> 24)                      as u8;
+        s[17] =  (self.limbs[ 2] >> 32)                      as u8;
+        s[18] =  (self.limbs[ 2] >> 40)                      as u8;
+        s[19] = ((self.limbs[ 2] >> 48) | (self.limbs[ 3] << 4)) as u8;
+        s[20] =  (self.limbs[ 3] >>  4)                      as u8;
+        s[21] =  (self.limbs[ 3] >> 12)                      as u8;
+        s[22] =  (self.limbs[ 3] >> 20)                      as u8;
+        s[23] =  (self.limbs[ 3] >> 28)                      as u8;
+        s[24] =  (self.limbs[ 3] >> 36)                      as u8;
+        s[25] =  (self.limbs[ 3] >> 44)                      as u8;
+        s[26] =  (self.limbs[ 4] >>  0)                      as u8;
+        s[27] =  (self.limbs[ 4] >>  8)                      as u8;
+        s[28] =  (self.limbs[ 4] >> 16)                      as u8;
+        s[29] =  (self.limbs[ 4] >> 24)                      as u8;
+        s[30] =  (self.limbs[ 4] >> 32)                      as u8;
+        s[31] =  (self.limbs[ 4] >> 40)                      as u8;
+
+        assume(false); // TODO: complete the proof
+
+        s
+    }

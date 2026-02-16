@@ -1,0 +1,24 @@
+{
+  "code_name": "CHANGELOG.md",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/scalar_mul/variable_base.rs/mul",
+    "/curve25519-dalek/src/backend/get_selected_backend"
+  ],
+  "disabled": false,
+  "fingerprint": "def694fa720fff1b1e7ebc5ac63056747b4a5a985b59979ee6fb21549eebfa94",
+  "id": 460093,
+  "identifier": "variable_base_mul",
+  "index": 10,
+  "parent_id": 460082,
+  "path": "/curve25519-dalek/src/backend/mod.rs/variable_base_mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub fn variable_base_mul(point: &EdwardsPoint, scalar: &Scalar) -> EdwardsPoint {\n    match get_selected_backend() {\n        // #[cfg(curve25519_dalek_backend = \"simd\")]\n        // BackendKind::Avx2 => vector::scalar_mul::variable_base::spec_avx2::mul(point, scalar),\n        // #[cfg(all(curve25519_dalek_backend = \"unstable_avx512\", nightly))]\n        // BackendKind::Avx512 => {\n        //     vector::scalar_mul::variable_base::spec_avx512ifma_avx512vl::mul(point, scalar)\n        // }\n        BackendKind::Serial => serial::scalar_mul::variable_base::mul(point, scalar),\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

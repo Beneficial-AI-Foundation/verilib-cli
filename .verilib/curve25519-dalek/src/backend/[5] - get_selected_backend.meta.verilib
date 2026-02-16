@@ -1,0 +1,21 @@
+{
+  "code_name": "CHANGELOG.md",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "7d9cc67290fb6a9f0ce7a3a22fa3309bb84026dbdce3f6bfe58e984ef45c3c55",
+  "id": 460373,
+  "identifier": "get_selected_backend",
+  "index": 5,
+  "parent_id": 460081,
+  "path": "/curve25519-dalek/src/backend/get_selected_backend",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "fn get_selected_backend() -> BackendKind {\n    // #[cfg(all(curve25519_dalek_backend = \"unstable_avx512\", nightly))]\n    // {\n    //     cpufeatures::new!(cpuid_avx512, \"avx512ifma\", \"avx512vl\");\n    //     let token_avx512: cpuid_avx512::InitToken = cpuid_avx512::init();\n    //     if token_avx512.get() {\n    //         return BackendKind::Avx512;\n    //     }\n    // }\n\n    // #[cfg(curve25519_dalek_backend = \"simd\")]\n    // {\n    //     cpufeatures::new!(cpuid_avx2, \"avx2\");\n    //     let token_avx2: cpuid_avx2::InitToken = cpuid_avx2::init();\n    //     if token_avx2.get() {\n    //         return BackendKind::Avx2;\n    //     }\n    // }\n\n    BackendKind::Serial\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

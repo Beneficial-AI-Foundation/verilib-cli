@@ -1,0 +1,28 @@
+{
+  "code_name": "mask_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/bytes_wide_to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/limbs_bounded",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/group_order",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/montgomery_mul",
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/add"
+  ],
+  "disabled": false,
+  "fingerprint": "0d02e25dae10f500754eccb3578e61f5ce2f48a2d6c0c658cfd0affcaa27a308",
+  "id": 460162,
+  "identifier": "from_bytes_wide",
+  "index": 9,
+  "parent_id": 460152,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar.rs/from_bytes_wide",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn from_bytes_wide(bytes: &[u8; 64]) -> (s: Scalar52)\n    ensures\n        limbs_bounded(&s),\n        to_nat(&s.limbs) == bytes_wide_to_nat(bytes) % group_order(),\n    {\n        assume(false); // TODO: complete the proof\n        let mut words = [0u64; 8];\n        for i in 0..8 {\n            for j in 0..8 {\n                words[i] |= (bytes[(i * 8) + j] as u64) << (j * 8);\n            }\n        }\n\n        let mask = (1u64 << 52) - 1;\n        let mut lo = Scalar52 { limbs: [0u64, 0u64, 0u64, 0u64, 0u64] };\n        let mut hi = Scalar52 { limbs: [0u64, 0u64, 0u64, 0u64, 0u64] };\n\n        lo[0] =   words[0]                             & mask;\n        lo[1] = ((words[0] >> 52) | (words[ 1] << 12)) & mask;\n        lo[2] = ((words[1] >> 40) | (words[ 2] << 24)) & mask;\n        lo[3] = ((words[2] >> 28) | (words[ 3] << 36)) & mask;\n        lo[4] = ((words[3] >> 16) | (words[ 4] << 48)) & mask;\n        hi[0] =  (words[4] >>  4)                      & mask;\n        hi[1] = ((words[4] >> 56) | (words[ 5] <<  8)) & mask;\n        hi[2] = ((words[5] >> 44) | (words[ 6] << 20)) & mask;\n        hi[3] = ((words[6] >> 32) | (words[ 7] << 32)) & mask;\n        hi[4] =   words[7] >> 20                             ;\n\n        lo = Scalar52::montgomery_mul(&lo, &constants::R);  // (lo * R) / R = lo\n        hi = Scalar52::montgomery_mul(&hi, &constants::RR); // (hi * R^2) / R = hi * R\n\n        Scalar52::add(&hi, &lo)\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

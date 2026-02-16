@@ -1,0 +1,23 @@
+{
+  "code_name": "field.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/montgomery.rs/ct_eq"
+  ],
+  "disabled": false,
+  "fingerprint": "fb038b6ae0cc869f3a9015d111fa278e16f3cf596ea12f5ec79a4b0059c6d436",
+  "id": 460010,
+  "identifier": "eq",
+  "index": 11,
+  "parent_id": 459998,
+  "path": "/curve25519-dalek/src/montgomery.rs/eq",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn eq(&self, other: &MontgomeryPoint) -> bool {\n        self.ct_eq(other).into()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

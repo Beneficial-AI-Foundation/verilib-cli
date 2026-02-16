@@ -1,0 +1,24 @@
+{
+  "code_name": "subtle_assumes.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/group_order"
+  ],
+  "disabled": false,
+  "fingerprint": "39abae1fb6c0116ef2e33c80a4593ed211a077ad3d65d222e3c4a857b5f92188",
+  "id": 460190,
+  "identifier": "to_scalar",
+  "index": 16,
+  "parent_id": 460173,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/to_scalar",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "spec fn to_scalar(limbs: &[u64; 5]) -> nat {\n    to_nat(limbs) % group_order()\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

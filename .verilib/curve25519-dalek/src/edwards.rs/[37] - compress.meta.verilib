@@ -1,0 +1,24 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/edwards/affine.rs/compress",
+    "/curve25519-dalek/src/edwards.rs/to_affine"
+  ],
+  "disabled": false,
+  "fingerprint": "5818332e81faf29ca015d08f67be046280bbc81941af3b65f8691d8f2ff4f2df",
+  "id": 460412,
+  "identifier": "compress",
+  "index": 37,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/compress",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn compress(&self) -> CompressedEdwardsY {\n        self.to_affine().compress()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

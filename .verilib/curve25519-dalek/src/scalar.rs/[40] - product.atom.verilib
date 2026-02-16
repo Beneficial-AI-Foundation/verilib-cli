@@ -1,0 +1,6 @@
+    fn product<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = T>,
+    {
+        iter.fold(Scalar::ONE, |acc, item| acc * item.borrow())
+    }

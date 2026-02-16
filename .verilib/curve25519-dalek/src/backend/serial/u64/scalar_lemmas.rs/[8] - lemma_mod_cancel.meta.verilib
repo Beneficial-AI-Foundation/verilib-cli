@@ -1,0 +1,24 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/group_order",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/to_nat"
+  ],
+  "disabled": false,
+  "fingerprint": "a2c3c0b514c0c6db6fb848ef389d12ffa5d43a02d30c55cba5d622025bd5cdf7",
+  "id": 460309,
+  "identifier": "lemma_mod_cancel",
+  "index": 8,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_mod_cancel",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_mod_cancel(a: &Scalar52, b: &Scalar52)\n    ensures (group_order() + to_nat(&a.limbs) - to_nat(&b.limbs)) % (group_order() as int) ==\n            (to_nat(&a.limbs) - to_nat(&b.limbs)) % (group_order() as int)\n{\n    lemma_mod_add_multiples_vanish((to_nat(&a.limbs) - to_nat(&b.limbs)) as int, group_order() as int);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

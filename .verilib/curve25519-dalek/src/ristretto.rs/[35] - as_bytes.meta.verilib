@@ -1,0 +1,21 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "91fc3bbd2564a0df3879510e7327ee4e746213ef6078ff87d79dd294bbeb92c9",
+  "id": 460473,
+  "identifier": "as_bytes",
+  "index": 35,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/as_bytes",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub const fn as_bytes(&self) -> &[u8; 32] {\n        &self.0\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

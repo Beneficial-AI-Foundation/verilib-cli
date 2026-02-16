@@ -1,0 +1,9 @@
+pub open spec fn bytes_to_nat_rec(bytes: &[u8; 32], index: int) -> nat
+decreases 32 - index
+{
+    if index >= 32 {
+        0
+    } else {
+        (bytes[index] as nat) * pow2((index * 8) as nat) + bytes_to_nat_rec(bytes, index + 1)
+    }
+}

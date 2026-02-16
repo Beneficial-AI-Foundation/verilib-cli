@@ -1,0 +1,23 @@
+{
+  "code_name": "subtle_assumes.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/words_to_nat_gen_u64"
+  ],
+  "disabled": false,
+  "fingerprint": "d2739097bab610eaf49c457084cf0748a5b80265837c33e97418abe63532cd50",
+  "id": 460180,
+  "identifier": "words_to_nat",
+  "index": 6,
+  "parent_id": 460173,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/words_to_nat",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn words_to_nat(words: &[u64; 4]) -> nat {\n    words_to_nat_gen_u64(words, 4, 64)\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

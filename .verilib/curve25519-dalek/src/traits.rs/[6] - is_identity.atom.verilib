@@ -1,0 +1,14 @@
+    fn is_identity(&self) -> bool;
+}
+
+/// Implement generic identity equality testing for a point representations
+/// which have constant-time equality testing and a defined identity
+/// constructor.
+impl<T> IsIdentity for T
+where
+    T: ConstantTimeEq + Identity,
+{
+    fn is_identity(&self) -> bool {
+        self.ct_eq(&T::identity()).into()
+    }
+}

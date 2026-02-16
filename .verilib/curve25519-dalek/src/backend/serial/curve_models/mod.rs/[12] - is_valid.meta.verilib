@@ -1,0 +1,23 @@
+{
+  "code_name": "Makefile",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/square"
+  ],
+  "disabled": false,
+  "fingerprint": "fe0c3b0c9fd13b8f7b5979bde8c4b2639853ae2e2789b7cb2f744181cc1017d9",
+  "id": 460361,
+  "identifier": "is_valid",
+  "index": 12,
+  "parent_id": 460348,
+  "path": "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/is_valid",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn is_valid(&self) -> bool {\n        // Curve equation is    -x^2 + y^2 = 1 + d*x^2*y^2,\n        // homogenized as (-X^2 + Y^2)*Z^2 = Z^4 + d*X^2*Y^2\n        let XX = self.X.square();\n        let YY = self.Y.square();\n        let ZZ = self.Z.square();\n        let ZZZZ = ZZ.square();\n        let lhs = &(&YY - &XX) * &ZZ;\n        let rhs = &ZZZZ + &(&constants::EDWARDS_D * &(&XX * &YY));\n\n        lhs == rhs\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

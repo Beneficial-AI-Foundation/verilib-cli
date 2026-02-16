@@ -1,0 +1,21 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "312989ae6230763a59b58096dad1c23aa9c253d82c81deb9e4d91d06f0e664e4",
+  "id": 460392,
+  "identifier": "as_projective",
+  "index": 17,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/as_projective",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub(crate) const fn as_projective(&self) -> ProjectivePoint {\n        ProjectivePoint {\n            X: self.X,\n            Y: self.Y,\n            Z: self.Z,\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

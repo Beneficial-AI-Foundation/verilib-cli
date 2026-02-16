@@ -1,0 +1,11 @@
+    pub fn mul_base(scalar: &Scalar) -> Self {
+        #[cfg(not(feature = "precomputed-tables"))]
+        {
+            scalar * constants::ED25519_BASEPOINT_POINT
+        }
+
+        #[cfg(feature = "precomputed-tables")]
+        {
+            scalar * constants::ED25519_BASEPOINT_TABLE
+        }
+    }

@@ -1,0 +1,24 @@
+{
+  "code_name": "montgomery.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/pow2k",
+    "/curve25519-dalek/src/field.rs/pow22501"
+  ],
+  "disabled": false,
+  "fingerprint": "9e97a2c39ac6991e81695a67bf90c32d784b0417601eb3a92c9e5054750fc577",
+  "id": 460071,
+  "identifier": "pow_p58",
+  "index": 2,
+  "parent_id": 460068,
+  "path": "/curve25519-dalek/src/field.rs/pow_p58",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn pow_p58(&self) -> FieldElement {\n        // The bits of (p-5)/8 are 101111.....11.\n        //\n        //                                 nonzero bits of exponent\n        let (t19, _) = self.pow22501();    // 249..0\n        let t20 = t19.pow2k(2);            // 251..2\n        let t21 = self * &t20;             // 251..2,0\n\n        t21\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

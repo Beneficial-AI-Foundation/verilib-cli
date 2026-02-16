@@ -1,0 +1,9 @@
+    pub fn montgomery_square(&self) -> (result: Scalar52)
+    requires
+        limbs_bounded(self),
+    ensures
+        limbs_bounded(&result),
+        (to_nat(&result.limbs) * montgomery_radix()) % group_order() == (to_nat(&self.limbs) * to_nat(&self.limbs)) % group_order(),
+    {
+        Scalar52::montgomery_reduce(&Scalar52::square_internal(self))
+    }

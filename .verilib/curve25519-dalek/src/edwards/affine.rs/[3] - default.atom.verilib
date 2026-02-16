@@ -1,0 +1,3 @@
+    fn default() -> AffinePoint {
+        AffinePoint::identity()
+    }

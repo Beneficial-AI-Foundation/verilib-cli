@@ -1,0 +1,21 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "45e4e1a31e8d9060d7343f4625ad2017f33fc4a1ccc836fcaf2d808785e44b21",
+  "id": 460328,
+  "identifier": "verify_invert_correct",
+  "index": 27,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/verify_invert_correct",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "proof fn verify_invert_correct(x: Scalar52)\n//     requires to_scalar(&x.limbs) != 0\n//    ensures (to_scalar(&x.limbs) * invert_spec(&x.limbs)) % group_order() == 1\n{\n    assume(false);\n\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

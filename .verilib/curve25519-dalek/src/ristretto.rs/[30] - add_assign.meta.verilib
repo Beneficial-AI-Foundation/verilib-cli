@@ -1,0 +1,21 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "d3cc2b8538be5743c252b29585a9e021a521f704229e8f4fd3f0b9cf24211679",
+  "id": 460468,
+  "identifier": "add_assign",
+  "index": 30,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/add_assign",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn add_assign(&mut self, _rhs: &RistrettoPoint) {\n        *self = (self as &RistrettoPoint) + _rhs;\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

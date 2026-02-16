@@ -1,0 +1,41 @@
+pub proof fn lemma_boundaries(limbs: [u64; 5])
+    ensures
+        ((limbs[0] & mask51) + (limbs[4] >> 51) * 19) < (1u64 << 52),
+        ((limbs[1] & mask51) + (limbs[0] >> 51)) < (1u64 << 52),
+        ((limbs[2] & mask51) + (limbs[1] >> 51)) < (1u64 << 52),
+        ((limbs[3] & mask51) + (limbs[2] >> 51)) < (1u64 << 52),
+        ((limbs[4] & mask51) + (limbs[3] >> 51)) < (1u64 << 52)
+
+{
+    // \A i. limbs[i] < 2^13
+    shifted_lt(limbs[0], 51);
+    shifted_lt(limbs[1], 51);
+    shifted_lt(limbs[2], 51);
+    shifted_lt(limbs[3], 51);
+    shifted_lt(limbs[4], 51);
+
+    // \A i. limbs[i] & mask51 < 2^51
+    masked_lt_51(limbs[0]);
+    masked_lt_51(limbs[1]);
+    masked_lt_51(limbs[2]);
+    masked_lt_51(limbs[3]);
+    masked_lt_51(limbs[4]);
+
+    // Since 19 < 2^5 and (limbs[4] >> 51) < 2^13, their product is less than 2^18
+    assert((limbs[4] >> 51) * 19 < (1u64 << 18) as nat) by {
+        assert(19 < (1u64 << 5)) by (bit_vector);
+        shift_is_pow2(5);
+        shift_is_pow2(13);
+        shift_is_pow2(18);
+        lemma_pow2_adds(13, 5);
+        // If (limbs[4] >> 51) < 2^13 and 19 < 2^5 then their product is less than 2^18
+        mul_lt((limbs[4] >> 51) as nat, (1u64 << 13) as nat, 19nat, (1u64 << 5) as nat);
+    }
+
+    // The final values (limbs[i] += cX) are all bounded by 2^51 + eps, for eps \in {2^18, 2^13}.
+    assert(((1u64 << 18)) + (1u64 << 51) < (1u64 << 52)) by (bit_vector);
+    assert(((1u64 << 13)) + (1u64 << 51) < (1u64 << 52)) by (bit_vector);
+
+    // In summary, they're all bounded by 2^52
+    // The solver can prove this automatically
+}

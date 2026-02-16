@@ -1,0 +1,27 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/common_verus/shift_lemmas.rs/shift_is_pow2",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/bit_or_is_plus",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_at_plus_version_rec",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_at_plus_version_rec_is_bounded",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_at_or_version_rec"
+  ],
+  "disabled": false,
+  "fingerprint": "0e555ba15d2e6dfa100bf6df33d9e8af48e55b619eed8a7f0a386e78192ab3c7",
+  "id": 460213,
+  "identifier": "load8_at_versions_equivalent",
+  "index": 5,
+  "parent_id": 460207,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_at_versions_equivalent",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn load8_at_versions_equivalent(input: &[u8], i: usize, k: nat)\n    requires\n        k <= 7\n    ensures\n        load8_at_or_version_rec(input, i, k) == load8_at_plus_version_rec(input, i, k)\n    decreases k\n{\n    if (k == 0){\n        // trivial\n    }\n    else {\n        load8_at_versions_equivalent(input, i, (k - 1) as nat);\n        let prev = load8_at_plus_version_rec(input, i, (k - 1) as nat);\n        assert(prev < (1u64 << 8 * k)) by {\n            load8_at_plus_version_rec_is_bounded(input, i, (k - 1) as nat);\n            shift_is_pow2(8 * k);\n        }\n        bit_or_is_plus(prev, input[i + k], (8 * k) as u64);\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

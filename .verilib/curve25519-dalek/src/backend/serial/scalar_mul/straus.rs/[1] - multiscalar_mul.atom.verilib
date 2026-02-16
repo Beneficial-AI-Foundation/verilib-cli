@@ -1,0 +1,42 @@
+    fn multiscalar_mul<I, J>(scalars: I, points: J) -> EdwardsPoint
+    where
+        I: IntoIterator,
+        I::Item: Borrow<Scalar>,
+        J: IntoIterator,
+        J::Item: Borrow<EdwardsPoint>,
+    {
+        use crate::backend::serial::curve_models::ProjectiveNielsPoint;
+        use crate::traits::Identity;
+        use crate::window::LookupTable;
+
+        let lookup_tables: Vec<_> = points
+            .into_iter()
+            .map(|point| LookupTable::<ProjectiveNielsPoint>::from(point.borrow()))
+            .collect();
+
+        // This puts the scalar digits into a heap-allocated Vec.
+        // To ensure that these are erased, pass ownership of the Vec into a
+        // Zeroizing wrapper.
+        #[cfg_attr(not(feature = "zeroize"), allow(unused_mut))]
+        let mut scalar_digits: Vec<_> = scalars
+            .into_iter()
+            .map(|s| s.borrow().as_radix_16())
+            .collect();
+
+        let mut Q = EdwardsPoint::identity();
+        for j in (0..64).rev() {
+            Q = Q.mul_by_pow_2(4);
+            let it = scalar_digits.iter().zip(lookup_tables.iter());
+            for (s_i, lookup_table_i) in it {
+                // R_i = s_{i,j} * P_i
+                let R_i = lookup_table_i.select(s_i[j]);
+                // Q = Q + R_i
+                Q = (&Q + &R_i).as_extended();
+            }
+        }
+
+        // #[cfg(feature = "zeroize")]
+        // zeroize::Zeroize::zeroize(&mut scalar_digits);
+
+        Q
+    }

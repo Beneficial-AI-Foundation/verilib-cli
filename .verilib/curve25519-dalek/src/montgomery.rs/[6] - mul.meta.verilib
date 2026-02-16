@@ -1,0 +1,24 @@
+{
+  "code_name": "field.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/scalar.rs/bits_le",
+    "/curve25519-dalek/src/montgomery.rs/mul_bits_be"
+  ],
+  "disabled": false,
+  "fingerprint": "76d4eaae0768983b971be35c994e0a0b319e7b9e28bc95e5d48f7b3d130cd704",
+  "id": 460005,
+  "identifier": "mul",
+  "index": 6,
+  "parent_id": 459998,
+  "path": "/curve25519-dalek/src/montgomery.rs/mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn mul(self, scalar: &Scalar) -> MontgomeryPoint {\n        // We multiply by the integer representation of the given Scalar. By scalar invariant #1,\n        // the MSB is 0, so we can skip it.\n        self.mul_bits_be(scalar.bits_le().rev().skip(1))\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,21 @@
+{
+  "code_name": "variable_base.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "05c9b819fbe0f09b51099b599f289f3c1fe2e0dd653ef8017fc65a6640959b67",
+  "id": 460223,
+  "identifier": "all_neg_limbs_positive",
+  "index": 0,
+  "parent_id": 460222,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/negate_lemmas.rs/all_neg_limbs_positive",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn all_neg_limbs_positive(limbs: [u64; 5]) -> bool\n{\n    &&& 36028797018963664u64 >= limbs[0]\n    &&& 36028797018963952u64 >= limbs[1]\n    &&& 36028797018963952u64 >= limbs[2]\n    &&& 36028797018963952u64 >= limbs[3]\n    &&& 36028797018963952u64 >= limbs[4]\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

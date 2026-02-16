@@ -1,0 +1,23 @@
+{
+  "code_name": "div_mod_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/common_verus/mask_lemmas.rs/low_bits_mask_increases"
+  ],
+  "disabled": false,
+  "fingerprint": "49b9f42c89efe53df124cf321d1b37ea1dc03b46d951256c2cd9221f4ff0f957",
+  "id": 460129,
+  "identifier": "low_bits_masks_fit_u64",
+  "index": 0,
+  "parent_id": 460128,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/mask_lemmas.rs/low_bits_masks_fit_u64",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn low_bits_masks_fit_u64(k: nat)\n    requires\n        k <= 64\n    ensures\n        low_bits_mask(k) <= u64::MAX\n{\n    lemma_low_bits_mask_values(); // lbm(0) = 0, lbm(64) = 2^64\n    assert(low_bits_mask(64) <= u64::MAX) by (compute);\n    if (k < 64){\n        low_bits_mask_increases(k, 64);\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

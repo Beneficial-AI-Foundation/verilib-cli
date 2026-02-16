@@ -1,0 +1,24 @@
+{
+  "code_name": "negate_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/field_core.rs/l51_bit_mask_lt",
+    "/curve25519-dalek/src/backend/serial/u64/common_verus/div_mod_lemmas.rs/lemma_div_and_mod"
+  ],
+  "disabled": false,
+  "fingerprint": "57de79a31a6554a55a275becf755ca3c57a2698fbf06ad7df09b005c88aa02fc",
+  "id": 460195,
+  "identifier": "lemma_div_and_mod_51",
+  "index": 2,
+  "parent_id": 460192,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2_51_lemmas.rs/lemma_div_and_mod_51",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_div_and_mod_51(ai:u64, bi: u64, v: u64)\n    requires\n        ai == v >> 51,\n        bi == v & mask51\n    ensures\n        ai == v / (pow2(51) as u64),\n        bi == v % (pow2(51) as u64),\n        v == ai * pow2(51) + bi\n{\n    l51_bit_mask_lt(); // mask51 == low_bits_mask(51)\n    lemma_div_and_mod(ai, bi, v, 51);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

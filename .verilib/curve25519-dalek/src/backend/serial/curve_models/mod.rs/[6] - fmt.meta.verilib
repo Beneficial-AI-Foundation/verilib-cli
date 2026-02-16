@@ -1,0 +1,21 @@
+{
+  "code_name": "Makefile",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "09dfa2136a334d46fa370f26bb76f7250632535e1e6aad5687dee44ab534514b",
+  "id": 460355,
+  "identifier": "fmt",
+  "index": 6,
+  "parent_id": 460348,
+  "path": "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/fmt",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {\n        write!(\n            f,\n            \"ProjectivePoint{{\\n\\tX: {:?},\\n\\tY: {:?},\\n\\tZ: {:?}\\n}}\",\n            &self.X, &self.Y, &self.Z\n        )\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

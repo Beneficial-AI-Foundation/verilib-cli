@@ -1,0 +1,24 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/seq_u64_to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/limbs_bounded"
+  ],
+  "disabled": false,
+  "fingerprint": "849ad9812fb65095017c95b6466501c39dd75cc8bde195afb0e948cbb7f345f4",
+  "id": 460331,
+  "identifier": "lemma_add_loop_invariant",
+  "index": 30,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_add_loop_invariant",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_add_loop_invariant(sum: Scalar52, carry: u64, i: usize, a: &Scalar52, b: &Scalar52, old_carry: u64, mask: u64, sum_loop_start: Scalar52)\n    requires\n        limbs_bounded(a),\n        limbs_bounded(b),\n        0 <= i < 5,\n        forall|j: int| 0 <= j < i ==> sum.limbs[j] < (1u64 << 52),\n        mask == (1u64 << 52) - 1,\n        seq_u64_to_nat(a.limbs@.subrange(0, i as int)) + seq_u64_to_nat(b.limbs@.subrange(0, i as int)) ==\n                    seq_u64_to_nat(sum_loop_start.limbs@.subrange(0, i as int)) + (old_carry >> 52) * pow2((52 * (i) as nat)),\n        sum_loop_start.limbs@.subrange(0, i as int) == sum.limbs@.subrange(0, i as int),\n        sum.limbs[i as int] == carry & mask,\n        carry == a.limbs[i as int] + b.limbs[i as int] + (old_carry >> 52)\n    ensures\n        seq_u64_to_nat(sum.limbs@.subrange(0, i + 1)) + (carry >> 52) * pow2((52 * (i + 1) as nat))\n        == seq_u64_to_nat(a.limbs@.subrange(0, i + 1)) + seq_u64_to_nat(b.limbs@.subrange(0, i + 1))\n{\n    calc! {\n        (==)\n        seq_u64_to_nat(a.limbs@.subrange(0, i + 1)) + seq_u64_to_nat(b.limbs@.subrange(0, i + 1)); {\n            lemma_seq_u64_to_nat_subrange_extend(a.limbs@, i as int);\n            lemma_seq_u64_to_nat_subrange_extend(b.limbs@, i as int);\n        }\n        seq_u64_to_nat(a.limbs@.subrange(0, i as int)) + a.limbs[i as int] as nat * pow2(52 * i as nat) +\n        seq_u64_to_nat(b.limbs@.subrange(0, i as int)) + b.limbs[i as int] as nat * pow2(52 * i as nat); {\n            lemma_mul_is_distributive_add_other_way(pow2(52 * i as nat) as int, a.limbs[i as int] as int, b.limbs[i as int] as int);\n        }\n        seq_u64_to_nat(a.limbs@.subrange(0, i as int)) + seq_u64_to_nat(b.limbs@.subrange(0, i as int)) +\n        (a.limbs[i as int] as nat + b.limbs[i as int] as nat) * pow2(52 * i as nat); {\n            assert(sum_loop_start.limbs@.subrange(0, i as int) == sum.limbs@.subrange(0, i as int));\n            // Use loop invariant\n        }\n        seq_u64_to_nat(sum.limbs@.subrange(0, i as int)) + (old_carry >> 52) as nat * pow2(52 * i as nat) +\n        (a.limbs[i as int] as nat + b.limbs[i as int] as nat) * pow2(52 * i as nat); {\n            lemma_mul_is_distributive_add_other_way(pow2(52 * i as nat) as int, (old_carry >> 52) as int, (a.limbs[i as int] as nat + b.limbs[i as int] as nat) as int);\n        }\n        seq_u64_to_nat(sum.limbs@.subrange(0, i as int)) +\n        ((old_carry >> 52) as nat + a.limbs[i as int] as nat + b.limbs[i as int] as nat) * pow2(52 * i as nat); {\n            assert(carry == a.limbs[i as int] + b.limbs[i as int] + (old_carry >> 52));\n            assert(sum.limbs[i as int] == carry & mask);\n            // Decompose carry using the mask\n            lemma_decompose(carry, mask);\n            assert(carry == (carry >> 52) * pow2(52) + sum.limbs[i as int]);\n        }\n        seq_u64_to_nat(sum.limbs@.subrange(0, i as int)) +\n        ((carry >> 52) as nat * pow2(52) + sum.limbs[i as int] as nat) * pow2(52 * i as nat); {\n            assert(pow2(52) * pow2(52 * i as nat) == pow2(52 + 52 * i as nat)) by {lemma_pow2_adds(52, 52 * i as nat);};\n            assert(52 + 52 * i as nat == 52 * (i+1) as nat);\n            lemma_mul_is_distributive_add_other_way(pow2(52 * i as nat) as int, (carry >> 52) as nat * pow2(52) as int, sum.limbs[i as int] as int);\n            assert((carry >> 52) as nat * pow2(52) * pow2(52 * i as nat) == (carry >> 52) as nat * pow2(52 * (i+1) as nat)) by {\n                    assert(pow2(52) * pow2(52 * i as nat) == pow2(52 * (i+1) as nat));\n                    lemma_mul_is_associative((carry >> 52) as int, pow2(52) as int, pow2(52 * i as nat) as int);\n            };\n        }\n        seq_u64_to_nat(sum.limbs@.subrange(0, i as int)) +\n        (carry >> 52) as nat * pow2(52 * (i+1) as nat) + sum.limbs[i as int] as nat * pow2(52 * i as nat); {\n            lemma_seq_u64_to_nat_subrange_extend(sum.limbs@, i as int);\n        }\n        seq_u64_to_nat(sum.limbs@.subrange(0, i + 1)) + (carry >> 52) as nat * pow2((52 * (i + 1) as nat));\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

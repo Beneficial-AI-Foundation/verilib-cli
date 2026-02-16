@@ -1,0 +1,6 @@
+    pub(crate) fn is_zero(&self) -> Choice {
+        let zero = [0u8; 32];
+        let bytes = self.to_bytes();
+
+        bytes.ct_eq(&zero)
+    }

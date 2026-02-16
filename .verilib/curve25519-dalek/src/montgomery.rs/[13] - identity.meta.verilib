@@ -1,0 +1,21 @@
+{
+  "code_name": "field.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "d0bfcb8092b14f00ae775534211f28cf9b40d5860e8ad75c92739be4ac397e91",
+  "id": 460012,
+  "identifier": "identity",
+  "index": 13,
+  "parent_id": 459998,
+  "path": "/curve25519-dalek/src/montgomery.rs/identity",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn identity() -> MontgomeryPoint {\n        MontgomeryPoint([0u8; 32])\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

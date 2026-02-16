@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "a7b1b4483d0c9cced3b7b2ce55b83ca954f78d08e912ce7fc10e50465766da9c",
+  "id": 460228,
+  "identifier": "as_nat_32_u8",
+  "index": 0,
+  "parent_id": 460227,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/field_core.rs/as_nat_32_u8",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn as_nat_32_u8(limbs: [u8; 32]) -> nat {\n    // Verus error: `core::iter::range::impl&%15::fold` is not supported\n    // we write them out manually\n    (limbs[0] as nat) +\n    pow2( 1 * 8) * (limbs[ 1] as nat) +\n    pow2( 2 * 8) * (limbs[ 2] as nat) +\n    pow2( 3 * 8) * (limbs[ 3] as nat) +\n    pow2( 4 * 8) * (limbs[ 4] as nat) +\n    pow2( 5 * 8) * (limbs[ 5] as nat) +\n    pow2( 6 * 8) * (limbs[ 6] as nat) +\n    pow2( 7 * 8) * (limbs[ 7] as nat) +\n    pow2( 8 * 8) * (limbs[ 8] as nat) +\n    pow2( 9 * 8) * (limbs[ 9] as nat) +\n    pow2(10 * 8) * (limbs[10] as nat) +\n    pow2(11 * 8) * (limbs[11] as nat) +\n    pow2(12 * 8) * (limbs[12] as nat) +\n    pow2(13 * 8) * (limbs[13] as nat) +\n    pow2(14 * 8) * (limbs[14] as nat) +\n    pow2(15 * 8) * (limbs[15] as nat) +\n    pow2(16 * 8) * (limbs[16] as nat) +\n    pow2(17 * 8) * (limbs[17] as nat) +\n    pow2(18 * 8) * (limbs[18] as nat) +\n    pow2(19 * 8) * (limbs[19] as nat) +\n    pow2(20 * 8) * (limbs[20] as nat) +\n    pow2(21 * 8) * (limbs[21] as nat) +\n    pow2(22 * 8) * (limbs[22] as nat) +\n    pow2(23 * 8) * (limbs[23] as nat) +\n    pow2(24 * 8) * (limbs[24] as nat) +\n    pow2(25 * 8) * (limbs[25] as nat) +\n    pow2(26 * 8) * (limbs[26] as nat) +\n    pow2(27 * 8) * (limbs[27] as nat) +\n    pow2(28 * 8) * (limbs[28] as nat) +\n    pow2(29 * 8) * (limbs[29] as nat) +\n    pow2(30 * 8) * (limbs[30] as nat) +\n    pow2(31 * 8) * (limbs[31] as nat)\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

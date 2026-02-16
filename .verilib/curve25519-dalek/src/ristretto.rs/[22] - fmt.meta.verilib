@@ -1,0 +1,21 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "c87064ec96f7bd4d59e7c323adfde69872451e0edb7c36c2282cea45a2cca033",
+  "id": 460460,
+  "identifier": "fmt",
+  "index": 22,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/fmt",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {\n        write!(f, \"CompressedRistretto: {:?}\", self.as_bytes())\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

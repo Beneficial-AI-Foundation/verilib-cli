@@ -1,0 +1,3 @@
+    fn ct_eq(&self, other: &FieldElement) -> Choice {
+        self.to_bytes().ct_eq(&other.to_bytes())
+    }

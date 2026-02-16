@@ -1,0 +1,4 @@
+    fn mul_assign(&mut self, _rhs: &'a FieldElement51) {
+        let result = (self as &FieldElement51) * _rhs;
+        self.0 = result.0;
+    }

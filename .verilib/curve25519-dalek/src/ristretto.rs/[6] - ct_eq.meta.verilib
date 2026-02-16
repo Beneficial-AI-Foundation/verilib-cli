@@ -1,0 +1,23 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/field.rs/ct_eq"
+  ],
+  "disabled": false,
+  "fingerprint": "d2370821b75768330c1ba5e05df43b7b882c01a36d12251a0e612145b192a509",
+  "id": 460444,
+  "identifier": "ct_eq",
+  "index": 6,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/ct_eq",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn ct_eq(&self, other: &RistrettoPoint) -> Choice {\n        let X1Y2 = &self.0.X * &other.0.Y;\n        let Y1X2 = &self.0.Y * &other.0.X;\n        let X1X2 = &self.0.X * &other.0.X;\n        let Y1Y2 = &self.0.Y * &other.0.Y;\n\n        X1Y2.ct_eq(&Y1X2) | X1X2.ct_eq(&Y1Y2)\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

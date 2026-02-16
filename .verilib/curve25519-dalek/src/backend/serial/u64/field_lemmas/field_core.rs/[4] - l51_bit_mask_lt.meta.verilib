@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "0b6998f5f45b898dd0d1f786dacb7413eb390b1061f4a349767126b183ab5596",
+  "id": 460232,
+  "identifier": "l51_bit_mask_lt",
+  "index": 4,
+  "parent_id": 460227,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/field_core.rs/l51_bit_mask_lt",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn l51_bit_mask_lt()\n    ensures\n        mask51 == low_bits_mask(51),\n        mask51 < (1u64 << 51) as nat,\n{\n    lemma2_to64_rest();\n    assert(mask51 < (1u64 << 51) as nat) by (compute);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

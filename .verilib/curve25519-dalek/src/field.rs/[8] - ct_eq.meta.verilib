@@ -1,0 +1,23 @@
+{
+  "code_name": "montgomery.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/to_bytes"
+  ],
+  "disabled": false,
+  "fingerprint": "c63840777a5c2905b4d82bd6be11e4b7dc8d824e0592f04f268b83517bdccea3",
+  "id": 460077,
+  "identifier": "ct_eq",
+  "index": 8,
+  "parent_id": 460068,
+  "path": "/curve25519-dalek/src/field.rs/ct_eq",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn ct_eq(&self, other: &FieldElement) -> Choice {\n        self.to_bytes().ct_eq(&other.to_bytes())\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

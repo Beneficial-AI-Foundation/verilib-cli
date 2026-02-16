@@ -1,0 +1,6 @@
+    fn identity() -> AffinePoint {
+        AffinePoint {
+            x: FieldElement::ZERO,
+            y: FieldElement::ONE,
+        }
+    }

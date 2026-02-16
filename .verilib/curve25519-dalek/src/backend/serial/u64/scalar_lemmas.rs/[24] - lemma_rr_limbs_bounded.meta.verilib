@@ -1,0 +1,21 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "d3525cacb8a717ffb5291b0de4246a007cde0ce19b037488616127a0ad67db1d",
+  "id": 460325,
+  "identifier": "lemma_rr_limbs_bounded",
+  "index": 24,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_rr_limbs_bounded",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_rr_limbs_bounded()\n    ensures\n        0x000d63c715bea69fu64 < (1u64 << 52),\n{\n    // Verus can figure that out the other 4 limbs are bounded\n    assert(0x000d63c715bea69fu64 < (1u64 << 52)) by (bit_vector);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,26 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/scalar.rs/pack",
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/montgomery_reduce",
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/mul_internal",
+    "/curve25519-dalek/src/scalar.rs/unpack"
+  ],
+  "disabled": false,
+  "fingerprint": "6be7c0c2b8f81588978fc6668ff802d8b2efca27790eb6ecc3b9001a7fa4c6f3",
+  "id": 460045,
+  "identifier": "reduce",
+  "index": 25,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/reduce",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn reduce(&self) -> Scalar {\n        let x = self.unpack();\n        let xR = UnpackedScalar::mul_internal(&x, &constants::R);\n        let x_mod_l = UnpackedScalar::montgomery_reduce(&xR);\n        x_mod_l.pack()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

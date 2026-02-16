@@ -1,0 +1,28 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/five_limbs_to_nat_aux",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_five_limbs_equals_to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_pow252",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/group_order",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/seq_u64_to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/to_nat"
+  ],
+  "disabled": false,
+  "fingerprint": "6134d8b7c4c37d680b671987794d035128c3de7401fcd4253f088d94386fdcd7",
+  "id": 460317,
+  "identifier": "lemma_l_equals_group_order",
+  "index": 16,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_l_equals_group_order",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub(crate) proof fn lemma_l_equals_group_order()\n    ensures\n        to_nat(&constants::L.limbs) == group_order(),\n        seq_u64_to_nat(constants::L.limbs@.subrange(0, 5 as int)) == group_order()\n{\n    // First show that the subrange equals the full array\n    assert(constants::L.limbs@ == constants::L.limbs@.subrange(0, 5 as int));\n    assert(seq_u64_to_nat(constants::L.limbs@) == seq_u64_to_nat(constants::L.limbs@.subrange(0, 5 as int)));\n    assert(to_nat(&constants::L.limbs) == seq_u64_to_nat(constants::L.limbs@));\n\n    assert(pow2(52) == 0x10000000000000) by {lemma2_to64_rest();};\n    lemma_pow2_adds(52, 52);\n    assert(pow2(104) == 0x100000000000000000000000000);\n    lemma_pow2_adds(104, 104);\n    assert(pow2(208) == 0x10000000000000000000000000000000000000000000000000000);\n    lemma_pow252();\n    lemma_five_limbs_equals_to_nat(&constants::L.limbs);\n    assert(five_limbs_to_nat_aux(constants::L.limbs) == group_order()) by (compute);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

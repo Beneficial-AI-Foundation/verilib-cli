@@ -1,0 +1,3 @@
+    fn ct_eq(&self, other: &Self) -> Choice {
+        self.x.ct_eq(&other.x) & self.y.ct_eq(&other.y)
+    }

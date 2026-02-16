@@ -1,0 +1,3 @@
+    pub fn is_torsion_free(&self) -> bool {
+        (self * constants::BASEPOINT_ORDER).is_identity()
+    }

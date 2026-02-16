@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "1db57c4fdd44df490737a0a16bf77b7e5944a498fb268c017a1608ba6373676c",
+  "id": 460029,
+  "identifier": "as_radix_16",
+  "index": 9,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/as_radix_16",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub(crate) fn as_radix_16(&self) -> [i8; 64] {\n        debug_assert!(self[31] <= 127);\n        let mut output = [0i8; 64];\n\n        // Step 1: change radix.\n        // Convert from radix 256 (bytes) to radix 16 (nibbles)\n        #[allow(clippy::identity_op)]\n        #[inline(always)]\n        fn bot_half(x: u8) -> u8 {\n            (x >> 0) & 15\n        }\n        #[inline(always)]\n        fn top_half(x: u8) -> u8 {\n            (x >> 4) & 15\n        }\n\n        for i in 0..32 {\n            output[2 * i] = bot_half(self[i]) as i8;\n            output[2 * i + 1] = top_half(self[i]) as i8;\n        }\n        // Precondition note: since self[31] <= 127, output[63] <= 7\n\n        // Step 2: recenter coefficients from [0,16) to [-8,8)\n        for i in 0..63 {\n            let carry = (output[i] + 8) >> 4;\n            output[i] -= carry << 4;\n            output[i + 1] += carry;\n        }\n        // Precondition note: output[63] is not recentered.  It\n        // increases by carry <= 1.  Thus output[63] <= 8.\n\n        output\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

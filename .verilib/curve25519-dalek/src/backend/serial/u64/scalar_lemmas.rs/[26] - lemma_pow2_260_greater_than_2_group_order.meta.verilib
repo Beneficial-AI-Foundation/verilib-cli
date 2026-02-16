@@ -1,0 +1,24 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/group_order",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_pow252"
+  ],
+  "disabled": false,
+  "fingerprint": "198b542746761f814d39f345234ca5d8b421de8ad4f40ba50511eb8b64e2f986",
+  "id": 460327,
+  "identifier": "lemma_pow2_260_greater_than_2_group_order",
+  "index": 26,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_pow2_260_greater_than_2_group_order",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_pow2_260_greater_than_2_group_order()\n    ensures pow2(260) > 2 * group_order()\n{\n    // The group order is approximately 2^252, so 2 * group_order ≈ 2^253\n    // And 2^260 >> 2^253\n    assert(pow2(260) == pow2(252) * pow2(8)) by {\n        lemma_pow2_adds(252, 8);\n    };\n    assert(pow2(8) == 256) by {\n        lemma2_to64();\n    };\n    lemma_pow252();\n    // Now Verus knows what the powers of 2 mean, so it can figure out the rest\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

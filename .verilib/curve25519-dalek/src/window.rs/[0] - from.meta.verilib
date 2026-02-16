@@ -1,0 +1,26 @@
+{
+  "code_name": "diagnostics.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/as_extended",
+    "/curve25519-dalek/src/edwards.rs/double",
+    "/curve25519-dalek/src/edwards.rs/as_projective_niels",
+    "/curve25519-dalek/src/edwards.rs/as_affine_niels"
+  ],
+  "disabled": false,
+  "fingerprint": "97b997fd6a56040b77ee121228035700fb460e842b60e3900176303fccfb35d7",
+  "id": 460062,
+  "identifier": "from",
+  "index": 0,
+  "parent_id": 460061,
+  "path": "/curve25519-dalek/src/window.rs/from",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn from(A: &'a EdwardsPoint) -> Self {\n        let mut Ai = [A.as_projective_niels(); 64];\n        let A2 = A.double();\n        for i in 0..63 {\n            Ai[i + 1] = (&A2 + &Ai[i]).as_extended().as_projective_niels();\n        }\n        // Now Ai = [A, 3A, 5A, 7A, 9A, 11A, 13A, 15A, ..., 127A]\n        NafLookupTable8(Ai)\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,24 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/scalar.rs/ct_eq",
+    "/curve25519-dalek/src/scalar.rs/reduce"
+  ],
+  "disabled": false,
+  "fingerprint": "96190bbe543534ee76cb897f8a6a8f7d3d8414d9fbd518255a18eb975747b230",
+  "id": 460022,
+  "identifier": "is_canonical",
+  "index": 2,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/is_canonical",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn is_canonical(&self) -> Choice {\n        self.ct_eq(&self.reduce())\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

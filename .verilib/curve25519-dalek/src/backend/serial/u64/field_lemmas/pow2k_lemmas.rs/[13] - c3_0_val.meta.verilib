@@ -1,0 +1,21 @@
+{
+  "code_name": "field_core.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "d58be26f84b4999b1519abbfddec9765c382d0371504671d3f8e891a1a7f02cf",
+  "id": 460252,
+  "identifier": "c3_0_val",
+  "index": 13,
+  "parent_id": 460238,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2k_lemmas.rs/c3_0_val",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub open spec fn c3_0_val(a: [u64;5]) -> u128{\n    (a[4] * (19 * a[4]) + 2*( a[0] *  a[3] + a[1] * a[2])) as u128\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

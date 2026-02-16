@@ -1,0 +1,3 @@
+    pub fn invert(&self) -> UnpackedScalar {
+        self.as_montgomery().montgomery_invert().from_montgomery()
+    }

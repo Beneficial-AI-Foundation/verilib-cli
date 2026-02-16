@@ -1,0 +1,4 @@
+    pub(crate) const fn from_limbs(limbs: [u64; 5]) -> FieldElement51 {
+        // ADAPTED CODE LINE: limbs is now a named field
+        FieldElement51{limbs}
+    }

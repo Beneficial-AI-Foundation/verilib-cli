@@ -1,0 +1,25 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/scalar.rs/pack",
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/mul",
+    "/curve25519-dalek/src/scalar.rs/unpack"
+  ],
+  "disabled": false,
+  "fingerprint": "9ae7e799ea4af59129f7d84d5513dd22aea216d4d1e5b1df2514f99d43742649",
+  "id": 460043,
+  "identifier": "mul",
+  "index": 23,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn mul(self, _rhs: &'a Scalar) -> Scalar {\n        UnpackedScalar::mul(&self.unpack(), &_rhs.unpack()).pack()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,25 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/as_extended",
+    "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/double",
+    "/curve25519-dalek/src/edwards.rs/as_projective"
+  ],
+  "disabled": false,
+  "fingerprint": "40f0b048fd522fbdd7db09043093e1f25fdd6456958ab72193261aee707de004",
+  "id": 460397,
+  "identifier": "double",
+  "index": 22,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/double",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub(crate) fn double(&self) -> EdwardsPoint {\n        self.as_projective().double().as_extended()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

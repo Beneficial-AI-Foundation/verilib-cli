@@ -1,0 +1,5 @@
+    fn add(self, _rhs: &'a FieldElement51) -> FieldElement51 {
+        let mut output = *self;
+        output += _rhs;
+        output
+    }

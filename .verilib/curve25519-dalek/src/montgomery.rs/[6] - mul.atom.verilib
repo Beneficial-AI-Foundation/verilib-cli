@@ -1,0 +1,5 @@
+    fn mul(self, scalar: &Scalar) -> MontgomeryPoint {
+        // We multiply by the integer representation of the given Scalar. By scalar invariant #1,
+        // the MSB is 0, so we can skip it.
+        self.mul_bits_be(scalar.bits_le().rev().skip(1))
+    }

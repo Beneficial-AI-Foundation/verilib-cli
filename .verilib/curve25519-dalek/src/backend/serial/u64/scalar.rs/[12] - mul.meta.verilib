@@ -1,0 +1,27 @@
+{
+  "code_name": "mask_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/limbs_bounded",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/group_order",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/mul_internal",
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/montgomery_reduce"
+  ],
+  "disabled": false,
+  "fingerprint": "88129c1259d37b1fa455626e67ce54d41a366293bdecdfb3968568737de3b52b",
+  "id": 460165,
+  "identifier": "mul",
+  "index": 12,
+  "parent_id": 460152,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar.rs/mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn mul(a: &Scalar52, b: &Scalar52) -> (result: Scalar52)\n    requires\n        limbs_bounded(a),\n        limbs_bounded(b),\n    ensures\n        to_nat(&result.limbs) == (to_nat(&a.limbs) * to_nat(&b.limbs)) % group_order(),\n    {\n        assume(false); // TODO: Add proper Montgomery arithmetic proofs\n        let ab = Scalar52::montgomery_reduce(&Scalar52::mul_internal(a, b));\n        Scalar52::montgomery_reduce(&Scalar52::mul_internal(&ab, &constants::RR))\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

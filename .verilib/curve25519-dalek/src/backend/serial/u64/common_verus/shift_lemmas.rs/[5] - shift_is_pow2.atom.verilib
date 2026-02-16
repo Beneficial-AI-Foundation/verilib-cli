@@ -1,0 +1,9 @@
+pub proof fn shift_is_pow2(k: nat)
+    requires
+        k < 64,
+    ensures
+        (1u64 << k) == pow2(k)
+{
+    pow2_le_max64(k);
+    lemma_u64_shl_is_mul(1u64, k as u64);
+}

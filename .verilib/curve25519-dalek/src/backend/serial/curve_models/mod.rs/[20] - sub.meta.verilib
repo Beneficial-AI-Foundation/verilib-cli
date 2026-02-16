@@ -1,0 +1,21 @@
+{
+  "code_name": "Makefile",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "e2103e486e9bc8b232fe0e9c6977bb0ee2e4f3245061e7d8c9bc3a834df6be12",
+  "id": 460369,
+  "identifier": "sub",
+  "index": 20,
+  "parent_id": 460348,
+  "path": "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/sub",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn sub(self, other: &'a ProjectiveNielsPoint) -> CompletedPoint {\n        let Y_plus_X = &self.Y + &self.X;\n        let Y_minus_X = &self.Y - &self.X;\n        let PM = &Y_plus_X * &other.Y_minus_X;\n        let MP = &Y_minus_X * &other.Y_plus_X;\n        let TT2d = &self.T * &other.T2d;\n        let ZZ = &self.Z * &other.Z;\n        let ZZ2 = &ZZ + &ZZ;\n\n        CompletedPoint {\n            X: &PM - &MP,\n            Y: &PM + &MP,\n            Z: &ZZ2 - &TT2d,\n            T: &ZZ2 + &TT2d,\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

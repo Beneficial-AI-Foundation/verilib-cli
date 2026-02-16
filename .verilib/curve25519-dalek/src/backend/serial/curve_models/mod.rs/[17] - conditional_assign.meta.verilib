@@ -1,0 +1,23 @@
+{
+  "code_name": "Makefile",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/conditional_assign"
+  ],
+  "disabled": false,
+  "fingerprint": "6121c3273899e45bb018012c8ed3040c1abf8d17f41038320e865544699d1964",
+  "id": 460366,
+  "identifier": "conditional_assign",
+  "index": 17,
+  "parent_id": 460348,
+  "path": "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/conditional_assign",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn conditional_assign(&mut self, other: &Self, choice: Choice) {\n        self.y_plus_x.conditional_assign(&other.y_plus_x, choice);\n        self.y_minus_x.conditional_assign(&other.y_minus_x, choice);\n        self.xy2d.conditional_assign(&other.xy2d, choice);\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

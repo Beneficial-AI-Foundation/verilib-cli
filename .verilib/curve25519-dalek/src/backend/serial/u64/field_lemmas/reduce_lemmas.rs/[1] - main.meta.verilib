@@ -1,0 +1,21 @@
+{
+  "code_name": "vartime_double_base.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "ef32637cb9c3ec2e3968c9cbdf26a5e9c172be94f88af533e14bd43f892d5297",
+  "id": 460205,
+  "identifier": "main",
+  "index": 1,
+  "parent_id": 460203,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/reduce_lemmas.rs/main",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "fn main() {}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,15 @@
+pub proof fn pow2_mul_u8(a: u8, k: nat)
+    ensures
+        pow2(k) * a <= pow2(k + 8) - pow2(k)
+{
+    assert(a <= pow2(8) - 1) by {
+        lemma2_to64();
+    }
+
+    mul_le(a as nat, (pow2(8) - 1) as nat, pow2(k), pow2(k));
+    assert((pow2(8) - 1) * pow2(k) == pow2(k + 8) - pow2(k)) by {
+        lemma_mul_is_distributive_sub(pow2(k) as int, pow2(8) as int, 1);
+        lemma_pow2_adds(k, 8);
+    }
+
+}

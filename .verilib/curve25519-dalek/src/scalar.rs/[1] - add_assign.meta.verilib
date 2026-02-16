@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "ce7a298180b82cae461edc6d4c0099503b2d51d06d1deb25c2b35fcd36adf812",
+  "id": 460021,
+  "identifier": "add_assign",
+  "index": 1,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/add_assign",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn add_assign(&mut self, _rhs: &'a Scalar) {\n        *self = *self + _rhs;\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,23 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/scalar.rs/bot_half"
+  ],
+  "disabled": false,
+  "fingerprint": "2ac5eb04d89443002fc764442298bbbac3d30f49e93d9f89aaf92bd8473d74f9",
+  "id": 460055,
+  "identifier": "top_half",
+  "index": 35,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/top_half",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "        fn top_half(x: u8) -> u8 {\n            (x >> 4) & 15\n        }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

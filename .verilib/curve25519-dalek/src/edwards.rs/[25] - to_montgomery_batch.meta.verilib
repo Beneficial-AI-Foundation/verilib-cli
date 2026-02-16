@@ -1,0 +1,24 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/to_bytes",
+    "/curve25519-dalek/src/field.rs/batch_invert"
+  ],
+  "disabled": false,
+  "fingerprint": "e70e6dddcf6e3a164ae3ebae5a4d70f42855fcaa57864c6adf02ecd0ac20b830",
+  "id": 460400,
+  "identifier": "to_montgomery_batch",
+  "index": 25,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/to_montgomery_batch",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn to_montgomery_batch(eds: &[Self]) -> Vec<MontgomeryPoint> {\n        // Do the same thing as the above function. u = (1+y)/(1-y) = (Z+Y)/(Z-Y).\n        // We will do this in a batch, ie compute (Z-Y) for all the input\n        // points, then invert them all at once\n\n        // Compute the denominators in a batch\n        let mut denominators = eds.iter().map(|p| &p.Z - &p.Y).collect::<Vec<_>>();\n        FieldElement::batch_invert(&mut denominators);\n\n        // Now compute the Montgomery u coordinate for every point\n        let mut ret = Vec::with_capacity(eds.len());\n        for (ed, d) in eds.iter().zip(denominators.iter()) {\n            let u = &(&ed.Z + &ed.Y) * d;\n            ret.push(MontgomeryPoint(u.to_bytes()));\n        }\n\n        ret\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

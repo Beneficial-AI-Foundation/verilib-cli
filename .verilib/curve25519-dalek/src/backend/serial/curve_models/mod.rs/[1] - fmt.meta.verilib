@@ -1,0 +1,21 @@
+{
+  "code_name": "Makefile",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "57c7eabcfecbe1459ee23022188c8b1a646b3dea804eb1092ccabec9cdf598a2",
+  "id": 460350,
+  "identifier": "fmt",
+  "index": 1,
+  "parent_id": 460348,
+  "path": "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/fmt",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {\n        write!(\n            f,\n            \"CompletedPoint{{\\n\\tX: {:?},\\n\\tY: {:?},\\n\\tZ: {:?},\\n\\tT: {:?}\\n}}\",\n            &self.X, &self.Y, &self.Z, &self.T\n        )\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

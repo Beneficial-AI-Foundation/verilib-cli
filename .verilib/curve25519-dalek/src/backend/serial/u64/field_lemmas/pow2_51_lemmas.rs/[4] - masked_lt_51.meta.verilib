@@ -1,0 +1,24 @@
+{
+  "code_name": "negate_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/common_verus/mask_lemmas.rs/masked_lt",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/field_core.rs/l51_bit_mask_lt"
+  ],
+  "disabled": false,
+  "fingerprint": "d89798f29369c20de63a7130715a676f6d4213a8150c2fc291dcad13e60d76de",
+  "id": 460197,
+  "identifier": "masked_lt_51",
+  "index": 4,
+  "parent_id": 460192,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/pow2_51_lemmas.rs/masked_lt_51",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn masked_lt_51(v: u64)\n    ensures\n        v & mask51 < (1u64 << 51),\n{\n    l51_bit_mask_lt(); // mask51 == low_bits_mask(51)\n    masked_lt(v, 51);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

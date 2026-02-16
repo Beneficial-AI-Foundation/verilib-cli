@@ -1,0 +1,27 @@
+pub proof fn shl_decomposition(v: u64, a: nat, b: nat)
+    requires
+        (a + b) < 64,
+        v * pow2(a + b) <= u64::MAX
+    ensures
+        (v << (a + b)) == ((v << a) << b)
+{
+    if (a == 0 || b == 0) {
+        broadcast use shl_zero_is_id;
+    }
+    else {
+        // 2^(a + b) == 2^a * 2^b
+        lemma_pow2_adds(a, b);
+        // 2^a < 2^(a + b) ...
+        lemma_pow2_strictly_increases(a, a + b);
+        // ..., which implies v * 2^a < v * 2^(a + b) <= u64::MAX
+        mul_le(v as nat, v as nat, pow2(a), pow2(a + b));
+        // v << a + b = v * 2^(a+b)
+        lemma_u64_shl_is_mul(v, (a + b) as u64);
+        // v << a = v * 2^a
+        lemma_u64_shl_is_mul(v, a as u64);
+        // (v * 2^a) * 2^b = v * (2^a * 2^b)
+        lemma_mul_is_associative(v as int, pow2(a) as int, pow2(b) as int);
+        // (v * 2^a) << b = (v * 2^a) * 2^b
+        lemma_u64_shl_is_mul((v * pow2(a)) as u64, b as u64);
+    }
+}

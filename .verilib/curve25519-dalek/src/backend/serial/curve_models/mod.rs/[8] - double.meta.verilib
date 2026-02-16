@@ -1,0 +1,24 @@
+{
+  "code_name": "Makefile",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/square2",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/square"
+  ],
+  "disabled": false,
+  "fingerprint": "8440b5853fb1289680626e291b65c03b3199c50d4b0462620a9c06c84e8d7885",
+  "id": 460357,
+  "identifier": "double",
+  "index": 8,
+  "parent_id": 460348,
+  "path": "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/double",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn double(&self) -> CompletedPoint {\n        // Double()\n        let XX = self.X.square();\n        let YY = self.Y.square();\n        let ZZ2 = self.Z.square2();\n        let X_plus_Y = &self.X + &self.Y;\n        let X_plus_Y_sq = X_plus_Y.square();\n        let YY_plus_XX = &YY + &XX;\n        let YY_minus_XX = &YY - &XX;\n\n        CompletedPoint {\n            X: &X_plus_Y_sq - &YY_plus_XX,\n            Y: YY_plus_XX,\n            Z: YY_minus_XX,\n            T: &ZZ2 - &YY_minus_XX,\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

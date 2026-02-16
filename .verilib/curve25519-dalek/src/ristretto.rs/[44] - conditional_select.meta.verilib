@@ -1,0 +1,23 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/edwards.rs/conditional_select"
+  ],
+  "disabled": false,
+  "fingerprint": "b06f099475b3f63a1a352ce11b093c6bab3c711b92dd3aec3e650c934398d023",
+  "id": 460482,
+  "identifier": "conditional_select",
+  "index": 44,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/conditional_select",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn conditional_select(\n        a: &RistrettoPoint,\n        b: &RistrettoPoint,\n        choice: Choice,\n    ) -> RistrettoPoint {\n        RistrettoPoint(EdwardsPoint::conditional_select(&a.0, &b.0, choice))\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

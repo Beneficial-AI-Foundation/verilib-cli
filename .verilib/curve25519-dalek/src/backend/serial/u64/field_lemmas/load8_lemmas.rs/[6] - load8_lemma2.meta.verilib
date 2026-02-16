@@ -1,0 +1,24 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_lemma1",
+    "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_lemma_base"
+  ],
+  "disabled": false,
+  "fingerprint": "c192a9ed7fe3ea59a2e062d72e8c7e2299f5bdb32bc017ebd9caa5c8871be031",
+  "id": 460214,
+  "identifier": "load8_lemma2",
+  "index": 6,
+  "parent_id": 460207,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/load8_lemmas.rs/load8_lemma2",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn load8_lemma2(a: nat, b: u8, j: nat, k: nat)\n    requires\n        a < pow2(j),\n        j + 8 <= 64,\n        j < k < 64\n    ensures\n        (a + b * pow2(j)) as nat / pow2(k)\n        ==\n        (b * pow2(j)) as nat / pow2(k)\n        ==\n        b as nat / pow2((k - j) as nat)\n\n{\n    let cb = (b * pow2(j)) as nat;\n\n    // a + cb == pow2(k) * (a / pow2(k) + cb / pow2(k)) + (a % pow2(k) + cb % pow2(k)),\n    load8_lemma_base(a, b, j, k);\n\n    let d = (k - j) as nat;\n\n    // 2^k = 2^j * 2^(k - j)\n    lemma_pow2_adds(j, d);\n    // 2^x > 0\n    lemma_pow2_pos(j);\n    lemma_pow2_pos(d);\n\n    assert(\n        (a + b * pow2(j)) as nat / pow2(k)\n        ==\n        ((a + b * pow2(j)) as nat / pow2(j)) / pow2(d)\n    ) by {\n        lemma_div_denominator((a + cb) as int, pow2(j) as int, pow2(d) as int );\n    }\n\n    assert((b * pow2(j)) as nat / pow2(j) == b) by {\n        lemma_div_multiples_vanish(b as int, pow2(j) as int);\n    }\n\n    assert((a + b * pow2(j)) as nat / pow2(j) == b) by {\n        // == a / pow2(j) + (b * pow2(j)) as nat / pow2(j)\n        load8_lemma1(a, b, j, j);\n        assert( a / pow2(j) == 0 ) by {\n            lemma_basic_div(a as int, pow2(j) as int);\n        }\n    }\n\n    assert(cb / pow2(k) == b as nat / pow2(d)) by {\n        lemma_div_denominator(cb as int, pow2(j) as int, pow2(d) as int )\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

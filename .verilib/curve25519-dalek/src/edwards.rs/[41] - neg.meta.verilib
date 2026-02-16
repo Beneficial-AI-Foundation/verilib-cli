@@ -1,0 +1,21 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "d3df52e6f74369d96392184d590fba903a0170dc6a7f7028a4377eeed0a3f308",
+  "id": 460416,
+  "identifier": "neg",
+  "index": 41,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/neg",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn neg(self) -> EdwardsPoint {\n        -&self\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,14 @@
+pub proof fn lemma_pow2_260_greater_than_2_group_order()
+    ensures pow2(260) > 2 * group_order()
+{
+    // The group order is approximately 2^252, so 2 * group_order ≈ 2^253
+    // And 2^260 >> 2^253
+    assert(pow2(260) == pow2(252) * pow2(8)) by {
+        lemma_pow2_adds(252, 8);
+    };
+    assert(pow2(8) == 256) by {
+        lemma2_to64();
+    };
+    lemma_pow252();
+    // Now Verus knows what the powers of 2 mean, so it can figure out the rest
+}

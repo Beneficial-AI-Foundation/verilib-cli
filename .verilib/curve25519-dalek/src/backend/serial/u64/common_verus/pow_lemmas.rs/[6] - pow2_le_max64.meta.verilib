@@ -1,0 +1,21 @@
+{
+  "code_name": "field_verus.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "8b7b4089b57b22b034c48f8882b34ae25b682d6de71b717fcfeaa79d84a9e4cb",
+  "id": 460114,
+  "identifier": "pow2_le_max64",
+  "index": 6,
+  "parent_id": 460107,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/pow_lemmas.rs/pow2_le_max64",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn pow2_le_max64(k: nat)\n    requires\n        k < 64,\n    ensures\n        pow2(k) <= u64::MAX\n    {\n        lemma2_to64();\n        lemma2_to64_rest();\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

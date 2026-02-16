@@ -1,0 +1,8 @@
+    fn neg(self) -> ProjectiveNielsPoint {
+        ProjectiveNielsPoint {
+            Y_plus_X: self.Y_minus_X,
+            Y_minus_X: self.Y_plus_X,
+            Z: self.Z,
+            T2d: -(&self.T2d),
+        }
+    }

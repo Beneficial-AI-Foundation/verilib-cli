@@ -1,0 +1,27 @@
+    pub(super) fn determine_curve25519_dalek_bits(target_arch: &String) -> DalekBits {
+        let target_pointer_width = match std::env::var("CARGO_CFG_TARGET_POINTER_WIDTH") {
+            Ok(pw) => pw,
+            Err(_) => {
+                determine_curve25519_dalek_bits_warning(ERR_MSG_NO_POINTER_WIDTH);
+                return DalekBits::Dalek32;
+            }
+        };
+
+        #[allow(clippy::match_single_binding)]
+        match &target_arch {
+            //Issues: 449 and 456
+            //TODO: When adding arch defaults use proper types not String match
+            //TODO(Arm): Needs tests + benchmarks to back this up
+            //TODO(Wasm32): Needs tests + benchmarks to back this up
+            _ => match target_pointer_width.as_ref() {
+                "64" => DalekBits::Dalek64,
+                "32" => DalekBits::Dalek32,
+                // Intended default solely for non-32/64 target pointer widths
+                // Otherwise known target platforms only.
+                _ => {
+                    determine_curve25519_dalek_bits_warning(ERR_MSG_UNKNOWN_POINTER_WIDTH);
+                    DalekBits::Dalek32
+                }
+            },
+        }
+    }

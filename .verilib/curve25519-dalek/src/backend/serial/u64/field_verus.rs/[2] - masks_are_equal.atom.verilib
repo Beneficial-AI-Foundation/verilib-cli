@@ -1,0 +1,8 @@
+pub proof fn masks_are_equal()
+    ensures
+        LOW_51_BIT_MASK == mask51,
+        LOW_51_BIT_MASK == low_bits_mask(51),
+        LOW_51_BIT_MASK < (1u64 << 51) as nat,
+{
+    l51_bit_mask_lt();
+}

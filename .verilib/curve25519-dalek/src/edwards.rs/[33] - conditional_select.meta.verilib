@@ -1,0 +1,23 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/conditional_select"
+  ],
+  "disabled": false,
+  "fingerprint": "85b05b2ffdb75bc251f3e42e151068b2a887e69ac6c095c75146153e002c9738",
+  "id": 460408,
+  "identifier": "conditional_select",
+  "index": 33,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/conditional_select",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn conditional_select(a: &EdwardsPoint, b: &EdwardsPoint, choice: Choice) -> EdwardsPoint {\n        EdwardsPoint {\n            X: FieldElement::conditional_select(&a.X, &b.X, choice),\n            Y: FieldElement::conditional_select(&a.Y, &b.Y, choice),\n            Z: FieldElement::conditional_select(&a.Z, &b.Z, choice),\n            T: FieldElement::conditional_select(&a.T, &b.T, choice),\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

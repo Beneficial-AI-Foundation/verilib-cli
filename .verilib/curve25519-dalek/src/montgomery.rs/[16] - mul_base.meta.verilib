@@ -1,0 +1,24 @@
+{
+  "code_name": "field.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/edwards.rs/mul_base",
+    "/curve25519-dalek/src/edwards.rs/to_montgomery"
+  ],
+  "disabled": false,
+  "fingerprint": "0422e6b2db513ae78266ead524c471ca44481a910b80885c144974988f7fe00f",
+  "id": 460015,
+  "identifier": "mul_base",
+  "index": 16,
+  "parent_id": 459998,
+  "path": "/curve25519-dalek/src/montgomery.rs/mul_base",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn mul_base(scalar: &Scalar) -> Self {\n        EdwardsPoint::mul_base(scalar).to_montgomery()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

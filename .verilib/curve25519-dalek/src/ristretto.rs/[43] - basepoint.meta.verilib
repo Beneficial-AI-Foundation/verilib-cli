@@ -1,0 +1,21 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "ee9210acbc1d8c6526e9ff4b7510166207e138407f3f9357a3add94745e18d0a",
+  "id": 460481,
+  "identifier": "basepoint",
+  "index": 43,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/basepoint",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn basepoint(&self) -> RistrettoPoint {\n        RistrettoPoint(self.0.basepoint())\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

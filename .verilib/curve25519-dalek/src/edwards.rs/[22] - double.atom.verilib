@@ -1,0 +1,3 @@
+    pub(crate) fn double(&self) -> EdwardsPoint {
+        self.as_projective().double().as_extended()
+    }

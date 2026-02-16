@@ -1,0 +1,28 @@
+{
+  "code_name": "mask_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/m",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_mul_internal_correct",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/limbs_bounded",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/slice128_to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_mul_internal_no_overflow"
+  ],
+  "disabled": false,
+  "fingerprint": "5052d786d959f6020ee0043806479427c9b954d95e49346e9981b8a70c63dfe0",
+  "id": 460171,
+  "identifier": "mul_internal",
+  "index": 18,
+  "parent_id": 460152,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar.rs/mul_internal",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub (crate) fn mul_internal(a: &Scalar52, b: &Scalar52) -> (z: [u128; 9])\n    requires\n        limbs_bounded(a),\n        limbs_bounded(b),\n    ensures\n        slice128_to_nat(&z) == to_nat(&a.limbs) * to_nat(&b.limbs),\n    {\n        proof {lemma_mul_internal_no_overflow()}\n\n        let mut z = [0u128; 9];\n\n        z[0] = m(a.limbs[0], b.limbs[0]);\n        z[1] = m(a.limbs[0], b.limbs[1]) + m(a.limbs[1], b.limbs[0]);\n        z[2] = m(a.limbs[0], b.limbs[2]) + m(a.limbs[1], b.limbs[1]) + m(a.limbs[2], b.limbs[0]);\n        z[3] = m(a.limbs[0], b.limbs[3]) + m(a.limbs[1], b.limbs[2]) + m(a.limbs[2], b.limbs[1]) + m(a.limbs[3], b.limbs[0]);\n        z[4] = m(a.limbs[0], b.limbs[4]) + m(a.limbs[1], b.limbs[3]) + m(a.limbs[2], b.limbs[2]) + m(a.limbs[3], b.limbs[1]) + m(a.limbs[4], b.limbs[0]);\n        z[5] =                 m(a.limbs[1], b.limbs[4]) + m(a.limbs[2], b.limbs[3]) + m(a.limbs[3], b.limbs[2]) + m(a.limbs[4], b.limbs[1]);\n        z[6] =                                 m(a.limbs[2], b.limbs[4]) + m(a.limbs[3], b.limbs[3]) + m(a.limbs[4], b.limbs[2]);\n        z[7] =                                                 m(a.limbs[3], b.limbs[4]) + m(a.limbs[4], b.limbs[3]);\n        z[8] =                                                                 m(a.limbs[4], b.limbs[4]);\n\n        proof {lemma_mul_internal_correct(&a.limbs, &b.limbs, &z);}\n\n        z\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

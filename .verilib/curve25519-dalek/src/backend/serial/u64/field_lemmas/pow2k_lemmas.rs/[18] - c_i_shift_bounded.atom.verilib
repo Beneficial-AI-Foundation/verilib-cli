@@ -1,0 +1,21 @@
+pub proof fn c_i_shift_bounded(a: [u64; 5], bound: u64)
+    requires
+        19 * bound <= u64::MAX,
+        77 * (bound * bound) + u64::MAX <= ((u64::MAX as u128) << 51),
+        forall |i: int| 0 <= i < 5 ==> a[i] < bound
+    ensures
+        (c0_val(a) >> 51) <= (u64::MAX as u128),
+        (c1_val(a) >> 51) <= (u64::MAX as u128),
+        (c2_val(a) >> 51) <= (u64::MAX as u128),
+        (c3_val(a) >> 51) <= (u64::MAX as u128),
+        (c4_val(a) >> 51) <= (u64::MAX as u128)
+
+{
+    c_i_0_bounded(a, bound);
+
+    lemma_shr_51_fits_u64(c0_val(a));
+    lemma_shr_51_fits_u64(c1_val(a));
+    lemma_shr_51_fits_u64(c2_val(a));
+    lemma_shr_51_fits_u64(c3_val(a));
+    lemma_shr_51_fits_u64(c4_val(a));
+}

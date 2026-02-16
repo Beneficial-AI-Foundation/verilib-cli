@@ -1,0 +1,21 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "efa280855596f1ccd71b52db861cacb9704ede92af510cc8e95ce872dd3f2bb0",
+  "id": 460312,
+  "identifier": "lemma_scalar_subtract_no_overflow",
+  "index": 11,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_scalar_subtract_no_overflow",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_scalar_subtract_no_overflow(carry: u64, difference_limb: u64, addend: u64, i: u32, l_value: &Scalar52)\n    requires\n        i < 5,\n        difference_limb < (1u64 << 52),\n        addend == 0 || addend == l_value.limbs[i as int],\n        i == 0 ==> carry == 0,\n        i >= 1 ==> (carry >> 52) < 2,\n        l_value.limbs[0] == 0x0002631a5cf5d3ed,\n        l_value.limbs[1] == 0x000dea2f79cd6581,\n        l_value.limbs[2] == 0x000000000014def9,\n        l_value.limbs[3] == 0x0000000000000000,\n        l_value.limbs[4] == 0x0000100000000000,\n    ensures\n        (carry >> 52) + difference_limb + addend < (1u64 << 53),\n{\n    if i == 0 {\n        assert(0x0002631a5cf5d3ed < (1u64 << 52)) by (bit_vector);\n    } else if i == 1 {\n        assert(0x000dea2f79cd6581 < (1u64 << 52)) by (bit_vector);\n    } else if i == 2 {\n        assert(0x000000000014def9 < (1u64 << 52)) by (bit_vector);\n    } else if i == 3 {\n    } else {\n        assert(0x0000100000000000 < (1u64 << 52)) by (bit_vector);\n    }\n    if i == 0 {\n        assert((0u64 >> 52) == 0) by (bit_vector);\n    }\n    assert(2 * (1u64 << 52) == (1u64 << 53)) by (bit_vector);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,24 @@
+{
+  "code_name": "field.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/field.rs/invert",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/to_bytes"
+  ],
+  "disabled": false,
+  "fingerprint": "168238376816457c8c6dca3fe75eb070898d1fbb172d2d5edea5ecf3882aab9d",
+  "id": 460016,
+  "identifier": "as_affine",
+  "index": 17,
+  "parent_id": 459998,
+  "path": "/curve25519-dalek/src/montgomery.rs/as_affine",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn as_affine(&self) -> MontgomeryPoint {\n        let u = &self.U * &self.W.invert();\n        MontgomeryPoint(u.to_bytes())\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

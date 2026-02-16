@@ -1,0 +1,23 @@
+{
+  "code_name": "as_nat_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/common_verus/mul_lemmas.rs/mul_le"
+  ],
+  "disabled": false,
+  "fingerprint": "064a041f04b7e22dcf0ec879182ea5e9a35b979a1f75314599863ea1133163a9",
+  "id": 460124,
+  "identifier": "lemma_shl_le_u64",
+  "index": 8,
+  "parent_id": 460115,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/shift_lemmas.rs/lemma_shl_le_u64",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_shl_le_u64(a: u64, b: u64, k: nat)\n    requires\n        a <= b,\n        k < 64,\n        (b * pow2(k)) <= u64::MAX,\n    ensures\n        (a << k) <= (b << k)\n{\n    mul_le(a as nat, b as nat, pow2(k), pow2(k));\n    lemma_u64_shl_is_mul(a, k as u64);\n    lemma_u64_shl_is_mul(b, k as u64);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,23 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/scalar.rs/read_le_u64_into"
+  ],
+  "disabled": false,
+  "fingerprint": "65572c738f7209bc612cb8177535b9e87d4eda9ed40e97d66b4be4976c26292a",
+  "id": 460024,
+  "identifier": "non_adjacent_form",
+  "index": 4,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/non_adjacent_form",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub(crate) fn non_adjacent_form(&self, w: usize) -> [i8; 256] {\n        // required by the NAF definition\n        debug_assert!(w >= 2);\n        // required so that the NAF digits fit in i8\n        debug_assert!(w <= 8);\n\n        let mut naf = [0i8; 256];\n\n        let mut x_u64 = [0u64; 5];\n        read_le_u64_into(&self.bytes, &mut x_u64[0..4]);\n\n        let width = 1 << w;\n        let window_mask = width - 1;\n\n        let mut pos = 0;\n        let mut carry = 0;\n        while pos < 256 {\n            // Construct a buffer of bits of the scalar, starting at bit `pos`\n            let u64_idx = pos / 64;\n            let bit_idx = pos % 64;\n            let bit_buf: u64 = if bit_idx < 64 - w {\n                // This window's bits are contained in a single u64\n                x_u64[u64_idx] >> bit_idx\n            } else {\n                // Combine the current u64's bits with the bits from the next u64\n                (x_u64[u64_idx] >> bit_idx) | (x_u64[1 + u64_idx] << (64 - bit_idx))\n            };\n\n            // Add the carry into the current window\n            let window = carry + (bit_buf & window_mask);\n\n            if window & 1 == 0 {\n                // If the window value is even, preserve the carry and continue.\n                // Why is the carry preserved?\n                // If carry == 0 and window & 1 == 0, then the next carry should be 0\n                // If carry == 1 and window & 1 == 0, then bit_buf & 1 == 1 so the next carry should be 1\n                pos += 1;\n                continue;\n            }\n\n            if window < width / 2 {\n                carry = 0;\n                naf[pos] = window as i8;\n            } else {\n                carry = 1;\n                naf[pos] = (window as i8).wrapping_sub(width as i8);\n            }\n\n            pos += w;\n        }\n\n        naf\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

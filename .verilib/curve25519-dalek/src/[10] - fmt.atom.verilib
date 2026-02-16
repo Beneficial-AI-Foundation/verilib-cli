@@ -1,0 +1,7 @@
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        let w_bits = match self {
+            DalekBits::Dalek32 => "32",
+            DalekBits::Dalek64 => "64",
+        };
+        write!(f, "{}", w_bits)
+    }

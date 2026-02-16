@@ -1,0 +1,21 @@
+{
+  "code_name": "Makefile",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "24734c0dc1628798fe571066f66dee35f5d4231f0b38d44842229fa5f434c912",
+  "id": 460362,
+  "identifier": "fmt",
+  "index": 13,
+  "parent_id": 460348,
+  "path": "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/fmt",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {\n        write!(\n            f,\n            \"AffineNielsPoint{{\\n\\ty_plus_x: {:?},\\n\\ty_minus_x: {:?},\\n\\txy2d: {:?}\\n}}\",\n            &self.y_plus_x, &self.y_minus_x, &self.xy2d\n        )\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,15 @@
+pub proof fn lemma_add_loop_bounds(i: int, carry: u64, a_limb: u64, b_limb: u64)
+    requires
+        0 <= i < 5,
+        a_limb < (1u64 << 52),
+        b_limb < (1u64 << 52),
+        i == 0 ==> carry == 0,
+        i >= 1 ==> (carry >> 52) < 2,
+    ensures
+        (carry >> 52) + a_limb + b_limb < (1u64 << 53),
+{
+    if i == 0 {
+        assert((0u64 >> 52) == 0) by (bit_vector);
+    }
+    assert((1u64 << 52) + (1u64 << 52) == (1u64 << 53)) by (bit_vector);
+}

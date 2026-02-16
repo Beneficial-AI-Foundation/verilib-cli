@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "5312783703bc1998fec45cdd4f58b12b4cbbe8c7dbe6bc8307fc90f3959d1ce4",
+  "id": 460281,
+  "identifier": "add",
+  "index": 15,
+  "parent_id": 460265,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field.rs/add",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn add(self, _rhs: &'a FieldElement51) -> FieldElement51 {\n        let mut output = *self;\n        output += _rhs;\n        output\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

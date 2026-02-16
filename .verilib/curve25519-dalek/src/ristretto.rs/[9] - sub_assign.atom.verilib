@@ -1,0 +1,3 @@
+    fn sub_assign(&mut self, _rhs: &RistrettoPoint) {
+        *self = (self as &RistrettoPoint) - _rhs;
+    }

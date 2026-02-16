@@ -1,0 +1,6 @@
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = T>,
+    {
+        iter.fold(RistrettoPoint::identity(), |acc, item| acc + item.borrow())
+    }

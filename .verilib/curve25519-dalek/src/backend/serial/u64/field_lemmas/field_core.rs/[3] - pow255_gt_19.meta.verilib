@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "99fc1696525fd1effc4ce12a64ccb98691935f27b024b13f52cdda6bc6cfae31",
+  "id": 460231,
+  "identifier": "pow255_gt_19",
+  "index": 3,
+  "parent_id": 460227,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_lemmas/field_core.rs/pow255_gt_19",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn pow255_gt_19()\n    ensures\n        pow2(255) > 19\n{\n    lemma2_to64(); // 2^5\n    lemma_pow2_strictly_increases(5, 255);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

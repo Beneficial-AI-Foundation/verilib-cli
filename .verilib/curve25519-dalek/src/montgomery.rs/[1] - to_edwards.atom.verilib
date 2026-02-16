@@ -1,0 +1,30 @@
+    pub fn to_edwards(&self, sign: u8) -> Option<EdwardsPoint> {
+        // To decompress the Montgomery u coordinate to an
+        // `EdwardsPoint`, we apply the birational map to obtain the
+        // Edwards y coordinate, then do Edwards decompression.
+        //
+        // The birational map is y = (u-1)/(u+1).
+        //
+        // The exceptional points are the zeros of the denominator,
+        // i.e., u = -1.
+        //
+        // But when u = -1, v^2 = u*(u^2+486662*u+1) = 486660.
+        //
+        // Since this is nonsquare mod p, u = -1 corresponds to a point
+        // on the twist, not the curve, so we can reject it early.
+
+        let u = FieldElement::from_bytes(&self.0);
+
+        if u == FieldElement::MINUS_ONE {
+            return None;
+        }
+
+        let one = FieldElement::ONE;
+
+        let y = &(&u - &one) * &(&u + &one).invert();
+
+        let mut y_bytes = y.to_bytes();
+        y_bytes[31] ^= sign << 7;
+
+        CompressedEdwardsY(y_bytes).decompress()
+    }

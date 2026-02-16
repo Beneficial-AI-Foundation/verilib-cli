@@ -1,0 +1,23 @@
+    pub (crate) fn square_internal(a: &Scalar52) -> (z: [u128; 9])
+    requires
+        limbs_bounded(a),
+    ensures
+        slice128_to_nat(&z) == to_nat(&a.limbs) * to_nat(&a.limbs),
+    {
+        proof {lemma_square_internal_no_overflow()}
+
+        let mut z = [0u128; 9];
+        z[0] = m(a.limbs[0], a.limbs[0]);
+        z[1] = m(a.limbs[0], a.limbs[1]) * 2;
+        z[2] = m(a.limbs[0], a.limbs[2]) * 2 + m(a.limbs[1], a.limbs[1]);
+        z[3] = m(a.limbs[0], a.limbs[3]) * 2 + m(a.limbs[1], a.limbs[2]) * 2;
+        z[4] = m(a.limbs[0], a.limbs[4]) * 2 + m(a.limbs[1], a.limbs[3]) * 2 + m(a.limbs[2], a.limbs[2]);
+        z[5] =                 m(a.limbs[1], a.limbs[4]) * 2 + m(a.limbs[2], a.limbs[3]) * 2;
+        z[6] =                                 m(a.limbs[2], a.limbs[4]) * 2 + m(a.limbs[3], a.limbs[3]);
+        z[7] =                                                 m(a.limbs[3], a.limbs[4]) * 2;
+        z[8] =                                                                 m(a.limbs[4], a.limbs[4]);
+
+        proof {lemma_square_internal_correct(&a.limbs, &z);}
+
+        z
+    }

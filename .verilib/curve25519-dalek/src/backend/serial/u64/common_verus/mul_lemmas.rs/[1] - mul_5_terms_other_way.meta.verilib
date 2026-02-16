@@ -1,0 +1,21 @@
+{
+  "code_name": "bit_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "309451578251d99ebf1666d887613ed592ff3703865466b12d3a28904afe2d86",
+  "id": 460144,
+  "identifier": "mul_5_terms_other_way",
+  "index": 1,
+  "parent_id": 460142,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/mul_lemmas.rs/mul_5_terms_other_way",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn mul_5_terms_other_way(n: int, x1: int, x2: int, x3: int, x4: int, x5: int)\n    ensures\n        (x1 + x2 + x3 + x4 + x5) * n == x1 * n + x2 * n + x3 * n + x4 * n + x5 * n\n{\n    // N * ((((x0 + x1) + x2) + x3) + x4) = N * (((x0 + x1) + x2) + x3) + N * x4\n    lemma_mul_is_distributive_add_other_way(n, x1 + x2 + x3 + x4, x5);\n    // N * (((x0 + x1) + x2) + x3) = N * ((x0 + x1) + x2) + N * x3\n    lemma_mul_is_distributive_add_other_way(n, x1 + x2 + x3, x4);\n    // N * ((x0 + x1) + x2) = N * (x0 + x1) + N * x2\n    lemma_mul_is_distributive_add_other_way(n, x1 + x2, x3);\n    // N * (x0 + x1) = N * x0 + N * x1\n    lemma_mul_is_distributive_add_other_way(n, x1, x2);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

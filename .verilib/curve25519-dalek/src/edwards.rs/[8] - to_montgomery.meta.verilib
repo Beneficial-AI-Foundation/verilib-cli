@@ -1,0 +1,24 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/field.rs/invert",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/to_bytes"
+  ],
+  "disabled": false,
+  "fingerprint": "4e239c22ebbb4f19a2fcb325a72ba58d3a8d2ebb14b098ed2cef5c3fb3cf0972",
+  "id": 460383,
+  "identifier": "to_montgomery",
+  "index": 8,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/to_montgomery",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn to_montgomery(&self) -> MontgomeryPoint {\n        // We have u = (1+y)/(1-y) = (Z+Y)/(Z-Y).\n        //\n        // The denominator is zero only when y=1, the identity point of\n        // the Edwards curve.  Since 0.invert() = 0, in this case we\n        // compute the 2-torsion point (0,0).\n        let U = &self.Z + &self.Y;\n        let W = &self.Z - &self.Y;\n        let u = &U * &W.invert();\n        MontgomeryPoint(u.to_bytes())\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

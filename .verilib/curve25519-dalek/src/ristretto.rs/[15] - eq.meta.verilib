@@ -1,0 +1,23 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/ristretto.rs/ct_eq"
+  ],
+  "disabled": false,
+  "fingerprint": "3b2d49b3ff782eb6ebdb562523c294f4e1eb398358ad87fe6e0dd8eea9827281",
+  "id": 460453,
+  "identifier": "eq",
+  "index": 15,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/eq",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn eq(&self, other: &RistrettoPoint) -> bool {\n        self.ct_eq(other).into()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

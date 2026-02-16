@@ -1,0 +1,3 @@
+    fn default() -> ProjectiveNielsPoint {
+        ProjectiveNielsPoint::identity()
+    }

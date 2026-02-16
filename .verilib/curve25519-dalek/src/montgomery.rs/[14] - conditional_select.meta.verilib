@@ -1,0 +1,23 @@
+{
+  "code_name": "field.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/conditional_select"
+  ],
+  "disabled": false,
+  "fingerprint": "ce449264c95e84caa204da08013c1e9057bbb29dbddc050001e4fcf13cd6c703",
+  "id": 460013,
+  "identifier": "conditional_select",
+  "index": 14,
+  "parent_id": 459998,
+  "path": "/curve25519-dalek/src/montgomery.rs/conditional_select",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn conditional_select(\n        a: &ProjectivePoint,\n        b: &ProjectivePoint,\n        choice: Choice,\n    ) -> ProjectivePoint {\n        ProjectivePoint {\n            U: FieldElement::conditional_select(&a.U, &b.U, choice),\n            W: FieldElement::conditional_select(&a.W, &b.W, choice),\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

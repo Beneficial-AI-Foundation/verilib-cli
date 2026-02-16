@@ -1,0 +1,21 @@
+{
+  "code_name": "pow2_51_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "8c177ec218d6679b1a87085861344f5c57052946990333b0e29c06038ecbae51",
+  "id": 460289,
+  "identifier": "from_limbs",
+  "index": 1,
+  "parent_id": 460287,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field_verus.rs/from_limbs",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub(crate) const fn from_limbs(limbs: [u64; 5]) -> FieldElement51 {\n        // ADAPTED CODE LINE: limbs is now a named field\n        FieldElement51{limbs}\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

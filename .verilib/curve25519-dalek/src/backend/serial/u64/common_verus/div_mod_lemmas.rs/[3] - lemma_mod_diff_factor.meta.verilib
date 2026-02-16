@@ -1,0 +1,21 @@
+{
+  "code_name": "pow2k_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "6487c06e78a0d9ebee99a35f6681b28f2cbbf53e82e3b60a09612e161fde445d",
+  "id": 460137,
+  "identifier": "lemma_mod_diff_factor",
+  "index": 3,
+  "parent_id": 460133,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/div_mod_lemmas.rs/lemma_mod_diff_factor",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_mod_diff_factor(a: int, b: int, m: int)\n    requires\n        m > 0,\n    ensures\n        (b - a * m) % m == b % m\n{\n    // (b - a * m) % m == (b % m - (a * m) % m) % m\n    lemma_sub_mod_noop(b, a * m, m);\n    // (a * m) % m == 0\n    lemma_mod_multiples_basic(a, m);\n    // b % m % m = b % m\n    lemma_mod_twice(b, m);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

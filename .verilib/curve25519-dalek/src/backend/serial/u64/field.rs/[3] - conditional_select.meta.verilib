@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "77651a525b2fd0fc16b5c0155d1281ccb1e14c8ffbdccad50a23c21a5bcd8e5b",
+  "id": 460269,
+  "identifier": "conditional_select",
+  "index": 3,
+  "parent_id": 460265,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field.rs/conditional_select",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn conditional_select(\n        a: &FieldElement51,\n        b: &FieldElement51,\n        choice: Choice,\n    ) -> FieldElement51 {\n        FieldElement51([\n            u64::conditional_select(&a.0[0], &b.0[0], choice),\n            u64::conditional_select(&a.0[1], &b.0[1], choice),\n            u64::conditional_select(&a.0[2], &b.0[2], choice),\n            u64::conditional_select(&a.0[3], &b.0[3], choice),\n            u64::conditional_select(&a.0[4], &b.0[4], choice),\n        ])\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

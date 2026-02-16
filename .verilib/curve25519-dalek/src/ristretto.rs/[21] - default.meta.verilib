@@ -1,0 +1,23 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/ristretto.rs/identity"
+  ],
+  "disabled": false,
+  "fingerprint": "62e88c6200390bf774ec08ffc8367c82fef6d6668d43eb06d0d9640457522161",
+  "id": 460459,
+  "identifier": "default",
+  "index": 21,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/default",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn default() -> RistrettoPoint {\n        RistrettoPoint::identity()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

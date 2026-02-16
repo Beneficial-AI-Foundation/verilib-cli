@@ -1,0 +1,14 @@
+    pub fn square(&self) -> (r: FieldElement51)
+        requires
+            // The precondition in pow2k loop propagates to here
+            forall |i: int| 0 <= i < 5 ==> self.limbs[i] < 1u64 << 54
+        ensures
+            as_nat(r.limbs) % p() == pow(as_nat(self.limbs) as int, 2) as nat % p()
+
+    {
+        proof {
+            // pow2(1) == 2
+            lemma2_to64();
+        }
+        self.pow2k(1)
+    }

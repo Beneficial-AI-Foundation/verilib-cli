@@ -1,0 +1,8 @@
+    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
+        ProjectiveNielsPoint {
+            Y_plus_X: FieldElement::conditional_select(&a.Y_plus_X, &b.Y_plus_X, choice),
+            Y_minus_X: FieldElement::conditional_select(&a.Y_minus_X, &b.Y_minus_X, choice),
+            Z: FieldElement::conditional_select(&a.Z, &b.Z, choice),
+            T2d: FieldElement::conditional_select(&a.T2d, &b.T2d, choice),
+        }
+    }

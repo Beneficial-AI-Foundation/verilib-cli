@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "4b90760bb5f1238136207a5a55fc66883564d3918a08ac2a89f8f91c1ec78b70",
+  "id": 460050,
+  "identifier": "index",
+  "index": 30,
+  "parent_id": 460019,
+  "path": "/curve25519-dalek/src/scalar.rs/index",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn index(&self, _index: usize) -> &u8 {\n        &(self.bytes[_index])\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

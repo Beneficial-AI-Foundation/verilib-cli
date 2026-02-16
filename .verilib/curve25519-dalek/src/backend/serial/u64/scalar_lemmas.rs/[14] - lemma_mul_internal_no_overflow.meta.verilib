@@ -1,0 +1,21 @@
+{
+  "code_name": "pow_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "6ba8cc8b03503888273d5d117571ef5da1eb9d22dcac01c110123927beab0908",
+  "id": 460315,
+  "identifier": "lemma_mul_internal_no_overflow",
+  "index": 14,
+  "parent_id": 460300,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar_lemmas.rs/lemma_mul_internal_no_overflow",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn lemma_mul_internal_no_overflow()\n    ensures\n        (1u128 << 104) + (1u128 << 104) == (1u128 << 105),\n        3u128 * (1u128 << 104) < (1u128 << 106),\n        4u128 * (1u128 << 104) == (1u128 << 2) * (1u128 << 104),\n        (1u128 << 2) * (1u128 << 104) == (1u128 << 106),\n        8u128 == (1u128 << 3),\n        (1u128 << 3) * (1u128 << 104) == (1u128 << 107),\n{\n    assert((1u128 << 104) + (1u128 << 104) == (1u128 << 105)) by (bit_vector);\n    assert(3u128 * (1u128 << 104) < (1u128 << 106)) by (bit_vector);\n    assert(4u128 * (1u128 << 104) == (1u128 << 2) * (1u128 << 104)) by (bit_vector);\n    assert((1u128 << 2) * (1u128 << 104) == (1u128 << 106)) by (bit_vector);\n    assert(8u128 == (1u128 << 3)) by (bit_vector);\n    assert((1u128 << 3) * (1u128 << 104) == (1u128 << 107)) by (bit_vector);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,23 @@
+{
+  "code_name": "as_nat_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/common_verus/shift_lemmas.rs/shr_zero_is_id"
+  ],
+  "disabled": false,
+  "fingerprint": "06542cf583313cf61d0512ae58bfdf34e5e58828b822707f3e0df79f45de205b",
+  "id": 460119,
+  "identifier": "shr_decomposition",
+  "index": 3,
+  "parent_id": 460115,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/shift_lemmas.rs/shr_decomposition",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn shr_decomposition(v: u64, a: nat, b: nat)\n    requires\n        (a + b) < 64\n    ensures\n        (v >> (a + b)) == ((v >> a) >> b)\n{\n    if (a == 0 || b == 0) {\n        broadcast use shr_zero_is_id;\n    }\n    else {\n        lemma2_to64_rest(); // pow2(64)\n        lemma_pow2_strictly_increases(a, a + b);\n        lemma_pow2_strictly_increases(b, a + b);\n        lemma_pow2_strictly_increases(a + b, 64); // pow2(a + b) fits in u64\n\n        // 2^(a + b) == 2^a * 2^b\n        lemma_pow2_adds(a, b);\n        // v >> a + b = v / 2^(a+b)\n        lemma_u64_shr_is_div(v, (a + b) as u64);\n        // v >> a = v / 2^a\n        lemma_u64_shr_is_div(v, a as u64);\n        // (v / 2^a) << b = (v / 2^a) / 2^b\n        lemma_u64_shr_is_div((v / (pow2(a) as u64)) as u64, b as u64);\n\n        // 2^k > 0\n        lemma_pow2_pos(a);\n        lemma_pow2_pos(b);\n\n        // v / 2^a / 2^b = v / 2^(a + b)\n        lemma_div_denominator(v as int, pow2(a) as int, pow2(b) as int);\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

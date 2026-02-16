@@ -1,0 +1,28 @@
+{
+  "code_name": "mask_lemmas.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/montgomery_reduce",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/to_nat",
+    "/curve25519-dalek/src/backend/serial/u64/scalar.rs/mul_internal",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/montgomery_radix",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/limbs_bounded",
+    "/curve25519-dalek/src/backend/serial/u64/scalar_specs.rs/group_order"
+  ],
+  "disabled": false,
+  "fingerprint": "ed24d3a8b38cecd9f0e017957b275331a0a03e9bdff8e41e8ec21b7e71b1f929",
+  "id": 460154,
+  "identifier": "montgomery_mul",
+  "index": 1,
+  "parent_id": 460152,
+  "path": "/curve25519-dalek/src/backend/serial/u64/scalar.rs/montgomery_mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn montgomery_mul(a: &Scalar52, b: &Scalar52) -> (result: Scalar52)\n    requires\n        limbs_bounded(a),\n        limbs_bounded(b),\n    ensures\n        limbs_bounded(&result),\n        (to_nat(&result.limbs) * montgomery_radix()) % group_order() == (to_nat(&a.limbs) * to_nat(&b.limbs)) % group_order(),\n    {\n        Scalar52::montgomery_reduce(&Scalar52::mul_internal(a, b))\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,50 @@
+pub proof fn load8_lemma2(a: nat, b: u8, j: nat, k: nat)
+    requires
+        a < pow2(j),
+        j + 8 <= 64,
+        j < k < 64
+    ensures
+        (a + b * pow2(j)) as nat / pow2(k)
+        ==
+        (b * pow2(j)) as nat / pow2(k)
+        ==
+        b as nat / pow2((k - j) as nat)
+
+{
+    let cb = (b * pow2(j)) as nat;
+
+    // a + cb == pow2(k) * (a / pow2(k) + cb / pow2(k)) + (a % pow2(k) + cb % pow2(k)),
+    load8_lemma_base(a, b, j, k);
+
+    let d = (k - j) as nat;
+
+    // 2^k = 2^j * 2^(k - j)
+    lemma_pow2_adds(j, d);
+    // 2^x > 0
+    lemma_pow2_pos(j);
+    lemma_pow2_pos(d);
+
+    assert(
+        (a + b * pow2(j)) as nat / pow2(k)
+        ==
+        ((a + b * pow2(j)) as nat / pow2(j)) / pow2(d)
+    ) by {
+        lemma_div_denominator((a + cb) as int, pow2(j) as int, pow2(d) as int );
+    }
+
+    assert((b * pow2(j)) as nat / pow2(j) == b) by {
+        lemma_div_multiples_vanish(b as int, pow2(j) as int);
+    }
+
+    assert((a + b * pow2(j)) as nat / pow2(j) == b) by {
+        // == a / pow2(j) + (b * pow2(j)) as nat / pow2(j)
+        load8_lemma1(a, b, j, j);
+        assert( a / pow2(j) == 0 ) by {
+            lemma_basic_div(a as int, pow2(j) as int);
+        }
+    }
+
+    assert(cb / pow2(k) == b as nat / pow2(d)) by {
+        lemma_div_denominator(cb as int, pow2(j) as int, pow2(d) as int )
+    }
+}

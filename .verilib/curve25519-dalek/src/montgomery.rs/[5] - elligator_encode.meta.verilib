@@ -1,0 +1,28 @@
+{
+  "code_name": "field.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/square",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/to_bytes",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/square2",
+    "/curve25519-dalek/src/field.rs/sqrt_ratio_i",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/conditional_select",
+    "/curve25519-dalek/src/field.rs/invert"
+  ],
+  "disabled": false,
+  "fingerprint": "f899ff9f968adfa71d59fa1caa7b6498d62ad4d9138d3cb85bb96a1b0bac9069",
+  "id": 460004,
+  "identifier": "elligator_encode",
+  "index": 5,
+  "parent_id": 459998,
+  "path": "/curve25519-dalek/src/montgomery.rs/elligator_encode",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub(crate) fn elligator_encode(r_0: &FieldElement) -> (MontgomeryPoint, Choice) {\n    let one = FieldElement::ONE;\n    let d_1 = &one + &r_0.square2(); /* 2r^2 */\n\n    let d = &MONTGOMERY_A_NEG * &(d_1.invert()); /* A/(1+2r^2) */\n\n    let d_sq = &d.square();\n    let au = &MONTGOMERY_A * &d;\n\n    let inner = &(d_sq + &au) + &one;\n    let eps = &d * &inner; /* eps = d^3 + Ad^2 + d */\n\n    let (eps_is_sq, _eps) = FieldElement::sqrt_ratio_i(&eps, &one);\n\n    let zero = FieldElement::ZERO;\n    let Atemp = FieldElement::conditional_select(&MONTGOMERY_A, &zero, eps_is_sq); /* 0, or A if nonsquare*/\n    let mut u = &d + &Atemp; /* d, or d+A if nonsquare */\n    u.conditional_negate(!eps_is_sq); /* d, or -d-A if nonsquare */\n\n    (MontgomeryPoint(u.to_bytes()), eps_is_sq)\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

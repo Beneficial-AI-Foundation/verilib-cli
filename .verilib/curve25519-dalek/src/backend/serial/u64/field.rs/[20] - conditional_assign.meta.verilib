@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "e0f355be156d26e335aa4e853f92a130976be63c5cf0682906062fc93b18f360",
+  "id": 460286,
+  "identifier": "conditional_assign",
+  "index": 20,
+  "parent_id": 460265,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field.rs/conditional_assign",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn conditional_assign(&mut self, other: &FieldElement51, choice: Choice) {\n        self.0[0].conditional_assign(&other.0[0], choice);\n        self.0[1].conditional_assign(&other.0[1], choice);\n        self.0[2].conditional_assign(&other.0[2], choice);\n        self.0[3].conditional_assign(&other.0[3], choice);\n        self.0[4].conditional_assign(&other.0[4], choice);\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

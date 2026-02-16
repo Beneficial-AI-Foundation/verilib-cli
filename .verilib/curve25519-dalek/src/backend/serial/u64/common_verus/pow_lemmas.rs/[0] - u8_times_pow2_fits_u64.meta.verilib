@@ -1,0 +1,24 @@
+{
+  "code_name": "field_verus.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/common_verus/mul_lemmas.rs/mul_le",
+    "/curve25519-dalek/src/backend/serial/u64/common_verus/pow_lemmas.rs/pow2_mul_u8"
+  ],
+  "disabled": false,
+  "fingerprint": "59b0ea066c05904eb2c48d182890f41ae2032cf48b88aea9b608865c436662ed",
+  "id": 460108,
+  "identifier": "u8_times_pow2_fits_u64",
+  "index": 0,
+  "parent_id": 460107,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/pow_lemmas.rs/u8_times_pow2_fits_u64",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn u8_times_pow2_fits_u64(a: u8, k: nat)\n    requires\n        k <= 56\n    ensures\n        (a as u64) * pow2(k) <= u64::MAX\n{\n    assert((a as u64) * pow2(k) <= (a as u64) * pow2(56)) by {\n        assert(pow2(k) <= pow2(56)) by {\n            if(k < 56) {\n                lemma_pow2_strictly_increases(k, 56);\n            }\n        }\n        mul_le(a as nat, a as nat, pow2(k), pow2(56));\n    }\n\n    pow2_mul_u8(a, 56);\n    assert(pow2(64) - pow2(56) <= u64::MAX) by {\n        lemma2_to64_rest();\n    }\n\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

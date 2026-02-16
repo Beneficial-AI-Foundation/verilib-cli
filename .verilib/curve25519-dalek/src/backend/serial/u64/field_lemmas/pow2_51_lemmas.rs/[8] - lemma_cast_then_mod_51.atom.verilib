@@ -1,0 +1,7 @@
+pub proof fn lemma_cast_then_mod_51(x: u128)
+    ensures
+        (x as u64) % (pow2(51) as u64) == x % (pow2(51) as u128)
+{
+    lemma2_to64_rest(); // pow2(51 | 64)
+    assert( (x as u64) % 0x8000000000000 == x % 0x8000000000000) by (bit_vector);
+}

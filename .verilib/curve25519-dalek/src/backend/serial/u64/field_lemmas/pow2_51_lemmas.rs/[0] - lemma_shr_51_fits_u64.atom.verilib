@@ -1,0 +1,10 @@
+pub proof fn lemma_shr_51_fits_u64(a: u128)
+    requires
+        a <= (u64::MAX as u128) << 51
+    ensures
+        (a >> 51) <= (u64::MAX as u128)
+
+{
+    assert(((u64::MAX as u128) << 51) >> 51 == (u64::MAX as u128)) by (compute);
+    lemma_shr_51_le(a, (u64::MAX as u128) << 51);
+}

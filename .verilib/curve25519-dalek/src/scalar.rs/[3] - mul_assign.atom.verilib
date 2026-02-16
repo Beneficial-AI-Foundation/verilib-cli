@@ -1,0 +1,3 @@
+    fn mul_assign(&mut self, _rhs: &'a Scalar) {
+        *self = UnpackedScalar::mul(&self.unpack(), &_rhs.unpack()).pack();
+    }

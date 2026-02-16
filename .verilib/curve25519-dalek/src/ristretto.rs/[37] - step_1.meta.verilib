@@ -1,0 +1,26 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/from_bytes",
+    "/curve25519-dalek/src/field.rs/is_negative",
+    "/curve25519-dalek/src/ristretto.rs/as_bytes",
+    "/curve25519-dalek/src/backend/serial/u64/field.rs/to_bytes"
+  ],
+  "disabled": false,
+  "fingerprint": "42273cbdab636ad77946c1614def625601f35547c05202f98fc77c4d1c36cd58",
+  "id": 460475,
+  "identifier": "step_1",
+  "index": 37,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/step_1",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub(super) fn step_1(repr: &CompressedRistretto) -> (Choice, Choice, FieldElement) {\n        // Step 1. Check s for validity:\n        // 1.a) s must be 32 bytes (we get this from the type system)\n        // 1.b) s < p\n        // 1.c) s is nonnegative\n        //\n        // Our decoding routine ignores the high bit, so the only\n        // possible failure for 1.b) is if someone encodes s in 0..18\n        // as s+p in 2^255-19..2^255-1.  We can check this by\n        // converting back to bytes, and checking that we get the\n        // original input, since our encoding routine is canonical.\n\n        let s = FieldElement::from_bytes(repr.as_bytes());\n        let s_bytes_check = s.to_bytes();\n        let s_encoding_is_canonical = s_bytes_check[..].ct_eq(repr.as_bytes());\n        let s_is_negative = s.is_negative();\n\n        (s_encoding_is_canonical, s_is_negative, s)\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

@@ -1,0 +1,84 @@
+pub proof fn load8_at_plus_version_rec_is_bounded(input: &[u8], i: usize, k: nat)
+    requires
+        k <= 7
+    ensures
+        load8_at_plus_version_rec(input, i, k) < pow2(8 * (k + 1))
+    decreases k
+{
+
+    assert(u8::MAX < pow2(8)) by {
+        lemma2_to64();
+    }
+
+    if (k == 0) {
+        // just needs the the pre-if assert
+    }
+    else {
+        // k > 0
+        // Let f(k) := load8_at_plus_version_rec(input, i, k)
+        // IH: f(k - 1) < pow2(8 * k)
+        assert(load8_at_plus_version_rec(input, i, (k - 1) as nat) < pow2(8 * k)) by {
+            load8_at_plus_version_rec_is_bounded(input, i, (k - 1) as nat);
+        }
+
+        let c = (input[i + k] as u64);
+        assert(c < pow2(8));
+
+        // f(k) = f(k - 1) + c * pow2(8 * k)
+        assert(c << (8 * k) == c * pow2(8 * k)) by {
+            assert((input[i + k] as u64) * pow2(8 * k) <= u64::MAX) by {
+                assert(u64::MAX == pow2(64) - 1) by {
+                    lemma2_to64_rest();
+                }
+                assert(c * pow2(8 * k) < pow2(64)) by {
+                    assert(c * pow2(8 * k) < pow2(8) * pow2(8 * k)) by {
+                        lemma_mul_strict_inequality(
+                            c as int,
+                            pow2(8) as int,
+                            pow2(8 * k) as int
+                        );
+                    }
+                    assert(pow2(8) * pow2(8 * k) <= pow2(64)) by {
+                        assert(pow2(8 * k) <= pow2(56)) by {
+                            if (k < 7) {
+                                lemma_pow2_strictly_increases(8 * k, 56);
+                            }
+                        }
+                        lemma_pow2_pos(8);
+                        lemma_mul_inequality(
+                            pow2(8 * k) as int,
+                            pow2(56) as int,
+                            pow2(8) as int
+                        );
+                        lemma_pow2_adds(8, 56);
+                    }
+                }
+            }
+            lemma_u64_shl_is_mul(c, (8 * k) as u64);
+        }
+
+        // f(k - 1) < 1 * 2^(8k)
+        // c <= 2^8 - 1
+        // f(k -1) + c * 2^8k < 2^8 * 2^8k = 2^(8 * (k + 1))
+
+        assert(load8_at_plus_version_rec(input, i, k) < pow2(8 * k) + c * pow2(8 * k));
+
+        assert(pow2(8 * k) + c * pow2(8 * k) <= pow2(8 * (k +1))) by {
+            // x + c * x == c ( x + 1 )
+            assert( pow2(8 * k) + c * pow2(8 * k) == pow2(8 *k) * (c + 1) ) by {
+                lemma_mul_is_distributive_add( pow2(8 * k) as int, c as int, 1 );
+            }
+            assert(c + 1 <= pow2(8));
+
+            assert(pow2(8 * k) * (c + 1) <= pow2(8 * (k + 1))) by {
+                lemma_mul_inequality(
+                    (c + 1) as int,
+                    pow2(8) as int,
+                    pow2(8 * k) as int
+                );
+                lemma_pow2_adds(8, 8 * k);
+                lemma_mul_is_distributive_add(8, 1, k as int);
+            }
+        }
+    }
+}

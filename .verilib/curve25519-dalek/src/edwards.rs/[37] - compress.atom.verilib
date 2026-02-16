@@ -1,0 +1,3 @@
+    pub fn compress(&self) -> CompressedEdwardsY {
+        self.to_affine().compress()
+    }

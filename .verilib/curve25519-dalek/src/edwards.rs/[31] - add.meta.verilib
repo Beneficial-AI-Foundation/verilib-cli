@@ -1,0 +1,24 @@
+{
+  "code_name": "constants.rs",
+  "dependencies": [
+    "/curve25519-dalek/src/edwards.rs/as_projective_niels",
+    "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/as_extended"
+  ],
+  "disabled": false,
+  "fingerprint": "2eb0e965b0053076999b63ebb9333e95d031df7e6763c68601152d475909b170",
+  "id": 460406,
+  "identifier": "add",
+  "index": 31,
+  "parent_id": 460374,
+  "path": "/curve25519-dalek/src/edwards.rs/add",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn add(self, other: &'a EdwardsPoint) -> EdwardsPoint {\n        (self + &other.as_projective_niels()).as_extended()\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

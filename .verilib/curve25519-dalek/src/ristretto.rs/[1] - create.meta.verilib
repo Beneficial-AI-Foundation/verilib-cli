@@ -1,0 +1,21 @@
+{
+  "code_name": "edwards.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "d3a3864d1a2de783f69dae54b9bec5630ef9d09534c1869147ca4c1cc79c51de",
+  "id": 460439,
+  "identifier": "create",
+  "index": 1,
+  "parent_id": 460437,
+  "path": "/curve25519-dalek/src/ristretto.rs/create",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    pub fn create(basepoint: &RistrettoPoint) -> RistrettoBasepointTable {\n        RistrettoBasepointTable(EdwardsBasepointTable::create(&basepoint.0))\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

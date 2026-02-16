@@ -1,0 +1,24 @@
+{
+  "code_name": "CHANGELOG.md",
+  "dependencies": [
+    "/curve25519-dalek/src/backend/get_selected_backend",
+    "/curve25519-dalek/src/backend/serial/scalar_mul/pippenger.rs/optional_multiscalar_mul"
+  ],
+  "disabled": false,
+  "fingerprint": "54aabbb861948af314dd6a7a01a6426bc67b5410aee1f1afbefa2a0f12864f7e",
+  "id": 460094,
+  "identifier": "pippenger_optional_multiscalar_mul",
+  "index": 11,
+  "parent_id": 460082,
+  "path": "/curve25519-dalek/src/backend/mod.rs/pippenger_optional_multiscalar_mul",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub fn pippenger_optional_multiscalar_mul<I, J>(scalars: I, points: J) -> Option<EdwardsPoint>\nwhere\n    I: IntoIterator,\n    I::Item: core::borrow::Borrow<Scalar>,\n    J: IntoIterator<Item = Option<EdwardsPoint>>,\n{\n    use crate::traits::VartimeMultiscalarMul;\n\n    match get_selected_backend() {\n        // #[cfg(curve25519_dalek_backend = \"simd\")]\n        // BackendKind::Avx2 =>\n        //     vector::scalar_mul::pippenger::spec_avx2::Pippenger::optional_multiscalar_mul::<I, J>(scalars, points),\n        // #[cfg(all(curve25519_dalek_backend = \"unstable_avx512\", nightly))]\n        // BackendKind::Avx512 =>\n        //     vector::scalar_mul::pippenger::spec_avx512ifma_avx512vl::Pippenger::optional_multiscalar_mul::<I, J>(scalars, points),\n        BackendKind::Serial => {\n            serial::scalar_mul::pippenger::Pippenger::optional_multiscalar_mul::<I, J>(\n                scalars, points,\n            )\n        }\n    }\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

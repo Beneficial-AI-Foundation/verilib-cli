@@ -1,0 +1,21 @@
+{
+  "code_name": "bit_lemmas.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "e2765ca8c16c4b2e8ef06621abc4a7ab6842a399a47d3b347a328b38552b7c98",
+  "id": 460151,
+  "identifier": "mul_le",
+  "index": 8,
+  "parent_id": 460142,
+  "path": "/curve25519-dalek/src/backend/serial/u64/common_verus/mul_lemmas.rs/mul_le",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "pub proof fn mul_le(a1:nat, b1:nat, a2:nat, b2:nat)\n    requires\n        a1 <= b1,\n        a2 <= b2,\n    ensures\n        a1 * a2 <= b1 * b2,\n{\n    // a1 < b1 /\\ a2 > 0 ==> a1 * a2 < b1 * a2\n    lemma_mul_inequality(a1 as int, b1  as int, a2 as int);\n    // a2 < b2 /\\ b2 > 0 ==> a2 * b1 < b2 * b1\n    lemma_mul_inequality(a2 as int, b2 as int, b1 as int);\n}",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

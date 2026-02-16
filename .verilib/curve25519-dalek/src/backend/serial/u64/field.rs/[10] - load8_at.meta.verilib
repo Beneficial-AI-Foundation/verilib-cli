@@ -1,0 +1,21 @@
+{
+  "code_name": "mod.rs",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "2b335f9e042218bc6f04329a82af3a7446a5e9bb3c75784f148e2767d851c3f9",
+  "id": 460276,
+  "identifier": "load8_at",
+  "index": 10,
+  "parent_id": 460265,
+  "path": "/curve25519-dalek/src/backend/serial/u64/field.rs/load8_at",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "        const fn load8_at(input: &[u8], i: usize) -> u64 {\n               (input[i] as u64)\n            | ((input[i + 1] as u64) << 8)\n            | ((input[i + 2] as u64) << 16)\n            | ((input[i + 3] as u64) << 24)\n            | ((input[i + 4] as u64) << 32)\n            | ((input[i + 5] as u64) << 40)\n            | ((input[i + 6] as u64) << 48)\n            | ((input[i + 7] as u64) << 56)\n        }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

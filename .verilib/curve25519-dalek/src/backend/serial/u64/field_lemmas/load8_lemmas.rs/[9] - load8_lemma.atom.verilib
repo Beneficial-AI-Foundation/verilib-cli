@@ -1,0 +1,23 @@
+pub proof fn load8_lemma(a: nat, b: u8, j: nat, k: nat)
+    requires
+        a < pow2(j),
+        j + 8 <= 64,
+        k < 64
+    ensures
+        (a + b * pow2(j)) as nat / pow2(k)
+        ==
+        a / pow2(k) + (b * pow2(j)) as nat / pow2(k)
+{
+    if ( k <= j) {
+        load8_lemma1(a, b, j, k);
+    }
+    else {
+        // j < k
+        load8_lemma2(a, b, j, k);
+
+        assert(a / pow2(k) == 0) by {
+            lemma_pow2_strictly_increases(j, k);
+            lemma_basic_div(a as int, pow2(k) as int);
+        }
+    }
+}

@@ -1,0 +1,9 @@
+pub proof fn lemma_pow2_square(v: int, i: nat)
+    ensures
+        pow(v, pow2(i)) * pow(v, pow2(i)) == pow(v, pow2(i + 1))
+{
+    // pow(v, pow2(i)) * pow(v, pow2(i)) = pow(v, pow2(i) + pow2(i));
+    lemma_pow_adds(v as int, pow2(i), pow2(i));
+    // 2 * pow2(i) = pow2(i + 1)
+    lemma_pow2_unfold(i + 1);
+}

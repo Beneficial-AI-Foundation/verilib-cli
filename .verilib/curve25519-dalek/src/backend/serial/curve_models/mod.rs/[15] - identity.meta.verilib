@@ -1,0 +1,21 @@
+{
+  "code_name": "Makefile",
+  "dependencies": [],
+  "disabled": false,
+  "fingerprint": "cf950fb15e185218a86862046a437451215ca38173d5a9f30f1f02c37c26ebb3",
+  "id": 460364,
+  "identifier": "identity",
+  "index": 15,
+  "parent_id": 460348,
+  "path": "/curve25519-dalek/src/backend/serial/curve_models/mod.rs/identity",
+  "snippets": [
+    {
+      "sortorder": 0,
+      "text": "    fn identity() -> AffineNielsPoint {\n        AffineNielsPoint {\n            y_plus_x: FieldElement::ONE,\n            y_minus_x: FieldElement::ONE,\n            xy2d: FieldElement::ZERO,\n        }\n    }",
+      "type_id": 2
+    }
+  ],
+  "specified": false,
+  "statement_type": "function",
+  "status_id": 0
+}

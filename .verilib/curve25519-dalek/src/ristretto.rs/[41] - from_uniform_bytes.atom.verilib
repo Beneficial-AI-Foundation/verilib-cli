@@ -1,0 +1,17 @@
+    pub fn from_uniform_bytes(bytes: &[u8; 64]) -> RistrettoPoint {
+        // This follows the one-way map construction from the Ristretto RFC:
+        // https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-ristretto255-decaf448-04#section-4.3.4
+        let mut r_1_bytes = [0u8; 32];
+        r_1_bytes.copy_from_slice(&bytes[0..32]);
+        let r_1 = FieldElement::from_bytes(&r_1_bytes);
+        let R_1 = RistrettoPoint::elligator_ristretto_flavor(&r_1);
+
+        let mut r_2_bytes = [0u8; 32];
+        r_2_bytes.copy_from_slice(&bytes[32..64]);
+        let r_2 = FieldElement::from_bytes(&r_2_bytes);
+        let R_2 = RistrettoPoint::elligator_ristretto_flavor(&r_2);
+
+        // Applying Elligator twice and adding the results ensures a
+        // uniform distribution.
+        R_1 + R_2
+    }
