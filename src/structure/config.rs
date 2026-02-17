@@ -15,6 +15,8 @@ pub struct StructureConfig {
     pub execution_mode: ExecutionMode,
     #[serde(default = "default_docker_image", rename = "docker-image")]
     pub docker_image: String,
+    #[serde(default, rename = "auto-validate-specs")]
+    pub auto_validate_specs: bool,
 }
 
 fn default_docker_image() -> String {
@@ -30,6 +32,7 @@ pub struct ConfigPaths {
     pub atoms_path: PathBuf,
     pub certs_specify_dir: PathBuf,
     pub command_config: CommandConfig,
+    pub auto_validate_specs: bool,
 }
 
 impl StructureConfig {
@@ -39,6 +42,7 @@ impl StructureConfig {
             structure_root: root.to_string(),
             execution_mode: ExecutionMode::Local,
             docker_image: default_docker_image(),
+            auto_validate_specs: false,
         }
     }
 
@@ -63,6 +67,7 @@ impl StructureConfig {
         json["structure-root"] = serde_json::Value::String(self.structure_root.clone());
         json["execution-mode"] = serde_json::to_value(&self.execution_mode).unwrap_or(serde_json::Value::Null);
         json["docker-image"] = serde_json::Value::String(self.docker_image.clone());
+        json["auto-validate-specs"] = serde_json::Value::Bool(self.auto_validate_specs);
 
         let content = serde_json::to_string_pretty(&json).context("Failed to serialize config")?;
         std::fs::write(&config_path, content).context("Failed to write config.json")?;
@@ -144,6 +149,10 @@ impl ConfigPaths {
             docker_image = env_img;
         }
 
+        let auto_validate_specs = json.get("auto-validate-specs")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+
         let command_config = CommandConfig {
             execution_mode: mode,
             docker_image,
@@ -156,6 +165,7 @@ impl ConfigPaths {
             certs_specify_dir: verilib_path.join("certs").join("specs"),
             verilib_path,
             command_config,
+            auto_validate_specs,
         })
     }
 }
