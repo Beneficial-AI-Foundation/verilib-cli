@@ -9,6 +9,17 @@ A command-line tool for managing Verilib repositories, verification structure fi
 - **Verification Structure** - Create and manage verification goals with `probe-verus` integration
 - **Cross-Platform** - Works on macOS, Linux, and Windows
 
+## Execution Modes
+
+`verilib-cli` supports two execution modes for verification commands (`atomize`, `specify`, `verify`):
+
+1.  **Docker (Recommended)**: Runs `probe-verus` in a container with all dependencies pre-installed. This ensures a consistent environment and avoids local setup issues. You simply need Docker installed and running.
+2.  **Local**: Runs `probe-verus` directly on your host machine. This requires you to install `probe-verus` and all its dependencies (Rust, Verus, etc.) manually.
+
+During initialization (`verilib-cli init`), you will be prompted to choose your preferred execution mode. You can also change it later by editing the `.verilib/config.json` file.
+
+> **Note for Local Mode:** If you choose to run locally and encounter issues with missing dependencies or environment configuration, please refer to the [probe-verus repository](https://github.com/Beneficial-AI-Foundation/probe-verus) for installation instructions and troubleshooting.
+
 ## Installation
 
 ### One-Line Installers (Recommended)
