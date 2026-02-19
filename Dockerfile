@@ -26,6 +26,7 @@ RUN echo "n" | python3 verus_analyzer_installer.py
 RUN echo "n" | python3 scip_installer.py
 
 WORKDIR /build
+ARG CACHEBUST=1
 RUN git clone https://github.com/Beneficial-AI-Foundation/probe-verus.git
 
 WORKDIR /build/probe-verus

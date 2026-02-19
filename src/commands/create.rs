@@ -3,7 +3,7 @@
 //! Initialize structure files from source analysis.
 
 use crate::structure::{
-    parse_github_link, run_command, write_frontmatter, CommandConfig, ExecutionMode, StructureConfig,
+    parse_github_link, run_command, write_frontmatter, CommandConfig, ConfigPaths, ExecutionMode, StructureConfig,
 };
 use anyhow::{bail, Context, Result};
 use serde_json::{json, Value};
@@ -22,9 +22,9 @@ pub async fn handle_create(project_root: PathBuf, root: Option<PathBuf>) -> Resu
         .map(|r| r.to_string_lossy().to_string())
         .unwrap_or_else(|| ".verilib/structure".to_string());
 
-    // Write config file with ONLY structure-root field
+    // Write config file with ONLY structure-root field (add/update it, preserving others)
     let config = StructureConfig::new(&structure_root_relative);
-    let config_path = config.save(&project_root)?;
+    let config_path = config.save(&project_root, true)?;
     println!("Wrote config to {}", config_path.display());
 
     // NOTE: .gitignore creation is moved to the 'init' subcommand
@@ -42,12 +42,10 @@ pub async fn handle_create(project_root: PathBuf, root: Option<PathBuf>) -> Resu
 
     let tracked_output_path = verilib_path.join("tracked_functions.csv");
 
-    // This command uses 'uv' which we expect to be local.
-    let local_config = CommandConfig {
-        execution_mode: ExecutionMode::Local,
-        ..Default::default()
-    };
-    run_analyze_verus_specs_proofs(&project_root, &seed_path, &tracked_output_path, &local_config)?;
+    // Load configuration to determine execution mode
+    let config = ConfigPaths::load(&project_root)?;
+
+    run_probe_verus_tracked_csv(&project_root, &seed_path, &tracked_output_path, &config.command_config)?;
 
     let tracked = read_tracked_csv(&tracked_output_path)?;
     let tracked = disambiguate_names(tracked);
@@ -61,50 +59,73 @@ pub async fn handle_create(project_root: PathBuf, root: Option<PathBuf>) -> Resu
     Ok(())
 }
 
-/// Run analyze_verus_specs_proofs.py CLI to generate tracked functions CSV.
-fn run_analyze_verus_specs_proofs(
+/// Run probe-verus tracked-csv CLI to generate tracked functions CSV.
+fn run_probe_verus_tracked_csv(
     project_root: &Path,
-    seed_path: &Path,
+    _seed_path: &Path,
     output_path: &Path,
     config: &CommandConfig,
 ) -> Result<()> {
-    let script_path = project_root
-        .join("scripts")
-        .join("analyze_verus_specs_proofs.py");
-    if !script_path.exists() {
-        bail!("Script not found: {}", script_path.display());
-    }
+    println!("Running probe-verus tracked-csv...");
 
-    println!("Running analyze_verus_specs_proofs.py...");
-
-    let seed_relative = seed_path.strip_prefix(project_root).unwrap_or(seed_path);
-    let output_relative = output_path
-        .strip_prefix(project_root)
-        .unwrap_or(output_path);
-
-    // Ensure parent directory exists
     if let Some(parent) = output_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
 
-    let output = run_command(
-        "uv",
-        &[
-            "run",
-            script_path.to_str().unwrap(),
-            "--seed",
-            seed_relative.to_str().unwrap(),
-            "--output",
-            output_relative.to_str().unwrap(),
-        ],
-        Some(project_root),
-        config,
-    )?;
+    match config.execution_mode {
+        ExecutionMode::Local => {
+            
+            let output_relative = output_path
+                .strip_prefix(project_root)
+                .unwrap_or(output_path)
+                .to_string_lossy();
 
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        eprintln!("Error running analyze_verus_specs_proofs.py:\n{}", stderr);
-        bail!("analyze_verus_specs_proofs.py failed");
+            let output = run_command(
+                "probe-verus",
+                &[
+                    "tracked-csv",
+                    ".", 
+                    "--output",
+                    &output_relative,
+                ],
+                Some(project_root),
+                config,
+            )?;
+
+            if !output.status.success() {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                eprintln!("Error running probe-verus tracked-csv:\n{}", stderr);
+                bail!("probe-verus tracked-csv failed");
+            }
+        }
+        ExecutionMode::Docker => {
+            let workspace_mount = "/workspace";
+            
+            let output_relative = output_path
+                .strip_prefix(project_root)
+                .unwrap_or(output_path)
+                .to_string_lossy();
+                
+            let output_in_container = format!("{}/{}", workspace_mount, output_relative);
+
+            let output = run_command(
+                "probe-verus",
+                &[
+                    "tracked-csv",
+                    workspace_mount, 
+                    "--output",
+                    &output_in_container
+                ],
+                Some(project_root),
+                config,
+            )?;
+
+            if !output.status.success() {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                eprintln!("Error running probe-verus tracked-csv in Docker:\n{}", stderr);
+                bail!("probe-verus tracked-csv failed");
+            }
+        }
     }
 
     println!(

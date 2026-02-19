@@ -46,15 +46,13 @@ impl StructureConfig {
         }
     }
 
-    /// Save config to .verilib/config.json
-    pub fn save(&self, project_root: &Path) -> Result<PathBuf> {
+    /// Save config to .verilib/config.json.
+    pub fn save(&self, project_root: &Path, preserve_existing: bool) -> Result<PathBuf> {
         let verilib_path = project_root.join(".verilib");
         std::fs::create_dir_all(&verilib_path).context("Failed to create .verilib directory")?;
 
         let config_path = verilib_path.join("config.json");
 
-        // If config exists, merge with existing content
-        // We read it into a Value to preserve other fields, but we should also respect our own fields.
         let mut json: serde_json::Value = if config_path.exists() {
              let existing = std::fs::read_to_string(&config_path)
                 .context("Failed to read existing config.json")?;
@@ -63,11 +61,20 @@ impl StructureConfig {
              serde_json::json!({})
         };
 
-        // Update fields
+        // Always update structure-root as that's the primary purpose of this save in 'create'
         json["structure-root"] = serde_json::Value::String(self.structure_root.clone());
-        json["execution-mode"] = serde_json::to_value(&self.execution_mode).unwrap_or(serde_json::Value::Null);
-        json["docker-image"] = serde_json::Value::String(self.docker_image.clone());
-        json["auto-validate-specs"] = serde_json::Value::Bool(self.auto_validate_specs);
+
+        if !preserve_existing || json.get("execution-mode").is_none() {
+            json["execution-mode"] = serde_json::to_value(&self.execution_mode).unwrap_or(serde_json::Value::Null);
+        }
+        
+        if !preserve_existing || json.get("docker-image").is_none() {
+            json["docker-image"] = serde_json::Value::String(self.docker_image.clone());
+        }
+
+        if !preserve_existing || (json.get("auto-validate-specs").is_none() && json.get("auto_validate_specs").is_none()) {
+            json["auto-validate-specs"] = serde_json::Value::Bool(self.auto_validate_specs);
+        }
 
         let content = serde_json::to_string_pretty(&json).context("Failed to serialize config")?;
         std::fs::write(&config_path, content).context("Failed to write config.json")?;

@@ -64,33 +64,6 @@ fn run_local(program: &str, args: &[&str], cwd: Option<&Path>) -> Result<Output>
     Ok(output)
 }
 
-fn ensure_image_pulled(image: &str) -> Result<()> {
-    let status = Command::new("docker")
-        .args(&["image", "inspect", image])
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .status();
-
-    if let Ok(status) = status {
-        if status.success() {
-            return Ok(());
-        }
-    }
-
-    println!("Docker image {} not found locally. Pulling...", image);
-    
-    let status = Command::new("docker")
-        .args(&["pull", "--platform", "linux/amd64", image])
-        .status()
-        .context(format!("Failed to pull docker image {}", image))?;
-
-    if !status.success() {
-        anyhow::bail!("Failed to pull docker image {}", image);
-    }
-    
-    Ok(())
-}
-
 fn run_docker(
     program: &str,
     args: &[&str],
@@ -119,7 +92,6 @@ fn run_docker(
     let mut docker_args = vec![
         "run",
         "--rm",
-        "--platform", "linux/amd64",
         "--entrypoint", program,
         "-u", &user_arg,
         "-v",
@@ -144,4 +116,33 @@ fn run_docker(
         .context(format!("Failed to run docker command with image {}", image))?;
 
     Ok(output)
+}
+
+fn ensure_image_pulled(image: &str) -> Result<()> {
+    // 1. Check if image exists locally (e.g. built locally)
+    let inspect = Command::new("docker")
+        .args(&["image", "inspect", image])
+        .output();
+
+    if let Ok(output) = inspect {
+        if output.status.success() {
+            // Found locally, no need to pull
+            return Ok(());
+        }
+    }
+
+    // 2. Not found locally, try to pull from registry
+    println!("Docker image '{}' not found locally. Pulling...", image);
+    
+    let status = Command::new("docker")
+        .args(&["pull", "--platform", "linux/amd64", image])
+        .status()
+        .context(format!("Failed to pull docker image {}", image))?;
+
+    if !status.success() {
+        // We can't proceed if we don't have the image
+        anyhow::bail!("Failed to pull docker image {} (and not found locally)", image);
+    }
+    
+    Ok(())
 }

@@ -5,7 +5,7 @@ on:
     paths:
       - 'Dockerfile'
       - '.github/workflows/docker-publish.yml'
-    branches: [ "main" ]
+    branches: [ "master" ]
     tags: [ 'docker-v*' ]
   workflow_dispatch:
 
@@ -56,6 +56,8 @@ jobs:
           context: .
           platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
+          build-args: |
+             CACHEBUST=${{ github.run_id }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
