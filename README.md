@@ -233,11 +233,9 @@ verilib-cli create --root custom/path
 |--------|-------------|
 | `--root <path>` | Custom structure root (default: `.verilib/structure`) |
 
-**Requirements:**
-- `scripts/analyze_verus_specs_proofs.py` script
-
 **Optional:**
-- `functions_to_track.csv` in project root — when absent, a minimal seed is used
+- `scripts/analyze_verus_specs_proofs.py` — when present (in project or bundled), generates structure files; when absent, create still runs and sets up config with no structure files
+- `functions_to_track.csv` in project root — when absent, all functions are tracked by default (when script runs)
 
 ### `atomize`
 Enrich structure files with metadata from SCIP atoms.

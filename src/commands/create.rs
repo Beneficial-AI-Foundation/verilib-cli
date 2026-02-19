@@ -5,7 +5,7 @@
 use crate::structure::{
     parse_github_link, run_command, write_frontmatter, CommandConfig, ConfigPaths, ExecutionMode, StructureConfig,
 };
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -30,14 +30,11 @@ pub async fn handle_create(project_root: PathBuf, root: Option<PathBuf>) -> Resu
     // NOTE: .gitignore creation is moved to the 'init' subcommand
 
     let tracked_path = project_root.join("functions_to_track.csv");
-    let seed_path: PathBuf = if tracked_path.exists() {
-        tracked_path
+    let seed_path = if tracked_path.exists() {
+        Some(tracked_path)
     } else {
-        // Optional: use minimal seed when functions_to_track.csv is absent
-        let fallback_seed = verilib_path.join("seed.csv");
-        std::fs::write(&fallback_seed, "function,module,link\n")
-            .context("Failed to write fallback seed.csv")?;
-        fallback_seed
+        // Default: track all functions when functions_to_track.csv is absent
+        None
     };
 
     let tracked_output_path = verilib_path.join("tracked_functions.csv");
@@ -69,7 +66,18 @@ fn run_probe_verus_tracked_csv(
     println!("Running probe-verus tracked-csv...");
 
     if let Some(parent) = output_path.parent() {
-        std::fs::create_dir_all(parent)?;
+        let _ = std::fs::create_dir_all(parent);
+    }
+
+    let mut args: Vec<String> = vec![
+        "run".into(),
+        script_path.to_str()?.into(),
+        "--output".into(),
+        output_relative.to_str()?.into(),
+    ];
+    if let Some(seed) = seed_path {
+        let seed_relative = seed.strip_prefix(project_root).unwrap_or(seed);
+        args.extend(["--seed".into(), seed_relative.to_str()?.into()]);
     }
 
     match config.execution_mode {
@@ -132,7 +140,7 @@ fn run_probe_verus_tracked_csv(
         "Generated tracked functions CSV at {}",
         output_path.display()
     );
-    Ok(())
+    Some(output_path.to_path_buf())
 }
 
 /// Tracked function data from CSV.
@@ -233,6 +241,8 @@ fn generate_structure_files(
     structure: &HashMap<String, Value>,
     structure_root: &Path,
 ) -> Result<()> {
+    std::fs::create_dir_all(structure_root)
+        .context("Failed to create structure root directory")?;
     let mut created_count = 0;
 
     for (relative_path_str, metadata) in structure {
