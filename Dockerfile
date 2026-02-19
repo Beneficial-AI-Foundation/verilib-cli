@@ -36,6 +36,9 @@ FROM --platform=linux/amd64 rust:slim-bookworm AS runtime
 RUN apt-get update && apt-get install -y \
     libssl3 \
     z3 \
+    python3 \
+    python3-pip \
+    python3-requests \
     && rm -rf /var/lib/apt/lists/*
 
 # Install specific Rust toolchain for Verus
