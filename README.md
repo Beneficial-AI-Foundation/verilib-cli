@@ -100,6 +100,19 @@ verilib-cli specify
 verilib-cli verify
 ```
 
+### Auto-Validation for Trusted Specs
+
+For high-trust projects where all specifications are considered valid by default (e.g., in CI environments), you can enable auto-validation.
+
+Add the following to your `.verilib/config.json`:
+```json
+{
+  "auto-validate-specs": true
+}
+```
+
+When enabled, `verilib-cli specify` will automatically generate specification certificates for all uncertified specifications instead of prompting interactively. This is ideal for CI workflows.
+
 ---
 
 ## Repository Commands

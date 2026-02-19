@@ -58,7 +58,11 @@ pub async fn handle_specify(project_root: PathBuf, no_probe: bool, check_only: b
     }
 
     // Display menu and create certs for selected functions
-    let newly_certified = collect_certifications(&uncertified, &config.certs_specify_dir)?;
+    let newly_certified = collect_certifications(
+        &uncertified, 
+        &config.certs_specify_dir, 
+        config.auto_validate_specs
+    )?;
 
     // Update specified status based on all certified functions
     let all_certified: HashSet<String> = existing_certs.union(&newly_certified).cloned().collect();
@@ -140,6 +144,7 @@ fn find_uncertified_functions(
 fn collect_certifications(
     uncertified: &HashMap<String, Value>,
     certs_dir: &Path,
+    auto_validate: bool,
 ) -> Result<HashSet<String>> {
     let mut newly_certified = HashSet::new();
 
@@ -148,10 +153,17 @@ fn collect_certifications(
         return Ok(newly_certified);
     }
 
-    println!(
-        "\n{} functions with specs need certification",
-        uncertified.len()
-    );
+    if auto_validate {
+        println!(
+            "\nAuto-validating all {} uncertified functions...",
+            uncertified.len()
+        );
+    } else {
+        println!(
+            "\n{} functions with specs need certification",
+            uncertified.len()
+        );
+    }
 
     let mut uncertified_list: Vec<(String, Value)> = uncertified
         .iter()
@@ -159,32 +171,36 @@ fn collect_certifications(
         .collect();
     uncertified_list.sort_by(|a, b| a.0.cmp(&b.0));
 
-    let selected_indices = display_menu(&uncertified_list, |i, _stub_path, stub| {
-        let display_name = stub
-            .get("display-name")
-            .and_then(|v| v.as_str())
-            .unwrap_or("?");
-        let code_path = stub
-            .get("code-path")
-            .and_then(|v| v.as_str())
-            .unwrap_or("?");
-        let spec_text = stub.get("spec-text");
-        let lines_start = spec_text
-            .and_then(|v| v.get("lines-start"))
-            .and_then(|v| v.as_u64())
-            .map(|l| l.to_string())
-            .unwrap_or_else(|| "?".to_string());
-        let lines_end = spec_text
-            .and_then(|v| v.get("lines-end"))
-            .and_then(|v| v.as_u64())
-            .map(|l| l.to_string())
-            .unwrap_or_else(|| "?".to_string());
+    let selected_indices: Vec<usize> = if auto_validate {
+        (0..uncertified_list.len()).collect()
+    } else {
+        display_menu(&uncertified_list, |i, _stub_path, stub| {
+            let display_name = stub
+                .get("display-name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("?");
+            let code_path = stub
+                .get("code-path")
+                .and_then(|v| v.as_str())
+                .unwrap_or("?");
+            let spec_text = stub.get("spec-text");
+            let lines_start = spec_text
+                .and_then(|v| v.get("lines-start"))
+                .and_then(|v| v.as_u64())
+                .map(|l| l.to_string())
+                .unwrap_or_else(|| "?".to_string());
+            let lines_end = spec_text
+                .and_then(|v| v.get("lines-end"))
+                .and_then(|v| v.as_u64())
+                .map(|l| l.to_string())
+                .unwrap_or_else(|| "?".to_string());
 
-        format!(
-            "  [{}] {} ({}#L{}-L{})",
-            i, display_name, code_path, lines_start, lines_end
-        )
-    })?;
+            format!(
+                "  [{}] {} ({}#L{}-L{})",
+                i, display_name, code_path, lines_start, lines_end
+            )
+        })?
+    };
 
     if selected_indices.is_empty() {
         println!("\nNo functions selected.");
