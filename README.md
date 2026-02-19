@@ -111,7 +111,7 @@ Add the following to your `.verilib/config.json`:
 }
 ```
 
-When enabled, `verilib-cli specify` will automatically generate compilation certificates for all uncertified specifications instead of prompting interactively. This is ideal for CI workflows.
+When enabled, `verilib-cli specify` will automatically generate specification certificates for all uncertified specifications instead of prompting interactively. This is ideal for CI workflows.
 
 ---
 
