@@ -202,8 +202,10 @@ verilib-cli create --root custom/path
 | `--root <path>` | Custom structure root (default: `.verilib/structure`) |
 
 **Requirements:**
-- `functions_to_track.csv` in project root
 - `scripts/analyze_verus_specs_proofs.py` script
+
+**Optional:**
+- `functions_to_track.csv` in project root — when absent, a minimal seed is used
 
 ### `atomize`
 Enrich structure files with metadata from SCIP atoms.
@@ -327,7 +329,7 @@ cd dalek-lite
 git checkout -b sl/structure
 
 # Step 1: Create structure files
-# Creates .md stub files in .verilib/structure/ from functions_to_track.csv
+# Creates .md stub files in .verilib/structure/ (from functions_to_track.csv if present)
 verilib-cli create
 
 # Step 2: Run atomization

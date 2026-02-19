@@ -30,9 +30,15 @@ pub async fn handle_create(project_root: PathBuf, root: Option<PathBuf>) -> Resu
     // NOTE: .gitignore creation is moved to the 'init' subcommand
 
     let tracked_path = project_root.join("functions_to_track.csv");
-    if !tracked_path.exists() {
-        bail!("{} not found", tracked_path.display());
-    }
+    let seed_path: PathBuf = if tracked_path.exists() {
+        tracked_path
+    } else {
+        // Optional: use minimal seed when functions_to_track.csv is absent
+        let fallback_seed = verilib_path.join("seed.csv");
+        std::fs::write(&fallback_seed, "function,module,link\n")
+            .context("Failed to write fallback seed.csv")?;
+        fallback_seed
+    };
 
     let tracked_output_path = verilib_path.join("tracked_functions.csv");
 
@@ -41,7 +47,7 @@ pub async fn handle_create(project_root: PathBuf, root: Option<PathBuf>) -> Resu
         execution_mode: ExecutionMode::Local,
         ..Default::default()
     };
-    run_analyze_verus_specs_proofs(&project_root, &tracked_path, &tracked_output_path, &local_config)?;
+    run_analyze_verus_specs_proofs(&project_root, &seed_path, &tracked_output_path, &local_config)?;
 
     let tracked = read_tracked_csv(&tracked_output_path)?;
     let tracked = disambiguate_names(tracked);
