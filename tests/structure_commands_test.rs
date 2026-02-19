@@ -424,18 +424,23 @@ mod create_tests {
     use super::*;
 
     #[test]
-    fn test_create_fails_without_functions_to_track_csv() {
+    fn test_create_uses_fallback_seed_without_functions_to_track_csv() {
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
 
-        // No functions_to_track.csv - should fail
+        // No functions_to_track.csv - create uses fallback seed and does not fail for that reason
         let output = run_command(&["create"], temp_dir.path());
 
-        assert!(!output.status.success(), "Should fail without functions_to_track.csv");
         let stderr = String::from_utf8_lossy(&output.stderr);
         assert!(
-            stderr.contains("functions_to_track.csv") && stderr.contains("not found"),
-            "Should report missing functions_to_track.csv: {}",
+            !(stderr.contains("functions_to_track.csv") && stderr.contains("not found")),
+            "Should NOT fail with 'functions_to_track.csv not found' (now optional): {}",
             stderr
+        );
+        // Fallback seed should be created when functions_to_track.csv is absent
+        let seed_path = temp_dir.path().join(".verilib").join("seed.csv");
+        assert!(
+            seed_path.exists(),
+            "Fallback .verilib/seed.csv should be created when functions_to_track.csv is missing"
         );
     }
 
