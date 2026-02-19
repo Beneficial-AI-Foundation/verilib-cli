@@ -5,7 +5,7 @@
 use crate::structure::{
     parse_github_link, run_command, write_frontmatter, CommandConfig, ExecutionMode, StructureConfig,
 };
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -30,26 +30,32 @@ pub async fn handle_create(project_root: PathBuf, root: Option<PathBuf>) -> Resu
     // NOTE: .gitignore creation is moved to the 'init' subcommand
 
     let tracked_path = project_root.join("functions_to_track.csv");
-    let seed_path: PathBuf = if tracked_path.exists() {
-        tracked_path
+    let seed_path = if tracked_path.exists() {
+        Some(tracked_path)
     } else {
-        // Optional: use minimal seed when functions_to_track.csv is absent
-        let fallback_seed = verilib_path.join("seed.csv");
-        std::fs::write(&fallback_seed, "function,module,link\n")
-            .context("Failed to write fallback seed.csv")?;
-        fallback_seed
+        // Default: track all functions when functions_to_track.csv is absent
+        None
     };
 
     let tracked_output_path = verilib_path.join("tracked_functions.csv");
 
-    // This command uses 'uv' which we expect to be local.
+    // Script is optional: if absent or fails, create proceeds with no structure files
     let local_config = CommandConfig {
         execution_mode: ExecutionMode::Local,
         ..Default::default()
     };
-    run_analyze_verus_specs_proofs(&project_root, &seed_path, &tracked_output_path, &local_config)?;
-
-    let tracked = read_tracked_csv(&tracked_output_path)?;
+    let tracked = match try_run_analyze_verus_specs_proofs(
+        &project_root,
+        seed_path.as_deref(),
+        &tracked_output_path,
+        &local_config,
+    ) {
+        Some(path) => read_tracked_csv(&path)?,
+        None => {
+            println!("Skipping structure generation (analyze_verus_specs_proofs.py not run)");
+            HashMap::new()
+        }
+    };
     let tracked = disambiguate_names(tracked);
     let structure = tracked_to_structure(&tracked);
 
@@ -61,57 +67,68 @@ pub async fn handle_create(project_root: PathBuf, root: Option<PathBuf>) -> Resu
     Ok(())
 }
 
-/// Run analyze_verus_specs_proofs.py CLI to generate tracked functions CSV.
-fn run_analyze_verus_specs_proofs(
+/// Path to the script bundled with verilib-cli (scripts/ relative to the executable).
+fn cli_bundled_script_path() -> Option<PathBuf> {
+    let exe = std::env::current_exe().ok()?;
+    let cli_root = exe.parent()?.parent()?; // target/release/verilib-cli -> verilib-cli root
+    let script = cli_root.join("scripts").join("analyze_verus_specs_proofs.py");
+    script.exists().then_some(script)
+}
+
+/// Optionally run analyze_verus_specs_proofs.py. Returns Some(output_path) on success, None if
+/// script is absent or fails (create continues without structure files).
+fn try_run_analyze_verus_specs_proofs(
     project_root: &Path,
-    seed_path: &Path,
+    seed_path: Option<&Path>,
     output_path: &Path,
     config: &CommandConfig,
-) -> Result<()> {
-    let script_path = project_root
+) -> Option<PathBuf> {
+    let project_script = project_root
         .join("scripts")
         .join("analyze_verus_specs_proofs.py");
-    if !script_path.exists() {
-        bail!("Script not found: {}", script_path.display());
-    }
+    let script_path: PathBuf = project_script
+        .exists()
+        .then_some(project_script)
+        .or_else(cli_bundled_script_path)?;
 
     println!("Running analyze_verus_specs_proofs.py...");
 
-    let seed_relative = seed_path.strip_prefix(project_root).unwrap_or(seed_path);
     let output_relative = output_path
         .strip_prefix(project_root)
         .unwrap_or(output_path);
 
-    // Ensure parent directory exists
     if let Some(parent) = output_path.parent() {
-        std::fs::create_dir_all(parent)?;
+        let _ = std::fs::create_dir_all(parent);
     }
 
-    let output = run_command(
-        "uv",
-        &[
-            "run",
-            script_path.to_str().unwrap(),
-            "--seed",
-            seed_relative.to_str().unwrap(),
-            "--output",
-            output_relative.to_str().unwrap(),
-        ],
-        Some(project_root),
-        config,
-    )?;
+    let mut args: Vec<String> = vec![
+        "run".into(),
+        script_path.to_str()?.into(),
+        "--output".into(),
+        output_relative.to_str()?.into(),
+    ];
+    if let Some(seed) = seed_path {
+        let seed_relative = seed.strip_prefix(project_root).unwrap_or(seed);
+        args.extend(["--seed".into(), seed_relative.to_str()?.into()]);
+    }
+
+    let args_ref: Vec<&str> = args.iter().map(String::as_str).collect();
+    let output = run_command("uv", &args_ref, Some(project_root), config).ok()?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        eprintln!("Error running analyze_verus_specs_proofs.py:\n{}", stderr);
-        bail!("analyze_verus_specs_proofs.py failed");
+        eprintln!(
+            "Warning: analyze_verus_specs_proofs.py failed (skipping structure generation):\n{}",
+            stderr
+        );
+        return None;
     }
 
     println!(
         "Generated tracked functions CSV at {}",
         output_path.display()
     );
-    Ok(())
+    Some(output_path.to_path_buf())
 }
 
 /// Tracked function data from CSV.

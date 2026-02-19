@@ -84,18 +84,27 @@ pub fn create_gitignore(verilib_path: &Path) -> Result<()> {
     Ok(())
 }
 
+/// Default config written when .verilib/config.json is missing.
+const DEFAULT_CONFIG_JSON: &str = r#"{
+  "docker-image": "ghcr.io/beneficial-ai-foundation/verilib-cli:latest",
+  "execution-mode": "local",
+  "repo": {},
+  "structure-root": ".verilib/structure"
+}"#;
+
 impl ConfigPaths {
     /// Load config and compute all paths.
-    /// Requires structure-root to be present in config.
+    /// If config.json is missing, creates a default one and continues.
     pub fn load(project_root: &Path) -> Result<Self> {
         let verilib_path = project_root.join(".verilib");
         let config_path = verilib_path.join("config.json");
 
         if !config_path.exists() {
-            anyhow::bail!(
-                "{} not found. Run 'verilib-cli create' first.",
-                config_path.display()
-            );
+            std::fs::create_dir_all(&verilib_path)
+                .context("Failed to create .verilib directory")?;
+            std::fs::write(&config_path, DEFAULT_CONFIG_JSON)
+                .context("Failed to write default config.json")?;
+            println!("Created default config at {}", config_path.display());
         }
 
         let content =
@@ -107,11 +116,7 @@ impl ConfigPaths {
         let structure_root_str = json
             .get("structure-root")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| {
-                anyhow::anyhow!(
-                    "No 'structure-root' field in config.json. Run 'verilib-cli create' first."
-                )
-            })?;
+            .unwrap_or(".verilib/structure");
 
         let structure_root = project_root.join(structure_root_str);
 

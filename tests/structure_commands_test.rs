@@ -424,10 +424,10 @@ mod create_tests {
     use super::*;
 
     #[test]
-    fn test_create_uses_fallback_seed_without_functions_to_track_csv() {
+    fn test_create_tracks_all_functions_without_functions_to_track_csv() {
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
 
-        // No functions_to_track.csv - create uses fallback seed and does not fail for that reason
+        // No functions_to_track.csv - create invokes script without --seed (tracks all functions)
         let output = run_command(&["create"], temp_dir.path());
 
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -435,12 +435,6 @@ mod create_tests {
             !(stderr.contains("functions_to_track.csv") && stderr.contains("not found")),
             "Should NOT fail with 'functions_to_track.csv not found' (now optional): {}",
             stderr
-        );
-        // Fallback seed should be created when functions_to_track.csv is absent
-        let seed_path = temp_dir.path().join(".verilib").join("seed.csv");
-        assert!(
-            seed_path.exists(),
-            "Fallback .verilib/seed.csv should be created when functions_to_track.csv is missing"
         );
     }
 
@@ -481,18 +475,17 @@ mod error_handling_tests {
     use super::*;
 
     #[test]
-    fn test_commands_fail_without_config() {
+    fn test_commands_create_default_config_when_missing() {
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
         let verilib_dir = temp_dir.path().join(".verilib");
-        fs::create_dir_all(&verilib_dir).expect("Failed to create .verilib dir");
 
-        // No config.json - should fail
-        let output = run_command(&["atomize", "--no-probe"], temp_dir.path());
-        assert!(!output.status.success());
-        let stderr = String::from_utf8_lossy(&output.stderr);
+        // No .verilib at all - atomize creates default config and proceeds
+        run_command(&["atomize", "--no-probe"], temp_dir.path());
+        // config.json should have been created (fails later on atoms.json)
+        let config_path = verilib_dir.join("config.json");
         assert!(
-            stderr.contains("config.json not found") || stderr.contains("Run 'verilib-cli create'"),
-            "Should report missing config"
+            config_path.exists(),
+            "Default config.json should be created when missing"
         );
     }
 
