@@ -84,6 +84,8 @@ fn generate_stubs(
     if let Some(parent) = stubs_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
+    // Ensure structure root exists (create may have written 0 files)
+    std::fs::create_dir_all(structure_root)?;
 
     println!(
         "Running probe-verus stubify on {}...",

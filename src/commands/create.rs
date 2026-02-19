@@ -229,6 +229,8 @@ fn generate_structure_files(
     structure: &HashMap<String, Value>,
     structure_root: &Path,
 ) -> Result<()> {
+    std::fs::create_dir_all(structure_root)
+        .context("Failed to create structure root directory")?;
     let mut created_count = 0;
 
     for (relative_path_str, metadata) in structure {
