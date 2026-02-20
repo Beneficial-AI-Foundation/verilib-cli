@@ -16,6 +16,25 @@ A command-line tool for managing Verilib repositories, verification structure fi
 1.  **Docker (Recommended)**: Runs `probe-verus` in a container with all dependencies pre-installed. This ensures a consistent environment and avoids local setup issues. You simply need Docker installed and running.
 2.  **Local**: Runs `probe-verus` directly on your host machine. This requires you to install `probe-verus` and all its dependencies (Rust, Verus, etc.) manually.
 
+### Using a Local Docker Image
+
+If you want to use a locally built Docker image instead of pulling from the registry (e.g., for development or custom modifications), follow these steps:
+
+1.  **Build the Docker image locally:**
+    ```bash
+    docker build --build-arg CACHEBUST=$(date +%s) -t verilib-cli:local .
+    ```
+
+2.  **Update your configuration:**
+    Edit `.verilib/config.json` in your project root and set the `docker-image` field:
+    ```json
+    {
+      "execution-mode": "docker",
+      "docker-image": "verilib-cli:local",
+      ...
+    }
+    ```
+
 During initialization (`verilib-cli init`), you will be prompted to choose your preferred execution mode. You can also change it later by editing the `.verilib/config.json` file.
 
 > **Note for Local Mode:** If you choose to run locally and encounter issues with missing dependencies or environment configuration, please refer to the [probe-verus repository](https://github.com/Beneficial-AI-Foundation/probe-verus) for installation instructions and troubleshooting.
@@ -214,11 +233,9 @@ verilib-cli create --root custom/path
 |--------|-------------|
 | `--root <path>` | Custom structure root (default: `.verilib/structure`) |
 
-**Requirements:**
-- `scripts/analyze_verus_specs_proofs.py` script
-
 **Optional:**
-- `functions_to_track.csv` in project root — when absent, a minimal seed is used
+- `scripts/analyze_verus_specs_proofs.py` — when present (in project or bundled), generates structure files; when absent, create still runs and sets up config with no structure files
+- `functions_to_track.csv` in project root — when absent, all functions are tracked by default (when script runs)
 
 ### `atomize`
 Enrich structure files with metadata from SCIP atoms.

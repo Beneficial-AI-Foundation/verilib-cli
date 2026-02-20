@@ -263,7 +263,7 @@ fn save_config(
     fs::write(&config_path, &config_json).context("Failed to write config.json file")?;
 
     // Create .gitignore for generated files
-    create_gitignore(&verilib_path)?;
+    // create_gitignore(&verilib_path)?;
 
     Ok(())
 }

@@ -46,15 +46,13 @@ impl StructureConfig {
         }
     }
 
-    /// Save config to .verilib/config.json
-    pub fn save(&self, project_root: &Path) -> Result<PathBuf> {
+    /// Save config to .verilib/config.json.
+    pub fn save(&self, project_root: &Path, preserve_existing: bool) -> Result<PathBuf> {
         let verilib_path = project_root.join(".verilib");
         std::fs::create_dir_all(&verilib_path).context("Failed to create .verilib directory")?;
 
         let config_path = verilib_path.join("config.json");
 
-        // If config exists, merge with existing content
-        // We read it into a Value to preserve other fields, but we should also respect our own fields.
         let mut json: serde_json::Value = if config_path.exists() {
              let existing = std::fs::read_to_string(&config_path)
                 .context("Failed to read existing config.json")?;
@@ -63,11 +61,20 @@ impl StructureConfig {
              serde_json::json!({})
         };
 
-        // Update fields
+        // Always update structure-root as that's the primary purpose of this save in 'create'
         json["structure-root"] = serde_json::Value::String(self.structure_root.clone());
-        json["execution-mode"] = serde_json::to_value(&self.execution_mode).unwrap_or(serde_json::Value::Null);
-        json["docker-image"] = serde_json::Value::String(self.docker_image.clone());
-        json["auto-validate-specs"] = serde_json::Value::Bool(self.auto_validate_specs);
+
+        if !preserve_existing || json.get("execution-mode").is_none() {
+            json["execution-mode"] = serde_json::to_value(&self.execution_mode).unwrap_or(serde_json::Value::Null);
+        }
+        
+        if !preserve_existing || json.get("docker-image").is_none() {
+            json["docker-image"] = serde_json::Value::String(self.docker_image.clone());
+        }
+
+        if !preserve_existing || (json.get("auto-validate-specs").is_none() && json.get("auto_validate_specs").is_none()) {
+            json["auto-validate-specs"] = serde_json::Value::Bool(self.auto_validate_specs);
+        }
 
         let content = serde_json::to_string_pretty(&json).context("Failed to serialize config")?;
         std::fs::write(&config_path, content).context("Failed to write config.json")?;
@@ -89,18 +96,27 @@ pub fn create_gitignore(verilib_path: &Path) -> Result<()> {
     Ok(())
 }
 
+/// Default config written when .verilib/config.json is missing.
+const DEFAULT_CONFIG_JSON: &str = r#"{
+  "docker-image": "ghcr.io/beneficial-ai-foundation/verilib-cli:latest",
+  "execution-mode": "local",
+  "repo": {},
+  "structure-root": ".verilib/structure"
+}"#;
+
 impl ConfigPaths {
     /// Load config and compute all paths.
-    /// Requires structure-root to be present in config.
+    /// If config.json is missing, creates a default one and continues.
     pub fn load(project_root: &Path) -> Result<Self> {
         let verilib_path = project_root.join(".verilib");
         let config_path = verilib_path.join("config.json");
 
         if !config_path.exists() {
-            anyhow::bail!(
-                "{} not found. Run 'verilib-cli create' first.",
-                config_path.display()
-            );
+            std::fs::create_dir_all(&verilib_path)
+                .context("Failed to create .verilib directory")?;
+            std::fs::write(&config_path, DEFAULT_CONFIG_JSON)
+                .context("Failed to write default config.json")?;
+            println!("Created default config at {}", config_path.display());
         }
 
         let content =
@@ -112,11 +128,7 @@ impl ConfigPaths {
         let structure_root_str = json
             .get("structure-root")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| {
-                anyhow::anyhow!(
-                    "No 'structure-root' field in config.json. Run 'verilib-cli create' first."
-                )
-            })?;
+            .unwrap_or(".verilib/structure");
 
         let structure_root = project_root.join(structure_root_str);
 
