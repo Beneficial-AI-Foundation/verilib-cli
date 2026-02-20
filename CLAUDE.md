@@ -35,8 +35,7 @@ This is a Rust CLI tool for managing Verilib verification repositories. The code
 
 ### External Tool Dependencies
 
-- **probe-verus** - Required for `atomize`, `specify`, and `verify` commands. Must be installed and in PATH.
-- **Python/uv** - The `create` command runs `scripts/analyze_verus_specs_proofs.py` via `uv run`
+- **probe-verus** - Required for `create`, `atomize`, `specify`, and `verify` commands. Must be installed and in PATH.
 
 ### Configuration Files
 
