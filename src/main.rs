@@ -33,8 +33,12 @@ async fn main() -> Result<()> {
             handle_reclone(cli.debug).await?;
         }
         // Structure commands (merged from verilib-structure)
-        Commands::Create { project_root, root } => {
-            handle_create(project_root, root).await?;
+        Commands::Create {
+            project_root,
+            root,
+            github_base_url,
+        } => {
+            handle_create(project_root, root, github_base_url).await?;
         }
         Commands::Atomize {
             project_root,
