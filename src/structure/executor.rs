@@ -92,8 +92,20 @@ fn run_docker(
     let mut docker_args = vec![
         "run",
         "--rm",
-        "--entrypoint", program,
-        "-u", &user_arg,
+        "--entrypoint",
+        program,
+        "-u",
+        &user_arg,
+        "-e",
+        "HOME=/tmp",
+        "-e",
+        "XDG_CACHE_HOME=/tmp/.cache",
+        "-e",
+        "UV_CACHE_DIR=/tmp/.uv-cache",
+        "-e",
+        "UV_PYTHON_INSTALL_DIR=/tmp/.python",
+        "-e",
+        "REPO_ROOT=/workspace",
         "-v",
     ];
 
@@ -101,8 +113,7 @@ fn run_docker(
     docker_args.push(&mount_arg);
 
     docker_args.extend_from_slice(&[
-        "--tmpfs", "/tmp",
-        "--tmpfs", "/home/tooluser/.cache",
+        "--tmpfs", "/tmp:exec,mode=777",
         "--security-opt=no-new-privileges",
         "-w", "/workspace",
         image,
