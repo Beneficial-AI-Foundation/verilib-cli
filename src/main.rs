@@ -38,11 +38,11 @@ async fn main() -> Result<()> {
         }
         Commands::Atomize {
             project_root,
-            update_stubs,
+            no_update_stubs,
             no_probe,
             check_only,
         } => {
-            handle_atomize(project_root, update_stubs, no_probe, check_only).await?;
+            handle_atomize(project_root, no_update_stubs, no_probe, check_only).await?;
         }
         Commands::Specify {
             project_root,

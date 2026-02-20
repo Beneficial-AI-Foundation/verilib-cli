@@ -58,9 +58,9 @@ pub enum Commands {
         #[arg(default_value = ".")]
         project_root: PathBuf,
 
-        /// Update .md structure files with code-name from atoms
-        #[arg(short = 's', long)]
-        update_stubs: bool,
+        /// Skip updating .md structure files with code-name from atoms
+        #[arg(long)]
+        no_update_stubs: bool,
 
         /// Skip running probe-verus atomize and read atoms.json from disk
         #[arg(short = 'n', long)]

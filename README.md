@@ -91,7 +91,7 @@ verilib-cli reclone   # Trigger server reclone
 verilib-cli create
 
 # 2. Enrich with atom metadata
-verilib-cli atomize --update-stubs
+verilib-cli atomize
 
 # 3. Manage specifications
 verilib-cli specify
@@ -224,14 +224,14 @@ verilib-cli create --root custom/path
 Enrich structure files with metadata from SCIP atoms.
 
 ```bash
-verilib-cli atomize                 # Generate stubs.json
-verilib-cli atomize -s              # Also update .md files with code-name
+verilib-cli atomize                 # Enrich stubs.json and update .md files
+verilib-cli atomize --no-update-stubs  # Enrich stubs.json only, skip .md updates
 ```
 
 **Options:**
 | Option | Description |
 |--------|-------------|
-| `-s, --update-stubs` | Update .md files with code-name |
+| `--no-update-stubs` | Skip updating .md files with code-name from atoms |
 | `-n, --no-probe` | Skip running probe-verus atomize and read existing atoms.json |
 | `-c, --check-only` | Check if .md stub files match enriched stubs.json without writing |
 
@@ -348,7 +348,7 @@ verilib-cli create
 # Step 2: Run atomization
 # Generates stubs.json with atom dependencies from SCIP analysis
 # Updates .md files with code-name, code-path, and code-line
-verilib-cli atomize --update-stubs
+verilib-cli atomize
 
 # Step 3: Manage specifications
 # Prompts user to certify functions with changed specs

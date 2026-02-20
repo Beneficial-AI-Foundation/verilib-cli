@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 /// Run the atomize subcommand.
 pub async fn handle_atomize(
     project_root: PathBuf,
-    update_stubs: bool,
+    no_update_stubs: bool,
     no_probe: bool,
     check_only: bool,
 ) -> Result<()> {
@@ -62,8 +62,8 @@ pub async fn handle_atomize(
     let content = serde_json::to_string_pretty(&enriched)?;
     std::fs::write(&config.structure_json_path, content)?;
 
-    // Optionally update .md files with code-name
-    if update_stubs {
+    // Update .md files with code-name (default behavior, skip with --no-update-stubs)
+    if !no_update_stubs {
         println!("Updating structure files with code-names...");
         update_structure_files(&enriched, &config.structure_root)?;
     }
