@@ -72,6 +72,14 @@ pub async fn handle_atomize(
     Ok(())
 }
 
+/// Check if structure has any .md files (recursively).
+fn has_md_files(structure_root: &Path) -> bool {
+    walkdir::WalkDir::new(structure_root)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .any(|e| e.path().extension().map_or(false, |ext| ext == "md"))
+}
+
 /// Run probe-verus stubify to generate stubs.json from .md files.
 fn generate_stubs(
     project_root: &Path,
@@ -79,11 +87,20 @@ fn generate_stubs(
     stubs_path: &Path,
     config: &CommandConfig,
 ) -> Result<HashMap<String, Value>> {
-    require_probe_installed(config)?;
-
     if let Some(parent) = stubs_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
+    // Ensure structure root exists (create may have written 0 files)
+    std::fs::create_dir_all(structure_root)?;
+
+    // No .md files: stubify would fail; write empty stubs.json and continue
+    if !has_md_files(structure_root) {
+        println!("No .md structure files found; writing empty stubs.json");
+        std::fs::write(stubs_path, "{}")?;
+        return Ok(HashMap::new());
+    }
+
+    require_probe_installed(config)?;
 
     println!(
         "Running probe-verus stubify on {}...",

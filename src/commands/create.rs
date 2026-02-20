@@ -3,7 +3,7 @@
 //! Initialize structure files from source analysis.
 
 use crate::structure::{
-    parse_github_link, run_command, write_frontmatter, CommandConfig, ExecutionMode, StructureConfig,
+    parse_github_link, run_command, write_frontmatter, CommandConfig, ConfigPaths, ExecutionMode, StructureConfig,
 };
 use anyhow::{bail, Context, Result};
 use serde_json::{json, Value};
@@ -24,30 +24,35 @@ pub async fn handle_create(project_root: PathBuf, root: Option<PathBuf>) -> Resu
 
     // Write config file with ONLY structure-root field
     let config = StructureConfig::new(&structure_root_relative);
-    let config_path = config.save(&project_root)?;
+    let config_path = config.save(&project_root, true)?;
     println!("Wrote config to {}", config_path.display());
 
     // NOTE: .gitignore creation is moved to the 'init' subcommand
 
+    let config = ConfigPaths::load(&project_root)?;
+
     let tracked_path = project_root.join("functions_to_track.csv");
-    let seed_path: PathBuf = if tracked_path.exists() {
-        tracked_path
-    } else {
-        // Optional: use minimal seed when functions_to_track.csv is absent
-        let fallback_seed = verilib_path.join("seed.csv");
-        std::fs::write(&fallback_seed, "function,module,link\n")
-            .context("Failed to write fallback seed.csv")?;
-        fallback_seed
-    };
+    if !tracked_path.exists() {
+        println!("functions_to_track.csv not found, generating from atomize...");
+        crate::commands::atomize::handle_atomize(
+            project_root.clone(),
+            false,
+            false, 
+            false,
+        )
+        .await?;
+
+        let atoms_path = verilib_path.join("atoms.json");
+        if atoms_path.exists() {
+            generate_functions_to_track_csv(&atoms_path, &tracked_path)?;
+        } else {
+             bail!("Failed to generate atoms.json for functions_to_track.csv");
+        }
+    }
 
     let tracked_output_path = verilib_path.join("tracked_functions.csv");
 
-    // This command uses 'uv' which we expect to be local.
-    let local_config = CommandConfig {
-        execution_mode: ExecutionMode::Local,
-        ..Default::default()
-    };
-    run_analyze_verus_specs_proofs(&project_root, &seed_path, &tracked_output_path, &local_config)?;
+    run_analyze_verus_specs_proofs(&project_root, &tracked_path, &tracked_output_path, &config.command_config)?;
 
     let tracked = read_tracked_csv(&tracked_output_path)?;
     let tracked = disambiguate_names(tracked);
@@ -68,44 +73,76 @@ fn run_analyze_verus_specs_proofs(
     output_path: &Path,
     config: &CommandConfig,
 ) -> Result<()> {
-    let script_path = project_root
-        .join("scripts")
-        .join("analyze_verus_specs_proofs.py");
-    if !script_path.exists() {
-        bail!("Script not found: {}", script_path.display());
-    }
+    let script_name = "analyze_verus_specs_proofs.py";
+    let script_path = if matches!(config.execution_mode, ExecutionMode::Docker) {
+        let workspace_script = PathBuf::from("/workspace/scripts").join(script_name);
+        
+        if project_root.join("scripts").join(script_name).exists() {
+             workspace_script
+        } else {
+             PathBuf::from("/usr/local/bin/scripts").join(script_name)
+        }
+    } else {
+        let path = project_root.join("scripts").join(script_name);
+        if !path.exists() {
+            bail!("Script not found locally: {}", path.display());
+        }
+        path
+    };
 
-    println!("Running analyze_verus_specs_proofs.py...");
+    println!("Running {}...", script_name);
 
-    let seed_relative = seed_path.strip_prefix(project_root).unwrap_or(seed_path);
-    let output_relative = output_path
-        .strip_prefix(project_root)
-        .unwrap_or(output_path);
+    let seed_arg = if matches!(config.execution_mode, ExecutionMode::Docker) {
+        seed_path.strip_prefix(project_root).unwrap_or(seed_path).to_string_lossy().to_string()
+    } else {
+        seed_path.to_string_lossy().to_string()
+    };
 
-    // Ensure parent directory exists
+    let output_arg = if matches!(config.execution_mode, ExecutionMode::Docker) {
+        output_path.strip_prefix(project_root).unwrap_or(output_path).to_string_lossy().to_string()
+    } else {
+        output_path.to_string_lossy().to_string()
+    };
+
+    // Ensure parent directory exists (locally)
     if let Some(parent) = output_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
+    
+    let (seed_flag, output_flag) = if matches!(config.execution_mode, ExecutionMode::Docker) {
+        (
+             format!("/workspace/{}", seed_arg),
+             format!("/workspace/{}", output_arg),
+        )
+    } else {
+        (seed_arg.clone(), output_arg.clone())
+    };
 
+    let script_path_str = script_path.to_string_lossy();
+    let args = vec![
+        "run",
+        &script_path_str,
+        "--seed",
+        &seed_flag,
+        "--output",
+        &output_flag,
+    ];
+    
     let output = run_command(
         "uv",
-        &[
-            "run",
-            script_path.to_str().unwrap(),
-            "--seed",
-            seed_relative.to_str().unwrap(),
-            "--output",
-            output_relative.to_str().unwrap(),
-        ],
+        &args,
         Some(project_root),
         config,
     )?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        eprintln!("Error running analyze_verus_specs_proofs.py:\n{}", stderr);
-        bail!("analyze_verus_specs_proofs.py failed");
+        eprintln!("Error running {}:\n{}", script_name, stderr);
+        bail!("{} failed", script_name);
     }
+    
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    println!("{} output:\n{}", script_name, stdout);
 
     println!(
         "Generated tracked functions CSV at {}",
@@ -113,6 +150,58 @@ fn run_analyze_verus_specs_proofs(
     );
     Ok(())
 }
+
+/// Generate functions_to_track.csv from atoms.json
+fn generate_functions_to_track_csv(atoms_path: &Path, output_path: &Path) -> Result<()> {
+    let file = std::fs::File::open(atoms_path)?;
+    let reader = std::io::BufReader::new(file);
+    let atoms: HashMap<String, Value> = serde_json::from_reader(reader)?;
+
+    let mut wtr = csv::Writer::from_path(output_path)?;
+    wtr.write_record(&["function", "module", "impl_block"])?;
+
+    for (key, val) in atoms {
+        if !key.starts_with("probe:") {
+            continue;
+        }
+
+        let parts: Vec<&str> = key.split('/').collect();
+        if parts.len() < 3 { continue; }
+        
+        let project_part = parts[0];
+        let project_name = project_part.strip_prefix("probe:").unwrap_or(project_part);
+
+        let func_part = parts.last().unwrap();
+        
+        let function = val.get("display-name")
+            .and_then(|v| v.as_str())
+            .unwrap_or(func_part)
+            .to_string() + "()";
+
+        if parts.len() <= 2 {
+            continue; 
+        }
+        
+        let dir_parts = &parts[2..parts.len()-1];
+        if dir_parts.is_empty() {
+             continue;
+        }
+
+        let mut rev_parts: Vec<&str> = dir_parts.to_vec();
+        rev_parts.reverse();
+        
+        let mut module_parts = vec![project_name];
+        module_parts.extend(rev_parts);
+        let module = module_parts.join("::");
+
+        wtr.write_record(&[&function, &module, ""])?;
+    }
+    
+    wtr.flush()?;
+    println!("Generated functions_to_track.csv at {}", output_path.display());
+    Ok(())
+}
+
 
 /// Tracked function data from CSV.
 #[derive(Debug, Clone)]
