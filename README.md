@@ -215,7 +215,7 @@ verilib-cli create --github-base-url "https://github.com/Org/Repo"
 | Option | Description |
 |--------|-------------|
 | `--root <path>` | Custom structure root (default: `.verilib/structure`) |
-| `--github-base-url <url>` | GitHub repo URL for links, e.g. `https://github.com/Org/Repo` (auto-derived from github.com git remote if omitted) |
+| `--github-base-url <url>` | GitHub repo URL for links, e.g. `https://github.com/Org/Repo` (auto-derived from git remote `origin` if omitted; uses placeholder when no remote) |
 
 **Requirements:**
 - `probe-verus` installed and in PATH

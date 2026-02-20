@@ -465,17 +465,22 @@ mod create_tests {
     }
 
     #[test]
-    fn test_create_requires_github_base_url() {
+    fn test_create_succeeds_without_git_remote() {
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
 
-        // No git remote in temp dir, no --github-base-url flag
+        // No git remote in temp dir, no --github-base-url - create succeeds with empty structure
         let output = run_command(&["create"], temp_dir.path());
 
-        let stderr = String::from_utf8_lossy(&output.stderr);
         assert!(
-            stderr.contains("--github-base-url"),
-            "Should suggest --github-base-url when no git remote: {}",
-            stderr
+            output.status.success(),
+            "create should succeed without git remote: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let combined = format!("{}{}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+        assert!(
+            combined.contains("Skipping structure generation") || combined.contains("Wrote config"),
+            "Should skip structure or write config: {}",
+            combined
         );
     }
 
