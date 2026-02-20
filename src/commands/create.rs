@@ -31,65 +31,73 @@ pub async fn handle_create(
     let config_path = config.save(&project_root)?;
     println!("Wrote config to {}", config_path.display());
 
-    let github_base = resolve_github_base_url(github_base_url, &project_root)?;
-    let tracked_output_path = verilib_path.join("tracked_functions.csv");
+    let github_base = resolve_github_base_url(github_base_url, &project_root);
+    let structure_root = project_root.join(&structure_root_relative);
+    std::fs::create_dir_all(&structure_root).context("Failed to create structure directory")?;
 
     let paths = ConfigPaths::load(&project_root)?;
-    run_probe_verus_tracked_csv(&project_root, &tracked_output_path, &github_base, &paths.command_config)?;
+    let tracked_output_path = verilib_path.join("tracked_functions.csv");
+    let tracked = if run_probe_verus_tracked_csv(
+        &project_root,
+        &tracked_output_path,
+        &github_base,
+        &paths.command_config,
+    )
+    .is_ok()
+    {
+        read_tracked_csv(&tracked_output_path)
+            .map(disambiguate_names)
+            .unwrap_or_else(|_| HashMap::new())
+    } else {
+        HashMap::new()
+    };
 
-    let tracked = read_tracked_csv(&tracked_output_path)?;
-    let tracked = disambiguate_names(tracked);
     let structure = tracked_to_structure(&tracked);
 
     println!("\nGenerating structure files...");
-    let structure_root = project_root.join(&structure_root_relative);
     generate_structure_files(&structure, &structure_root)?;
 
     Ok(())
 }
 
+/// Placeholder repo URL when git remote cannot be detected.
+/// Structure files get correct code-path and code-line; links won't resolve to real GitHub.
+const FALLBACK_REPO_URL: &str = "https://github.com/local/repo";
+
 /// Derive a GitHub base URL from the git remote, or use the explicit override.
-///
-/// The returned URL always ends with `/blob/<branch>/` so that probe-verus
-/// produces links compatible with `parse_github_link()`.
-fn resolve_github_base_url(
-    explicit: Option<String>,
-    project_root: &Path,
-) -> Result<String> {
+/// Falls back to a placeholder when auto-detection fails so structure generation still runs.
+fn resolve_github_base_url(explicit: Option<String>, project_root: &Path) -> String {
     let repo_url = match explicit {
         Some(url) => {
             if !url.starts_with("https://") && !url.starts_with("http://") {
-                bail!(
-                    "Invalid --github-base-url '{}': must start with https:// or http://",
-                    url
-                );
+                eprintln!("Warning: Invalid --github-base-url '{}', using fallback", url);
+                FALLBACK_REPO_URL.to_string()
+            } else {
+                strip_to_repo_url(&url)
             }
-            strip_to_repo_url(&url)
         }
         None => {
-            let output = git_command(project_root, &["remote", "get-url", "origin"])
-                .context("Failed to run 'git remote get-url origin'")?;
-
+            let output = match git_command(project_root, &["remote", "get-url", "origin"]) {
+                Ok(o) => o,
+                Err(_) => {
+                    eprintln!("Note: No git remote 'origin'; using placeholder URL for links");
+                    return format!("{}/blob/main/", FALLBACK_REPO_URL);
+                }
+            };
             if !output.status.success() {
-                bail!(
-                    "Could not auto-detect GitHub URL (no git remote 'origin' found). \
-                     Please pass --github-base-url explicitly."
-                );
+                eprintln!("Note: No git remote 'origin'; using placeholder URL for links");
+                return format!("{}/blob/main/", FALLBACK_REPO_URL);
             }
-
             let remote = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            parse_git_remote_to_https(&remote).ok_or_else(|| {
-                anyhow::anyhow!(
-                    "Git remote '{}' is not a recognized GitHub URL. \
-                     Pass --github-base-url explicitly.",
-                    remote
-                )
-            })?
+            parse_git_remote_to_https(&remote).unwrap_or_else(|| {
+                eprintln!("Note: Git remote is not GitHub; using placeholder URL for links");
+                FALLBACK_REPO_URL.to_string()
+            })
         }
     };
 
     let branch = detect_default_branch(project_root);
-    Ok(format!("{}/blob/{}/", repo_url, branch))
+    format!("{}/blob/{}/", repo_url, branch)
 }
 
 /// Strip a GitHub URL to the repo root (e.g. `https://github.com/Org/Repo`).
@@ -534,9 +542,7 @@ mod tests {
     #[test]
     fn test_resolve_explicit_plain_url() {
         let tmp = tempfile::TempDir::new().unwrap();
-        let result =
-            resolve_github_base_url(Some("https://github.com/Org/Repo".into()), tmp.path())
-                .unwrap();
+        let result = resolve_github_base_url(Some("https://github.com/Org/Repo".into()), tmp.path());
         assert_eq!(result, "https://github.com/Org/Repo/blob/main/");
     }
 
@@ -547,42 +553,36 @@ mod tests {
         let result = resolve_github_base_url(
             Some("https://github.com/Org/Repo/blob/master".into()),
             tmp.path(),
-        )
-        .unwrap();
+        );
         assert_eq!(result, "https://github.com/Org/Repo/blob/main/");
     }
 
     #[test]
-    fn test_resolve_explicit_url_rejects_non_http_scheme() {
+    fn test_resolve_invalid_url_uses_fallback() {
         let tmp = tempfile::TempDir::new().unwrap();
-        let result =
-            resolve_github_base_url(Some("file:///etc/passwd".into()), tmp.path());
-        assert!(result.is_err());
-        let msg = result.unwrap_err().to_string();
+        let result = resolve_github_base_url(Some("file:///etc/passwd".into()), tmp.path());
         assert!(
-            msg.contains("must start with https://"),
-            "Error should mention scheme requirement: {}",
-            msg
+            result.contains("github.com/local/repo"),
+            "Invalid URL should use fallback; got {}",
+            result
         );
     }
 
     #[test]
-    fn test_resolve_explicit_url_rejects_bare_string() {
+    fn test_resolve_bare_string_uses_fallback() {
         let tmp = tempfile::TempDir::new().unwrap();
         let result = resolve_github_base_url(Some("foobar".into()), tmp.path());
-        assert!(result.is_err());
+        assert!(result.contains("github.com/local/repo"));
     }
 
     #[test]
-    fn test_resolve_no_explicit_no_remote_fails() {
+    fn test_resolve_no_explicit_no_remote_uses_fallback() {
         let tmp = tempfile::TempDir::new().unwrap();
         let result = resolve_github_base_url(None, tmp.path());
-        assert!(result.is_err());
-        let msg = result.unwrap_err().to_string();
         assert!(
-            msg.contains("--github-base-url"),
-            "Error should mention --github-base-url: {}",
-            msg
+            result.contains("github.com/local/repo"),
+            "No git remote should use fallback; got {}",
+            result
         );
     }
 }
