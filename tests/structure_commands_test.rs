@@ -424,51 +424,84 @@ mod create_tests {
     use super::*;
 
     #[test]
-    fn test_create_uses_fallback_seed_without_functions_to_track_csv() {
-        let temp_dir = TempDir::new().expect("Failed to create temp dir");
-
-        // No functions_to_track.csv - create uses fallback seed and does not fail for that reason
-        let output = run_command(&["create"], temp_dir.path());
-
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        assert!(
-            !(stderr.contains("functions_to_track.csv") && stderr.contains("not found")),
-            "Should NOT fail with 'functions_to_track.csv not found' (now optional): {}",
-            stderr
-        );
-        // Fallback seed should be created when functions_to_track.csv is absent
-        let seed_path = temp_dir.path().join(".verilib").join("seed.csv");
-        assert!(
-            seed_path.exists(),
-            "Fallback .verilib/seed.csv should be created when functions_to_track.csv is missing"
-        );
-    }
-
-    #[test]
     fn test_create_creates_config_and_verilib_dir() {
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
 
-        // Create a minimal functions_to_track.csv (the script will fail but config should be created first)
-        fs::write(temp_dir.path().join("functions_to_track.csv"), "function,module,link\n").unwrap();
-
-        // Run create - it will fail at the Python script step but should create config first
+        // create will fail at probe-verus step, but should create config first
         let _output = run_command(&["create"], temp_dir.path());
 
-        // Check that .verilib directory was created
         let verilib_dir = temp_dir.path().join(".verilib");
         assert!(verilib_dir.exists(), ".verilib directory should be created");
 
-        // Check that config.json was created
         let config_path = verilib_dir.join("config.json");
         assert!(config_path.exists(), "config.json should be created");
 
-        // Check config content
         let config: serde_json::Value =
             serde_json::from_str(&fs::read_to_string(&config_path).unwrap()).unwrap();
         assert_eq!(
             config["structure-root"].as_str(),
             Some(".verilib/structure"),
             "config should have default structure-root"
+        );
+    }
+
+    #[test]
+    fn test_create_no_seed_file_needed() {
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+
+        let output = run_command(&["create"], temp_dir.path());
+
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            !stderr.contains("functions_to_track.csv"),
+            "Should not reference functions_to_track.csv: {}",
+            stderr
+        );
+        let seed_path = temp_dir.path().join(".verilib").join("seed.csv");
+        assert!(
+            !seed_path.exists(),
+            "Should not create seed.csv (probe-verus discovers functions automatically)"
+        );
+    }
+
+    #[test]
+    fn test_create_requires_github_base_url() {
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+
+        // No git remote in temp dir, no --github-base-url flag
+        let output = run_command(&["create"], temp_dir.path());
+
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("--github-base-url"),
+            "Should suggest --github-base-url when no git remote: {}",
+            stderr
+        );
+    }
+
+    #[test]
+    fn test_create_with_explicit_github_base_url() {
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+
+        let output = run_command(
+            &["create", "--github-base-url", "https://github.com/Org/Repo"],
+            temp_dir.path(),
+        );
+
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            !stderr.contains("--github-base-url"),
+            "Should not complain about missing --github-base-url when it was provided: {}",
+            stderr
+        );
+
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let combined = format!("{}{}", stdout, stderr);
+        assert!(
+            combined.contains("Running probe-verus tracked-csv")
+                || combined.contains("probe-verus not installed"),
+            "Should proceed past URL resolution to the probe-verus invocation step: {}",
+            combined
         );
     }
 }

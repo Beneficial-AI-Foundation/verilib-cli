@@ -202,23 +202,23 @@ Commands for managing verification structure files. These integrate with `probe-
    ```
 
 ### `create`
-Initialize structure files from source analysis. Creates `.md` stub files and config.
+Initialize structure files from source analysis. Uses `probe-verus tracked-csv` to auto-discover
+exec functions with Verus specs and generate `.md` stub files.
 
 ```bash
-verilib-cli create                  # Default structure root
+verilib-cli create                  # Default structure root (GitHub URL auto-derived from git remote)
 verilib-cli create --root custom/path
+verilib-cli create --github-base-url "https://github.com/Org/Repo"
 ```
 
 **Options:**
 | Option | Description |
 |--------|-------------|
 | `--root <path>` | Custom structure root (default: `.verilib/structure`) |
+| `--github-base-url <url>` | GitHub repo URL for links, e.g. `https://github.com/Org/Repo` (auto-derived from github.com git remote if omitted) |
 
 **Requirements:**
-- `scripts/analyze_verus_specs_proofs.py` script
-
-**Optional:**
-- `functions_to_track.csv` in project root — when absent, a minimal seed is used
+- `probe-verus` installed and in PATH
 
 ### `atomize`
 Enrich structure files with metadata from SCIP atoms.
@@ -342,7 +342,7 @@ cd dalek-lite
 git checkout -b sl/structure
 
 # Step 1: Create structure files
-# Creates .md stub files in .verilib/structure/ (from functions_to_track.csv if present)
+# Auto-discovers exec functions with Verus specs via probe-verus
 verilib-cli create
 
 # Step 2: Run atomization
