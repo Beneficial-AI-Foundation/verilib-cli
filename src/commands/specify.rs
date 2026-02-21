@@ -125,11 +125,17 @@ fn find_uncertified_functions(
     // Filter out existing certs (by code-name)
     let uncertified: HashMap<String, Value> = stubs_with_specs
         .into_iter()
-        .filter(|(_, stub)| {
-            let code_name = stub
-                .get("code-name")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+        .filter(|(stub_path, stub)| {
+            let code_name = match stub.get("code-name").and_then(|v| v.as_str()) {
+                Some(name) if !name.is_empty() => name,
+                _ => {
+                    eprintln!(
+                        "WARNING: {}: code-name is null or empty, skipping cert check. Run 'atomize' to populate it.",
+                        stub_path
+                    );
+                    return false;
+                }
+            };
             !existing_certs.contains(code_name)
         })
         .collect();
@@ -360,12 +366,18 @@ fn incorporate_spec_text(
     specs_data: &HashMap<String, Value>,
 ) {
     let mut count = 0;
-    for stub in stubs_data.values_mut() {
+    for (stub_path, stub) in stubs_data.iter_mut() {
         if let Some(obj) = stub.as_object_mut() {
-            let code_name = obj
-                .get("code-name")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let code_name = match obj.get("code-name").and_then(|v| v.as_str()) {
+                Some(name) if !name.is_empty() => name,
+                _ => {
+                    eprintln!(
+                        "WARNING: {}: code-name is null or empty. Run 'atomize' to populate it.",
+                        stub_path
+                    );
+                    continue;
+                }
+            };
 
             if let Some(spec_info) = specs_data.get(code_name) {
                 // Only add spec-text if specified is true

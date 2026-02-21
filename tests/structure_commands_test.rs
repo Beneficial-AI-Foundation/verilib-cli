@@ -153,7 +153,7 @@ code-line: 10
     }
 
     #[test]
-    fn test_atomize_update_stubs_updates_md_files() {
+    fn test_atomize_updates_md_files_by_default() {
         let temp_dir = setup_test_project();
         let verilib_dir = temp_dir.path().join(".verilib");
 
@@ -169,19 +169,45 @@ code-line: 10
         )
         .unwrap();
 
-        // Run atomize with --update-stubs
-        let output = run_command(&["atomize", "--no-probe", "--update-stubs"], temp_dir.path());
-        assert!(output.status.success(), "atomize --update-stubs should succeed");
+        // Run atomize without any update flag (updating is now the default)
+        let output = run_command(&["atomize", "--no-probe"], temp_dir.path());
+        assert!(output.status.success(), "atomize should succeed");
 
         // Check that the .md file was updated with code-name
         let content = fs::read_to_string(&md_path).unwrap();
         assert!(
             content.contains("code-name:"),
-            "Should have added code-name to .md file"
+            "Should have added code-name to .md file by default"
         );
         assert!(
             content.contains("probe:test/1.0.0/module/func_a()"),
             "Should have correct code-name value"
+        );
+    }
+
+    #[test]
+    fn test_atomize_no_update_stubs_skips_md_update() {
+        let temp_dir = setup_test_project();
+        let verilib_dir = temp_dir.path().join(".verilib");
+
+        // Create a .md file without code-name
+        let md_path = verilib_dir.join("structure/src/module.rs/func_a().md");
+        let original_content = r#"---
+code-path: "src/module.rs"
+code-line: 10
+---
+"#;
+        fs::write(&md_path, original_content).unwrap();
+
+        // Run atomize with --no-update-stubs
+        let output = run_command(&["atomize", "--no-probe", "--no-update-stubs"], temp_dir.path());
+        assert!(output.status.success(), "atomize --no-update-stubs should succeed");
+
+        // .md file should NOT have been updated
+        let content = fs::read_to_string(&md_path).unwrap();
+        assert!(
+            !content.contains("probe:test/1.0.0/module/func_a()"),
+            "Should NOT have updated .md file when --no-update-stubs is passed"
         );
     }
 
@@ -412,6 +438,56 @@ mod verify_tests {
             func_b["verified"].as_bool(),
             Some(false),
             "func_b should not be verified"
+        );
+    }
+}
+
+// ============================================================================
+// NULL CODE-NAME WARNING TESTS
+// ============================================================================
+
+mod null_code_name_tests {
+    use super::*;
+
+    #[test]
+    fn test_verify_warns_on_null_code_name() {
+        let temp_dir = setup_test_project();
+        let verilib_dir = temp_dir.path().join(".verilib");
+
+        // Set code-name to null in stubs.json for func_a
+        let stubs_path = verilib_dir.join("stubs.json");
+        let mut stubs: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&stubs_path).unwrap()).unwrap();
+        stubs["src/module.rs/func_a().md"]["code-name"] = serde_json::Value::Null;
+        fs::write(&stubs_path, serde_json::to_string_pretty(&stubs).unwrap()).unwrap();
+
+        let output = run_command(&["verify", "--no-probe"], temp_dir.path());
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("WARNING") && stderr.contains("code-name is null or empty"),
+            "Should warn about null code-name: {}",
+            stderr
+        );
+    }
+
+    #[test]
+    fn test_specify_warns_on_null_code_name() {
+        let temp_dir = setup_test_project();
+        let verilib_dir = temp_dir.path().join(".verilib");
+
+        // Set code-name to null in stubs.json for func_a
+        let stubs_path = verilib_dir.join("stubs.json");
+        let mut stubs: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&stubs_path).unwrap()).unwrap();
+        stubs["src/module.rs/func_a().md"]["code-name"] = serde_json::Value::Null;
+        fs::write(&stubs_path, serde_json::to_string_pretty(&stubs).unwrap()).unwrap();
+
+        let output = run_command(&["specify", "--no-probe", "--check-only"], temp_dir.path());
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("WARNING") && stderr.contains("code-name is null or empty"),
+            "Should warn about null code-name: {}",
+            stderr
         );
     }
 }

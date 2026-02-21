@@ -130,8 +130,14 @@ fn update_stubs_with_verification(
 
         // Get the code-name for this stub
         let code_name = match stub_obj.get("code-name").and_then(|v| v.as_str()) {
-            Some(name) => name.to_string(),
-            None => continue,
+            Some(name) if !name.is_empty() => name.to_string(),
+            _ => {
+                eprintln!(
+                    "WARNING: {}: code-name is null or empty, skipping verification update. Run 'atomize' to populate it.",
+                    stub_name
+                );
+                continue;
+            }
         };
 
         // Get previous verification status
