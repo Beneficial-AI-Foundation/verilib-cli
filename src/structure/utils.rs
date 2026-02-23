@@ -89,103 +89,11 @@ where
     Ok(result)
 }
 
-/// Extract code path and line number from a GitHub link.
-///
-/// Accepts any `/blob/<branch>/` pattern (e.g. `main`, `master`, `develop`).
-/// Branch names containing `/` (e.g. `feature/foo`) are not supported: the
-/// first `/` after `/blob/` is taken as the branch/path delimiter.
-pub fn parse_github_link(github_link: &str) -> Option<(String, u32)> {
-    if github_link.is_empty() {
-        return None;
-    }
-
-    let blob_idx = github_link.find("/blob/")?;
-    let after_blob = &github_link[blob_idx + "/blob/".len()..];
-    // Skip the branch name segment to get the file path
-    let path_part = after_blob.split_once('/')?.1;
-
-    if let Some((code_path, line_str)) = path_part.rsplit_once("#L") {
-        let line_number: u32 = line_str.parse().ok()?;
-        Some((code_path.to_string(), line_number))
-    } else {
-        Some((path_part.to_string(), 0))
-    }
-}
-
 /// Get a display name from a full identifier (e.g., extract "func" from "probe:crate/mod#func()").
 pub fn get_display_name(name: &str) -> String {
     if let Some(pos) = name.rfind('#') {
         name[pos + 1..].trim_end_matches("()").to_string()
     } else {
         name.to_string()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_github_link_main_branch() {
-        assert_eq!(
-            parse_github_link("https://github.com/Org/Repo/blob/main/src/lib.rs#L42"),
-            Some(("src/lib.rs".to_string(), 42))
-        );
-    }
-
-    #[test]
-    fn test_parse_github_link_master_branch() {
-        assert_eq!(
-            parse_github_link("https://github.com/Org/Repo/blob/master/src/lib.rs#L10"),
-            Some(("src/lib.rs".to_string(), 10))
-        );
-    }
-
-    #[test]
-    fn test_parse_github_link_develop_branch() {
-        assert_eq!(
-            parse_github_link("https://github.com/Org/Repo/blob/develop/src/foo.rs#L1"),
-            Some(("src/foo.rs".to_string(), 1))
-        );
-    }
-
-    #[test]
-    fn test_parse_github_link_no_line_number() {
-        assert_eq!(
-            parse_github_link("https://github.com/Org/Repo/blob/main/src/lib.rs"),
-            Some(("src/lib.rs".to_string(), 0))
-        );
-    }
-
-    #[test]
-    fn test_parse_github_link_empty() {
-        assert_eq!(parse_github_link(""), None);
-    }
-
-    #[test]
-    fn test_parse_github_link_no_blob() {
-        assert_eq!(
-            parse_github_link("https://github.com/Org/Repo/tree/main/src"),
-            None
-        );
-    }
-
-    #[test]
-    fn test_parse_github_link_blob_without_path() {
-        // /blob/<branch> with no trailing path -> split_once('/') returns None
-        assert_eq!(
-            parse_github_link("https://github.com/Org/Repo/blob/main"),
-            None
-        );
-    }
-
-    #[test]
-    fn test_parse_github_link_nested_path() {
-        assert_eq!(
-            parse_github_link(
-                "https://github.com/Org/Repo/blob/main/src/deeply/nested/file.rs#L99"
-            ),
-            Some(("src/deeply/nested/file.rs".to_string(), 99))
-        );
     }
 }

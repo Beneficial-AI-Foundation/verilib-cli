@@ -50,10 +50,6 @@ pub enum Commands {
         /// Root directory for structure files (default: .verilib/structure)
         #[arg(long)]
         root: Option<PathBuf>,
-
-        /// GitHub base URL for links (auto-derived from git remote if omitted)
-        #[arg(long)]
-        github_base_url: Option<String>,
     },
 
     /// Enrich structure files with metadata from SCIP atoms

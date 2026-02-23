@@ -3,8 +3,8 @@
 //! Initialize structure files from source analysis using probe-verus.
 
 use crate::structure::{
-    parse_github_link, require_probe_installed, run_command, write_frontmatter, CommandConfig,
-    ConfigPaths, StructureConfig,
+    require_probe_installed, run_command, write_frontmatter, CommandConfig, ConfigPaths,
+    StructureConfig,
 };
 use anyhow::{bail, Context, Result};
 use serde_json::{json, Value};
@@ -12,11 +12,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 /// Run the create subcommand.
-pub async fn handle_create(
-    project_root: PathBuf,
-    root: Option<PathBuf>,
-    github_base_url: Option<String>,
-) -> Result<()> {
+pub async fn handle_create(project_root: PathBuf, root: Option<PathBuf>) -> Result<()> {
     let project_root = project_root
         .canonicalize()
         .context("Failed to resolve project root")?;
@@ -31,157 +27,29 @@ pub async fn handle_create(
     let config_path = config.save(&project_root)?;
     println!("Wrote config to {}", config_path.display());
 
-    let github_base = resolve_github_base_url(github_base_url, &project_root);
-    let structure_root = project_root.join(&structure_root_relative);
-    std::fs::create_dir_all(&structure_root).context("Failed to create structure directory")?;
+    let tracked_output_path = verilib_path.join("tracked_functions.csv");
 
     let paths = ConfigPaths::load(&project_root)?;
-    let tracked_output_path = verilib_path.join("tracked_functions.csv");
-    let tracked = if run_probe_verus_tracked_csv(
-        &project_root,
-        &tracked_output_path,
-        &github_base,
-        &paths.command_config,
-    )
-    .is_ok()
-    {
-        read_tracked_csv(&tracked_output_path)
-            .map(disambiguate_names)
-            .unwrap_or_else(|_| HashMap::new())
-    } else {
-        HashMap::new()
-    };
+    run_probe_verus_tracked_csv(&project_root, &tracked_output_path, &paths.command_config)?;
 
+    let tracked = read_tracked_csv(&tracked_output_path)?;
+    let tracked = disambiguate_names(tracked);
     let structure = tracked_to_structure(&tracked);
 
     println!("\nGenerating structure files...");
+    let structure_root = project_root.join(&structure_root_relative);
     generate_structure_files(&structure, &structure_root)?;
 
     Ok(())
 }
 
-/// Placeholder repo URL when git remote cannot be detected.
-/// Structure files get correct code-path and code-line; links won't resolve to real GitHub.
-const FALLBACK_REPO_URL: &str = "https://github.com/local/repo";
-
-/// Derive a GitHub base URL from the git remote, or use the explicit override.
-/// Falls back to a placeholder when auto-detection fails so structure generation still runs.
-fn resolve_github_base_url(explicit: Option<String>, project_root: &Path) -> String {
-    let repo_url = match explicit {
-        Some(url) => {
-            if !url.starts_with("https://") && !url.starts_with("http://") {
-                eprintln!("Warning: Invalid --github-base-url '{}', using fallback", url);
-                FALLBACK_REPO_URL.to_string()
-            } else {
-                strip_to_repo_url(&url)
-            }
-        }
-        None => {
-            let output = match git_command(project_root, &["remote", "get-url", "origin"]) {
-                Ok(o) => o,
-                Err(_) => {
-                    eprintln!("Note: No git remote 'origin'; using placeholder URL for links");
-                    return format!("{}/blob/main/", FALLBACK_REPO_URL);
-                }
-            };
-            if !output.status.success() {
-                eprintln!("Note: No git remote 'origin'; using placeholder URL for links");
-                return format!("{}/blob/main/", FALLBACK_REPO_URL);
-            }
-            let remote = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            parse_git_remote_to_https(&remote).unwrap_or_else(|| {
-                eprintln!("Note: Git remote is not GitHub; using placeholder URL for links");
-                FALLBACK_REPO_URL.to_string()
-            })
-        }
-    };
-
-    let branch = detect_default_branch(project_root);
-    format!("{}/blob/{}/", repo_url, branch)
-}
-
-/// Strip a GitHub URL to the repo root (e.g. `https://github.com/Org/Repo`).
-///
-/// Handles URLs that contain `/blob/...` paths or a `.git` suffix.
-fn strip_to_repo_url(url: &str) -> String {
-    let url = url.trim_end_matches('/');
-    if let Some(idx) = url.find("/blob/") {
-        return url[..idx].to_string();
-    }
-    url.trim_end_matches(".git").to_string()
-}
-
-/// Detect the default branch by inspecting the remote HEAD ref, falling back
-/// to `"main"`.
-///
-/// We intentionally skip the current local branch as a fallback because it is
-/// often a feature branch, which would produce broken GitHub links once merged.
-fn detect_default_branch(project_root: &Path) -> String {
-    if let Some(branch) = detect_remote_default_branch(project_root) {
-        return branch;
-    }
-    eprintln!("Warning: Could not detect remote default branch, defaulting to 'main'");
-    "main".to_string()
-}
-
-fn detect_remote_default_branch(project_root: &Path) -> Option<String> {
-    let output = git_command(project_root, &["symbolic-ref", "refs/remotes/origin/HEAD"]).ok()?;
-
-    if !output.status.success() {
-        return None;
-    }
-
-    let refname = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    refname.strip_prefix("refs/remotes/origin/").map(String::from)
-}
-
-/// Run a git command in the given project root directory.
-///
-/// Git always inspects the local repo and must run locally, bypassing the
-/// `CommandConfig` execution-mode abstraction.
-fn git_command(project_root: &Path, args: &[&str]) -> std::io::Result<std::process::Output> {
-    std::process::Command::new("git")
-        .args(args)
-        .current_dir(project_root)
-        .output()
-}
-
-/// Convert a git remote URL to a plain `https://github.com/Org/Repo` URL.
-///
-/// Supports SCP-style SSH, URL-style SSH, HTTPS, and HTTP remotes.
-/// Only github.com remotes are recognized; all others return `None`.
-fn parse_git_remote_to_https(remote: &str) -> Option<String> {
-    let remote = remote.trim();
-
-    // SCP-style SSH: git@github.com:Org/Repo.git
-    if let Some(rest) = remote.strip_prefix("git@github.com:") {
-        let repo = rest.trim_end_matches(".git").trim_end_matches('/');
-        return Some(format!("https://github.com/{}", repo));
-    }
-
-    // URL-style SSH: ssh://git@github.com/Org/Repo.git
-    if let Some(rest) = remote.strip_prefix("ssh://git@github.com/") {
-        let repo = rest.trim_end_matches(".git").trim_end_matches('/');
-        return Some(format!("https://github.com/{}", repo));
-    }
-
-    if remote.starts_with("https://github.com/") {
-        let url = remote.trim_end_matches(".git").trim_end_matches('/');
-        return Some(url.to_string());
-    }
-    if remote.starts_with("http://github.com/") {
-        let url = remote.trim_end_matches(".git").trim_end_matches('/');
-        return Some(url.replacen("http://", "https://", 1));
-    }
-
-    None
-}
-
 /// Run `probe-verus tracked-csv` to generate the tracked functions CSV.
+///
+/// Called without `--github-base-url` so the link column contains bare
+/// `file_path#Lline` values that `parse_tracked_link` can parse directly.
 fn run_probe_verus_tracked_csv(
     project_root: &Path,
     output_path: &Path,
-    github_base_url: &str,
     config: &CommandConfig,
 ) -> Result<()> {
     require_probe_installed(config)?;
@@ -202,14 +70,7 @@ fn run_probe_verus_tracked_csv(
 
     let output = run_command(
         "probe-verus",
-        &[
-            "tracked-csv",
-            ".",
-            "--output",
-            output_str,
-            "--github-base-url",
-            github_base_url,
-        ],
+        &["tracked-csv", ".", "--output", output_str],
         Some(project_root),
         config,
     )?;
@@ -311,12 +172,32 @@ fn disambiguate_names(
     new_tracked
 }
 
+/// Parse a tracked-csv link into (file_path, line_number).
+///
+/// probe-verus produces bare links like `src/module.rs#L42` (path with
+/// optional `#L<line>` suffix).
+fn parse_tracked_link(link: &str) -> Option<(String, u32)> {
+    if link.is_empty() {
+        return None;
+    }
+
+    if let Some((code_path, line_str)) = link.rsplit_once("#L") {
+        let line_number: u32 = line_str.parse().ok()?;
+        if code_path.is_empty() {
+            return None;
+        }
+        Some((code_path.to_string(), line_number))
+    } else {
+        Some((link.to_string(), 0))
+    }
+}
+
 /// Convert tracked functions to a structure dictionary.
 fn tracked_to_structure(tracked: &HashMap<String, TrackedFunction>) -> HashMap<String, Value> {
     let mut result = HashMap::new();
 
     for func in tracked.values() {
-        if let Some((code_path, line_start)) = parse_github_link(&func.link) {
+        if let Some((code_path, line_start)) = parse_tracked_link(&func.link) {
             if code_path.is_empty() {
                 continue;
             }
@@ -380,125 +261,41 @@ fn generate_structure_files(
 mod tests {
     use super::*;
 
-    // --- parse_git_remote_to_https ---
+    // --- parse_tracked_link ---
 
     #[test]
-    fn test_parse_ssh_remote() {
+    fn test_parse_bare_link_with_line() {
         assert_eq!(
-            parse_git_remote_to_https("git@github.com:Org/Repo.git"),
-            Some("https://github.com/Org/Repo".to_string())
+            parse_tracked_link("src/module.rs#L42"),
+            Some(("src/module.rs".to_string(), 42))
         );
     }
 
     #[test]
-    fn test_parse_ssh_remote_no_suffix() {
+    fn test_parse_bare_link_nested_path() {
         assert_eq!(
-            parse_git_remote_to_https("git@github.com:Org/Repo"),
-            Some("https://github.com/Org/Repo".to_string())
+            parse_tracked_link("src/deeply/nested/file.rs#L99"),
+            Some(("src/deeply/nested/file.rs".to_string(), 99))
         );
     }
 
     #[test]
-    fn test_parse_https_remote() {
+    fn test_parse_bare_link_no_line() {
         assert_eq!(
-            parse_git_remote_to_https("https://github.com/Org/Repo.git"),
-            Some("https://github.com/Org/Repo".to_string())
+            parse_tracked_link("src/module.rs"),
+            Some(("src/module.rs".to_string(), 0))
         );
     }
 
+
     #[test]
-    fn test_parse_https_remote_no_suffix() {
-        assert_eq!(
-            parse_git_remote_to_https("https://github.com/Org/Repo"),
-            Some("https://github.com/Org/Repo".to_string())
-        );
+    fn test_parse_empty_link() {
+        assert_eq!(parse_tracked_link(""), None);
     }
 
     #[test]
-    fn test_parse_https_remote_trailing_slash() {
-        assert_eq!(
-            parse_git_remote_to_https("https://github.com/Org/Repo/"),
-            Some("https://github.com/Org/Repo".to_string())
-        );
-    }
-
-    #[test]
-    fn test_parse_http_remote_normalized_to_https() {
-        assert_eq!(
-            parse_git_remote_to_https("http://github.com/Org/Repo.git"),
-            Some("https://github.com/Org/Repo".to_string())
-        );
-    }
-
-    #[test]
-    fn test_parse_http_remote_no_suffix_normalized() {
-        assert_eq!(
-            parse_git_remote_to_https("http://github.com/Org/Repo"),
-            Some("https://github.com/Org/Repo".to_string())
-        );
-    }
-
-    #[test]
-    fn test_parse_non_github_remote_returns_none() {
-        assert_eq!(
-            parse_git_remote_to_https("git@gitlab.com:Org/Repo.git"),
-            None
-        );
-    }
-
-    #[test]
-    fn test_parse_ssh_url_remote() {
-        assert_eq!(
-            parse_git_remote_to_https("ssh://git@github.com/Org/Repo.git"),
-            Some("https://github.com/Org/Repo".to_string())
-        );
-    }
-
-    #[test]
-    fn test_parse_empty_remote_returns_none() {
-        assert_eq!(parse_git_remote_to_https(""), None);
-    }
-
-    // --- strip_to_repo_url ---
-
-    #[test]
-    fn test_strip_plain_url_unchanged() {
-        assert_eq!(
-            strip_to_repo_url("https://github.com/Org/Repo"),
-            "https://github.com/Org/Repo"
-        );
-    }
-
-    #[test]
-    fn test_strip_url_with_blob_path() {
-        assert_eq!(
-            strip_to_repo_url("https://github.com/Org/Repo/blob/main/src/lib.rs"),
-            "https://github.com/Org/Repo"
-        );
-    }
-
-    #[test]
-    fn test_strip_url_with_blob_branch_only() {
-        assert_eq!(
-            strip_to_repo_url("https://github.com/Org/Repo/blob/master"),
-            "https://github.com/Org/Repo"
-        );
-    }
-
-    #[test]
-    fn test_strip_url_trailing_slash() {
-        assert_eq!(
-            strip_to_repo_url("https://github.com/Org/Repo/"),
-            "https://github.com/Org/Repo"
-        );
-    }
-
-    #[test]
-    fn test_strip_url_dot_git_suffix() {
-        assert_eq!(
-            strip_to_repo_url("https://github.com/Org/Repo.git"),
-            "https://github.com/Org/Repo"
-        );
+    fn test_parse_hash_l_only() {
+        assert_eq!(parse_tracked_link("#L10"), None);
     }
 
     // --- disambiguate_names ---
@@ -508,11 +305,17 @@ mod tests {
         let mut tracked = HashMap::new();
         tracked.insert(
             "dup::mod_b".to_string(),
-            TrackedFunction { link: String::new(), qualified_name: "dup".into() },
+            TrackedFunction {
+                link: String::new(),
+                qualified_name: "dup".into(),
+            },
         );
         tracked.insert(
             "dup::mod_a".to_string(),
-            TrackedFunction { link: String::new(), qualified_name: "dup".into() },
+            TrackedFunction {
+                link: String::new(),
+                qualified_name: "dup".into(),
+            },
         );
 
         let result = disambiguate_names(tracked);
@@ -525,64 +328,21 @@ mod tests {
         let mut tracked = HashMap::new();
         tracked.insert(
             "foo::mod_a".to_string(),
-            TrackedFunction { link: String::new(), qualified_name: "foo".into() },
+            TrackedFunction {
+                link: String::new(),
+                qualified_name: "foo".into(),
+            },
         );
         tracked.insert(
             "bar::mod_b".to_string(),
-            TrackedFunction { link: String::new(), qualified_name: "bar".into() },
+            TrackedFunction {
+                link: String::new(),
+                qualified_name: "bar".into(),
+            },
         );
 
         let result = disambiguate_names(tracked);
         assert_eq!(result["foo::mod_a"].qualified_name, "foo");
         assert_eq!(result["bar::mod_b"].qualified_name, "bar");
-    }
-
-    // --- resolve_github_base_url ---
-
-    #[test]
-    fn test_resolve_explicit_plain_url() {
-        let tmp = tempfile::TempDir::new().unwrap();
-        let result = resolve_github_base_url(Some("https://github.com/Org/Repo".into()), tmp.path());
-        assert_eq!(result, "https://github.com/Org/Repo/blob/main/");
-    }
-
-    #[test]
-    fn test_resolve_explicit_url_strips_blob_and_redetects() {
-        // /blob/master is stripped; branch re-detected as "main" (no git repo in tmp)
-        let tmp = tempfile::TempDir::new().unwrap();
-        let result = resolve_github_base_url(
-            Some("https://github.com/Org/Repo/blob/master".into()),
-            tmp.path(),
-        );
-        assert_eq!(result, "https://github.com/Org/Repo/blob/main/");
-    }
-
-    #[test]
-    fn test_resolve_invalid_url_uses_fallback() {
-        let tmp = tempfile::TempDir::new().unwrap();
-        let result = resolve_github_base_url(Some("file:///etc/passwd".into()), tmp.path());
-        assert!(
-            result.contains("github.com/local/repo"),
-            "Invalid URL should use fallback; got {}",
-            result
-        );
-    }
-
-    #[test]
-    fn test_resolve_bare_string_uses_fallback() {
-        let tmp = tempfile::TempDir::new().unwrap();
-        let result = resolve_github_base_url(Some("foobar".into()), tmp.path());
-        assert!(result.contains("github.com/local/repo"));
-    }
-
-    #[test]
-    fn test_resolve_no_explicit_no_remote_uses_fallback() {
-        let tmp = tempfile::TempDir::new().unwrap();
-        let result = resolve_github_base_url(None, tmp.path());
-        assert!(
-            result.contains("github.com/local/repo"),
-            "No git remote should use fallback; got {}",
-            result
-        );
     }
 }
