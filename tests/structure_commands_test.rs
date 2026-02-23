@@ -13,6 +13,20 @@ fn setup_test_project() -> TempDir {
     let verilib_dir = temp_dir.path().join(".verilib");
     fs::create_dir_all(&verilib_dir).expect("Failed to create .verilib dir");
 
+    // Verus-style Cargo.toml so atomize uses the full pipeline (not atoms-only)
+    fs::write(
+        temp_dir.path().join("Cargo.toml"),
+        r#"[package]
+name = "test-verus-project"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+vstd = { git = "https://github.com/verus-lang/verus", rev = "test" }
+"#,
+    )
+    .expect("Failed to write Cargo.toml");
+
     // Copy fixtures
     let fixtures_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures");
 
@@ -214,6 +228,136 @@ code-line: 10
         assert!(
             func_a["dependencies"].is_array(),
             "Should have dependencies array"
+        );
+    }
+}
+
+// ============================================================================
+// ATOMS-ONLY TESTS
+// ============================================================================
+
+mod atoms_only_tests {
+    use super::*;
+
+    #[test]
+    fn test_atoms_only_no_probe_works_without_config() {
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+        let verilib_dir = temp_dir.path().join(".verilib");
+        fs::create_dir_all(&verilib_dir).unwrap();
+
+        let fixtures_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures");
+        fs::copy(
+            fixtures_dir.join("atoms.json"),
+            verilib_dir.join("atoms.json"),
+        )
+        .unwrap();
+
+        let output = run_command(&["atomize", "--atoms-only", "--no-probe"], temp_dir.path());
+
+        assert!(
+            output.status.success(),
+            "atoms-only --no-probe should succeed without config.json: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(
+            stdout.contains("Atoms-only mode"),
+            "Should report atoms-only mode: {}",
+            stdout
+        );
+    }
+
+    #[test]
+    fn test_auto_detect_pure_rust_triggers_atoms_only() {
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+
+        fs::write(
+            temp_dir.path().join("Cargo.toml"),
+            r#"[package]
+name = "my-rust-project"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = "1.0"
+"#,
+        )
+        .unwrap();
+
+        let verilib_dir = temp_dir.path().join(".verilib");
+        fs::create_dir_all(&verilib_dir).unwrap();
+        let fixtures_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures");
+        fs::copy(
+            fixtures_dir.join("atoms.json"),
+            verilib_dir.join("atoms.json"),
+        )
+        .unwrap();
+
+        let output = run_command(&["atomize", "--no-probe"], temp_dir.path());
+
+        assert!(
+            output.status.success(),
+            "Should auto-detect pure Rust and use atoms-only: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(
+            stdout.contains("Auto-enabling atoms-only mode"),
+            "Should auto-enable atoms-only: {}",
+            stdout
+        );
+    }
+
+    #[test]
+    fn test_auto_detect_verus_project_without_config_fails() {
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+
+        fs::write(
+            temp_dir.path().join("Cargo.toml"),
+            r#"[package]
+name = "my-verus-project"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+vstd = { git = "https://github.com/verus-lang/verus", rev = "abc123" }
+"#,
+        )
+        .unwrap();
+
+        let output = run_command(&["atomize"], temp_dir.path());
+
+        assert!(
+            !output.status.success(),
+            "Verus project without config should fail"
+        );
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("Run 'verilib-cli create' first"),
+            "Should tell user to run create: {}",
+            stderr
+        );
+    }
+
+    #[test]
+    fn test_atoms_only_flag_overrides_full_pipeline() {
+        let temp_dir = setup_test_project();
+
+        let verilib_dir = temp_dir.path().join(".verilib");
+        let stubs_before = fs::read_to_string(verilib_dir.join("stubs.json")).unwrap();
+
+        let output = run_command(&["atomize", "--atoms-only", "--no-probe"], temp_dir.path());
+
+        assert!(
+            output.status.success(),
+            "atoms-only should succeed even with config: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+
+        let stubs_after = fs::read_to_string(verilib_dir.join("stubs.json")).unwrap();
+        assert_eq!(
+            stubs_before, stubs_after,
+            "atoms-only should not modify stubs.json"
         );
     }
 }
@@ -490,18 +634,30 @@ mod error_handling_tests {
     use super::*;
 
     #[test]
-    fn test_commands_fail_without_config() {
+    fn test_verus_project_fails_without_config() {
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
         let verilib_dir = temp_dir.path().join(".verilib");
         fs::create_dir_all(&verilib_dir).expect("Failed to create .verilib dir");
 
-        // No config.json - should fail
+        fs::write(
+            temp_dir.path().join("Cargo.toml"),
+            r#"[package]
+name = "verus-test"
+version = "0.1.0"
+
+[dependencies]
+vstd = { git = "https://github.com/verus-lang/verus" }
+"#,
+        )
+        .unwrap();
+
         let output = run_command(&["atomize", "--no-probe"], temp_dir.path());
         assert!(!output.status.success());
         let stderr = String::from_utf8_lossy(&output.stderr);
         assert!(
-            stderr.contains("config.json not found") || stderr.contains("Run 'verilib-cli create'"),
-            "Should report missing config"
+            stderr.contains("Run 'verilib-cli create' first"),
+            "Should tell user to run create: {}",
+            stderr
         );
     }
 

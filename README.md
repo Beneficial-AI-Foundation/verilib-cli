@@ -222,8 +222,9 @@ verilib-cli create --root custom/path
 Enrich structure files with metadata from SCIP atoms.
 
 ```bash
-verilib-cli atomize                 # Generate stubs.json
+verilib-cli atomize                 # Generate stubs.json (full pipeline)
 verilib-cli atomize -s              # Also update .md files with code-name
+verilib-cli atomize --atoms-only    # Only generate atoms.json (no stubs needed)
 ```
 
 **Options:**
@@ -232,6 +233,13 @@ verilib-cli atomize -s              # Also update .md files with code-name
 | `-s, --update-stubs` | Update .md files with code-name |
 | `-n, --no-probe` | Skip running probe-verus atomize and read existing atoms.json |
 | `-c, --check-only` | Check if .md stub files match enriched stubs.json without writing |
+| `--atoms-only` | Only generate atoms.json, skip stubs enrichment (no `create` needed) |
+| `--rust-analyzer` | Use rust-analyzer instead of verus-analyzer for SCIP generation |
+
+**Auto-detection:** When no `.verilib/config.json` exists and the project's `Cargo.toml` has no Verus
+dependencies (`vstd`, `verus_builtin`, `verus_builtin_macros`, or `[package.metadata.verus]`),
+atoms-only mode is enabled automatically. This lets `verilib-cli atomize` work on pure Rust projects
+without running `create` first.
 
 ### `specify`
 Check specification status and manage spec certificates.

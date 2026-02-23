@@ -69,6 +69,14 @@ pub enum Commands {
         /// Check if .md stub files match enriched stubs.json without writing
         #[arg(short = 'c', long)]
         check_only: bool,
+
+        /// Only generate atoms.json, skip stubs enrichment (no create needed)
+        #[arg(long)]
+        atoms_only: bool,
+
+        /// Use rust-analyzer instead of verus-analyzer for SCIP generation
+        #[arg(long)]
+        rust_analyzer: bool,
     },
 
     /// Check specification status and manage spec certs

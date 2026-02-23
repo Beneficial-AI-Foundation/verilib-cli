@@ -34,6 +34,7 @@ chrono = { version = "0.4", features = ["serde"] }
 csv = "1"
 intervaltree = "0.2"
 which = "8"
+toml = "0.8"
 
 [target.'cfg(unix)'.dependencies]
 users = "0.11.0"

@@ -18,10 +18,41 @@ pub async fn handle_atomize(
     update_stubs: bool,
     no_probe: bool,
     check_only: bool,
+    atoms_only: bool,
+    rust_analyzer: bool,
 ) -> Result<()> {
     let project_root = project_root
         .canonicalize()
         .context("Failed to resolve project root")?;
+
+    // Decide whether to use atoms-only mode:
+    //   1. Explicit --atoms-only flag always wins
+    //   2. Cargo.toml has no Verus deps -> pure Rust -> atoms-only + rust-analyzer
+    //   3. Verus project with config.json -> full pipeline
+    //   4. Verus project without config.json -> error (need create first)
+    let is_pure_rust = !is_verus_project(&project_root);
+    let use_atoms_only = if atoms_only {
+        true
+    } else if is_pure_rust {
+        println!("No Verus dependencies detected in Cargo.toml.");
+        println!("Auto-enabling atoms-only mode for pure Rust project.\n");
+        true
+    } else {
+        if ConfigPaths::load(&project_root).is_err() {
+            bail!(
+                "Verus project detected but no .verilib/config.json found. \
+                 Run 'verilib-cli create' first."
+            );
+        }
+        false
+    };
+
+    let use_rust_analyzer = rust_analyzer || is_pure_rust;
+
+    if use_atoms_only {
+        return handle_atoms_only(&project_root, no_probe, use_rust_analyzer);
+    }
+
     let config = ConfigPaths::load(&project_root)?;
 
     // Step 1: Generate stubs.json from .md files using probe-verus stubify
@@ -37,7 +68,12 @@ pub async fn handle_atomize(
     let probe_atoms = if no_probe {
         load_atoms_from_file(&config.atoms_path)?
     } else {
-        generate_probe_atoms(&project_root, &config.atoms_path, &config.command_config)?
+        generate_probe_atoms(
+            &project_root,
+            &config.atoms_path,
+            &config.command_config,
+            use_rust_analyzer,
+        )?
     };
     println!("Loaded {} atoms", probe_atoms.len());
 
@@ -70,6 +106,81 @@ pub async fn handle_atomize(
 
     println!("Done.");
     Ok(())
+}
+
+/// Atoms-only mode: just produce atoms.json without stubs enrichment.
+fn handle_atoms_only(
+    project_root: &Path,
+    no_probe: bool,
+    rust_analyzer: bool,
+) -> Result<()> {
+    let verilib_path = project_root.join(".verilib");
+    std::fs::create_dir_all(&verilib_path).context("Failed to create .verilib directory")?;
+
+    let atoms_path = verilib_path.join("atoms.json");
+    let config = CommandConfig::default();
+
+    let atoms = if no_probe {
+        load_atoms_from_file(&atoms_path)?
+    } else {
+        generate_probe_atoms(project_root, &atoms_path, &config, rust_analyzer)?
+    };
+
+    println!("Atoms-only mode: generated {} atoms.", atoms.len());
+    println!("Output: {}", atoms_path.display());
+    Ok(())
+}
+
+/// Check if a project uses Verus by inspecting Cargo.toml.
+///
+/// Returns true if any of these indicators are found:
+/// - `vstd`, `verus_builtin`, or `verus_builtin_macros` in dependencies
+/// - `[package.metadata.verus]` section
+fn is_verus_project(project_root: &Path) -> bool {
+    let cargo_toml_path = project_root.join("Cargo.toml");
+    let content = match std::fs::read_to_string(&cargo_toml_path) {
+        Ok(c) => c,
+        Err(_) => return false,
+    };
+
+    let parsed: toml::Value = match content.parse() {
+        Ok(v) => v,
+        Err(_) => return false,
+    };
+
+    if parsed
+        .get("package")
+        .and_then(|p| p.get("metadata"))
+        .and_then(|m| m.get("verus"))
+        .is_some()
+    {
+        return true;
+    }
+
+    let dep_sections = ["dependencies", "dev-dependencies", "build-dependencies"];
+    let verus_crates = ["vstd", "verus_builtin", "verus_builtin_macros"];
+
+    for section in &dep_sections {
+        if let Some(deps) = parsed.get(section).and_then(|v| v.as_table()) {
+            for crate_name in &verus_crates {
+                if deps.contains_key(*crate_name) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    if let Some(workspace) = parsed.get("workspace").and_then(|v| v.as_table()) {
+        if let Some(deps) = workspace.get("dependencies").and_then(|v| v.as_table()) {
+            for crate_name in &verus_crates {
+                if deps.contains_key(*crate_name) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    false
 }
 
 /// Run probe-verus stubify to generate stubs.json from .md files.
@@ -145,34 +256,41 @@ fn load_atoms_from_file(atoms_path: &Path) -> Result<HashMap<String, Value>> {
 }
 
 /// Run probe-verus atomize on the project and save results to atoms.json.
-fn generate_probe_atoms(project_root: &Path, atoms_path: &Path, config: &CommandConfig) -> Result<HashMap<String, Value>> {
+fn generate_probe_atoms(
+    project_root: &Path,
+    atoms_path: &Path,
+    config: &CommandConfig,
+    use_rust_analyzer: bool,
+) -> Result<HashMap<String, Value>> {
     require_probe_installed(config)?;
 
     if let Some(parent) = atoms_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
 
+    let analyzer_label = if use_rust_analyzer {
+        "rust-analyzer"
+    } else {
+        "verus-analyzer"
+    };
     println!(
-        "Running probe-verus atomize on {}...",
+        "Running probe-verus atomize ({}) on {}...",
+        analyzer_label,
         project_root.display()
     );
 
-    let output = run_command(
-        "probe-verus",
-        &[
-            "atomize",
-            ".",
-            "-o",
-            atoms_path
-                .strip_prefix(project_root)
-                .unwrap_or(atoms_path)
-                .to_str()
-                .unwrap(),
-            "-r",
-        ],
-        Some(project_root),
-        config,
-    )?;
+    let atoms_path_str = atoms_path
+        .strip_prefix(project_root)
+        .unwrap_or(atoms_path)
+        .to_str()
+        .unwrap();
+
+    let mut args = vec!["atomize", ".", "-o", atoms_path_str, "-r"];
+    if use_rust_analyzer {
+        args.push("--rust-analyzer");
+    }
+
+    let output = run_command("probe-verus", &args, Some(project_root), config)?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -518,4 +636,101 @@ fn update_structure_files(
     println!("Skipped: {}", skipped_count);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_is_verus_project_with_vstd_dep() {
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            r#"[package]
+name = "test"
+version = "0.1.0"
+
+[dependencies]
+vstd = { git = "https://github.com/verus-lang/verus" }
+"#,
+        )
+        .unwrap();
+        assert!(is_verus_project(dir.path()));
+    }
+
+    #[test]
+    fn test_is_verus_project_with_builtin_dep() {
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            r#"[package]
+name = "test"
+version = "0.1.0"
+
+[dependencies]
+verus_builtin = { git = "https://github.com/verus-lang/verus" }
+"#,
+        )
+        .unwrap();
+        assert!(is_verus_project(dir.path()));
+    }
+
+    #[test]
+    fn test_is_verus_project_with_metadata_section() {
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            r#"[package]
+name = "test"
+version = "0.1.0"
+
+[package.metadata.verus]
+verify = true
+"#,
+        )
+        .unwrap();
+        assert!(is_verus_project(dir.path()));
+    }
+
+    #[test]
+    fn test_is_verus_project_with_workspace_deps() {
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            r#"[workspace]
+members = ["crate-a"]
+
+[workspace.dependencies]
+vstd = { git = "https://github.com/verus-lang/verus" }
+"#,
+        )
+        .unwrap();
+        assert!(is_verus_project(dir.path()));
+    }
+
+    #[test]
+    fn test_is_not_verus_project_plain_rust() {
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            r#"[package]
+name = "test"
+version = "0.1.0"
+
+[dependencies]
+serde = "1.0"
+tokio = "1"
+"#,
+        )
+        .unwrap();
+        assert!(!is_verus_project(dir.path()));
+    }
+
+    #[test]
+    fn test_is_not_verus_project_no_cargo_toml() {
+        let dir = TempDir::new().unwrap();
+        assert!(!is_verus_project(dir.path()));
+    }
 }
