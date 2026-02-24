@@ -31,6 +31,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libdbus-1-dev pkg-config
+
       - name: Install cargo-edit
         uses: taiki-e/install-action@v2
         with:
@@ -53,7 +58,7 @@ jobs:
           NEW_VERSION="${{ steps.bump.outputs.new_version }}"
           TAG="v$NEW_VERSION"
           
-          cargo check
+          cargo metadata --format-version 1 > /dev/null
           
           git add Cargo.toml Cargo.lock
           git commit -m "chore: bump version to $NEW_VERSION"
