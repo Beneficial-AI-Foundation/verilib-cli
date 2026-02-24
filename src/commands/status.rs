@@ -4,7 +4,7 @@ use crate::storage::{get_credential_storage, get_platform_info};
 
 pub async fn handle_status() -> Result<()> {
     let platform_info = get_platform_info();
-    
+
     match get_stored_api_key() {
         Ok(key) => {
             let masked_key = format!("{}***", if key.len() > 4 { &key[..4] } else { &key });
@@ -25,7 +25,8 @@ pub async fn handle_status() -> Result<()> {
 
 pub fn get_stored_api_key() -> Result<String> {
     let entry = get_credential_storage()?;
-    
-    entry.get_password()
+
+    entry
+        .get_password()
         .context("Failed to retrieve API key from storage")
 }

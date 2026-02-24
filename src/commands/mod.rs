@@ -1,22 +1,22 @@
 pub mod api;
 pub mod atomize;
 pub mod auth;
+pub mod create;
 pub mod deploy;
 pub mod init;
 pub mod reclone;
 pub mod specify;
 pub mod status;
-pub mod create;
-pub mod verify;
 pub mod types;
+pub mod verify;
 
 pub use api::handle_api;
 pub use atomize::handle_atomize;
 pub use auth::handle_auth;
+pub use create::handle_create;
 pub use deploy::handle_deploy;
 pub use init::handle_init;
 pub use reclone::handle_reclone;
 pub use specify::handle_specify;
 pub use status::handle_status;
-pub use create::handle_create;
 pub use verify::handle_verify;

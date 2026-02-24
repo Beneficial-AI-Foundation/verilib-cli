@@ -3,8 +3,8 @@
 //! Check specification status and manage spec certs.
 
 use crate::structure::{
-    create_cert, display_menu, get_existing_certs, require_probe_installed, run_command,
-    CommandConfig, ConfigPaths, ATOMIZE_INTERMEDIATE_FILES, cleanup_intermediate_files,
+    cleanup_intermediate_files, create_cert, display_menu, get_existing_certs,
+    require_probe_installed, run_command, CommandConfig, ConfigPaths, ATOMIZE_INTERMEDIATE_FILES,
 };
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
@@ -59,9 +59,9 @@ pub async fn handle_specify(project_root: PathBuf, no_probe: bool, check_only: b
 
     // Display menu and create certs for selected functions
     let newly_certified = collect_certifications(
-        &uncertified, 
-        &config.certs_specify_dir, 
-        config.auto_validate_specs
+        &uncertified,
+        &config.certs_specify_dir,
+        config.auto_validate_specs,
     )?;
 
     // Update specified status based on all certified functions
@@ -126,10 +126,7 @@ fn find_uncertified_functions(
     let uncertified: HashMap<String, Value> = stubs_with_specs
         .into_iter()
         .filter(|(_, stub)| {
-            let code_name = stub
-                .get("code-name")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let code_name = stub.get("code-name").and_then(|v| v.as_str()).unwrap_or("");
             !existing_certs.contains(code_name)
         })
         .collect();
@@ -214,10 +211,7 @@ fn collect_certifications(
 
     for idx in &selected_indices {
         let (_stub_path, stub) = &uncertified_list[*idx];
-        let code_name = stub
-            .get("code-name")
-            .and_then(|v| v.as_str())
-            .unwrap_or("");
+        let code_name = stub.get("code-name").and_then(|v| v.as_str()).unwrap_or("");
         newly_certified.insert(code_name.to_string());
         let cert_path = create_cert(certs_dir, code_name)?;
         println!(
@@ -362,10 +356,7 @@ fn incorporate_spec_text(
     let mut count = 0;
     for stub in stubs_data.values_mut() {
         if let Some(obj) = stub.as_object_mut() {
-            let code_name = obj
-                .get("code-name")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let code_name = obj.get("code-name").and_then(|v| v.as_str()).unwrap_or("");
 
             if let Some(spec_info) = specs_data.get(code_name) {
                 // Only add spec-text if specified is true

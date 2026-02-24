@@ -1,5 +1,5 @@
-use anyhow::{Context, Result};
 use crate::constants::DEFAULT_DOCKER_IMAGE;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::process::{Command, Output};
@@ -78,7 +78,7 @@ fn ensure_image_pulled(image: &str) -> Result<()> {
     }
 
     println!("Docker image {} not found locally. Pulling...", image);
-    
+
     let status = Command::new("docker")
         .args(&["pull", "--platform", "linux/amd64", image])
         .status()
@@ -87,22 +87,17 @@ fn ensure_image_pulled(image: &str) -> Result<()> {
     if !status.success() {
         anyhow::bail!("Failed to pull docker image {}", image);
     }
-    
+
     Ok(())
 }
 
-fn run_docker(
-    program: &str,
-    args: &[&str],
-    cwd: Option<&Path>,
-    image: &str,
-) -> Result<Output> {
+fn run_docker(program: &str, args: &[&str], cwd: Option<&Path>, image: &str) -> Result<Output> {
     ensure_image_pulled(image)?;
 
-    let host_cwd = cwd
-        .map(|p| p.to_path_buf())
-        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf()));
-    
+    let host_cwd = cwd.map(|p| p.to_path_buf()).unwrap_or_else(|| {
+        std::env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf())
+    });
+
     let host_cwd_str = host_cwd.to_string_lossy();
 
     #[cfg(unix)]
@@ -115,13 +110,15 @@ fn run_docker(
     #[cfg(not(unix))]
     let user_arg = "1000:1000".to_string();
 
-
     let mut docker_args = vec![
         "run",
         "--rm",
-        "--platform", "linux/amd64",
-        "--entrypoint", program,
-        "-u", &user_arg,
+        "--platform",
+        "linux/amd64",
+        "--entrypoint",
+        program,
+        "-u",
+        &user_arg,
         "-v",
     ];
 
@@ -129,10 +126,13 @@ fn run_docker(
     docker_args.push(&mount_arg);
 
     docker_args.extend_from_slice(&[
-        "--tmpfs", "/tmp",
-        "--tmpfs", "/home/tooluser/.cache",
+        "--tmpfs",
+        "/tmp",
+        "--tmpfs",
+        "/home/tooluser/.cache",
         "--security-opt=no-new-privileges",
-        "-w", "/workspace",
+        "-w",
+        "/workspace",
         image,
     ]);
 

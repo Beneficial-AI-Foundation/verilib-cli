@@ -16,22 +16,19 @@ pub struct FileStorage {
 
 impl FileStorage {
     pub fn new() -> Result<Self> {
-        let home_dir = dirs::home_dir()
-            .context("Failed to get home directory")?;
+        let home_dir = dirs::home_dir().context("Failed to get home directory")?;
         let file_path = home_dir.join(FILE_NAME);
         Ok(Self { file_path })
     }
 
     fn ensure_secure_file(&self) -> Result<()> {
         if !self.file_path.exists() {
-            File::create(&self.file_path)
-                .context("Failed to create credentials file")?;
+            File::create(&self.file_path).context("Failed to create credentials file")?;
         }
 
         #[cfg(unix)]
         {
-            let metadata = fs::metadata(&self.file_path)
-                .context("Failed to read file metadata")?;
+            let metadata = fs::metadata(&self.file_path).context("Failed to read file metadata")?;
             let mut permissions = metadata.permissions();
             permissions.set_mode(0o600);
             fs::set_permissions(&self.file_path, permissions)
@@ -63,8 +60,7 @@ impl CredentialStorage for FileStorage {
             anyhow::bail!("No credentials file found");
         }
 
-        let mut file = File::open(&self.file_path)
-            .context("Failed to open credentials file")?;
+        let mut file = File::open(&self.file_path).context("Failed to open credentials file")?;
 
         let mut password = String::new();
         file.read_to_string(&mut password)
@@ -79,8 +75,7 @@ impl CredentialStorage for FileStorage {
 
     fn delete_password(&self) -> Result<()> {
         if self.file_path.exists() {
-            fs::remove_file(&self.file_path)
-                .context("Failed to delete credentials file")?;
+            fs::remove_file(&self.file_path).context("Failed to delete credentials file")?;
         }
         Ok(())
     }

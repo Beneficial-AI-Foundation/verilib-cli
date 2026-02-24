@@ -40,7 +40,6 @@ pub enum Commands {
     /// Reclone repository after checking for uncommitted changes
     Reclone,
     // ===== Structure Commands (merged from verilib-structure) =====
-
     /// Initialize structure files from source analysis
     Create {
         /// Project root directory (default: current working directory)

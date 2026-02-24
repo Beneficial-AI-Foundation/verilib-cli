@@ -110,11 +110,7 @@ pub async fn handle_atomize(
 }
 
 /// Atoms-only mode: just produce atoms.json without stubs enrichment.
-fn handle_atoms_only(
-    project_root: &Path,
-    no_probe: bool,
-    rust_analyzer: bool,
-) -> Result<()> {
+fn handle_atoms_only(project_root: &Path, no_probe: bool, rust_analyzer: bool) -> Result<()> {
     let verilib_path = project_root.join(".verilib");
     std::fs::create_dir_all(&verilib_path).context("Failed to create .verilib directory")?;
 
@@ -180,13 +176,9 @@ const SKIP_DIRS: &[&str] = &["target", ".git", "node_modules"];
 /// Check if a project uses Verus by scanning all Cargo.toml files under the
 /// project root. Skips `target/`, `.git/`, and `node_modules/` directories.
 fn is_verus_project(project_root: &Path) -> bool {
-    for entry in WalkDir::new(project_root)
-        .into_iter()
-        .filter_entry(|e| {
-            !e.file_type().is_dir()
-                || !SKIP_DIRS.contains(&e.file_name().to_str().unwrap_or(""))
-        })
-    {
+    for entry in WalkDir::new(project_root).into_iter().filter_entry(|e| {
+        !e.file_type().is_dir() || !SKIP_DIRS.contains(&e.file_name().to_str().unwrap_or(""))
+    }) {
         let entry = match entry {
             Ok(e) => e,
             Err(_) => continue,
@@ -469,10 +461,7 @@ fn enrich_stubs(
 
 /// Build an enriched entry from atom data.
 fn build_enriched_entry(code_name: &str, atom: &Value) -> Value {
-    let code_path = atom
-        .get("code-path")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+    let code_path = atom.get("code-path").and_then(|v| v.as_str()).unwrap_or("");
 
     let code_text = atom.get("code-text");
 
@@ -576,7 +565,11 @@ fn check_stubs_match(
         println!("All {} stub files match enriched stubs.", stubs.len());
         Ok(())
     } else {
-        eprintln!("Found {} mismatches in {} stub files:", mismatches.len(), mismatched_files.len());
+        eprintln!(
+            "Found {} mismatches in {} stub files:",
+            mismatches.len(),
+            mismatched_files.len()
+        );
         for mismatch in &mismatches {
             eprintln!("  {}", mismatch);
         }
@@ -594,10 +587,7 @@ fn check_stubs_match(
 }
 
 /// Update structure .md files with code-name field from enriched data.
-fn update_structure_files(
-    enriched: &HashMap<String, Value>,
-    structure_root: &Path,
-) -> Result<()> {
+fn update_structure_files(enriched: &HashMap<String, Value>, structure_root: &Path) -> Result<()> {
     let mut updated_count = 0;
     let mut skipped_count = 0;
 

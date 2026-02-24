@@ -24,9 +24,7 @@ pub fn encode_name(name: &str) -> String {
 
 /// Decode a filename back to an identifier.
 pub fn decode_name(encoded: &str) -> String {
-    percent_decode_str(encoded)
-        .decode_utf8_lossy()
-        .to_string()
+    percent_decode_str(encoded).decode_utf8_lossy().to_string()
 }
 
 /// Get the set of identifiers that already have certs.

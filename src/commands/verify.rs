@@ -102,7 +102,10 @@ fn check_for_failures(stubs: &HashMap<String, Value>) -> Result<()> {
 
     failed_stubs.sort_by(|a, b| a.0.cmp(&b.0));
 
-    eprintln!("Found {} stubs with status \"failure\":", failed_stubs.len());
+    eprintln!(
+        "Found {} stubs with status \"failure\":",
+        failed_stubs.len()
+    );
     for (stub_path, display_name, code_name) in &failed_stubs {
         eprintln!("  {}: {} ({})", stub_path, display_name, code_name);
     }

@@ -59,13 +59,15 @@ where
 {
     use serde::de::Error;
     use serde_json::Value;
-    
+
     let value = Value::deserialize(deserializer)?;
-    
+
     match value {
         Value::Array(arr) if arr.is_empty() => Ok(HashMap::new()),
         Value::Object(_) => serde_json::from_value(value).map_err(Error::custom),
-        _ => Err(Error::custom("expected an object or empty array for layouts")),
+        _ => Err(Error::custom(
+            "expected an object or empty array for layouts",
+        )),
     }
 }
 

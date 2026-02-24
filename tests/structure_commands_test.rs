@@ -111,7 +111,10 @@ mod atomize_tests {
         // Now check-only should pass
         let output = run_command(&["atomize", "--no-probe", "--check-only"], temp_dir.path());
 
-        assert!(output.status.success(), "check-only should pass when stubs match");
+        assert!(
+            output.status.success(),
+            "check-only should pass when stubs match"
+        );
     }
 
     #[test]
@@ -184,8 +187,14 @@ code-line: 10
         .unwrap();
 
         // Run atomize with --update-stubs
-        let output = run_command(&["atomize", "--no-probe", "--update-stubs"], temp_dir.path());
-        assert!(output.status.success(), "atomize --update-stubs should succeed");
+        let output = run_command(
+            &["atomize", "--no-probe", "--update-stubs"],
+            temp_dir.path(),
+        );
+        assert!(
+            output.status.success(),
+            "atomize --update-stubs should succeed"
+        );
 
         // Check that the .md file was updated with code-name
         let content = fs::read_to_string(&md_path).unwrap();
@@ -426,8 +435,13 @@ mod specify_tests {
         let verilib_dir = temp_dir.path().join(".verilib");
 
         // Add cert for func_b (func_a already has a cert)
-        let cert_path = verilib_dir.join("certs/specs/probe%3Atest%2F1%2E0%2E0%2Fmodule%2Ffunc_b%28%29.json");
-        fs::write(&cert_path, r#"{"timestamp": "2026-01-27T10:00:00.000000000Z"}"#).unwrap();
+        let cert_path =
+            verilib_dir.join("certs/specs/probe%3Atest%2F1%2E0%2E0%2Fmodule%2Ffunc_b%28%29.json");
+        fs::write(
+            &cert_path,
+            r#"{"timestamp": "2026-01-27T10:00:00.000000000Z"}"#,
+        )
+        .unwrap();
 
         // check-only should pass when all specified functions have certs
         let output = run_command(&["specify", "--no-probe", "--check-only"], temp_dir.path());
@@ -438,7 +452,8 @@ mod specify_tests {
         );
         let stdout = String::from_utf8_lossy(&output.stdout);
         assert!(
-            stdout.contains("All stubs with specs have certs") || stdout.contains("already validated"),
+            stdout.contains("All stubs with specs have certs")
+                || stdout.contains("already validated"),
             "Should report all certified"
         );
     }
@@ -617,13 +632,14 @@ mod create_tests {
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
             assert!(
-                stderr.contains("probe-verus") || stderr.contains("not found") || stderr.contains("not installed"),
+                stderr.contains("probe-verus")
+                    || stderr.contains("not found")
+                    || stderr.contains("not installed"),
                 "Should report that probe-verus is required: {}",
                 stderr
             );
         }
     }
-
 }
 
 // ============================================================================
