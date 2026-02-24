@@ -1,0 +1,4 @@
+function,module,link
+func_a,module,src/module.rs#L10
+func_b,module,src/module.rs#L25
+func_c,other,src/other.rs#L5
