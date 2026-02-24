@@ -64,9 +64,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: ${{ github.event.inputs.tag != '' }}
-          token: ${{ github.event.inputs.tag != '' && secrets.GITHUB_TOKEN || '' }}
           submodules: recursive
+          persist-credentials: false
       - name: Verify version consistency
         if: ${{ github.event.inputs.tag != '' }}
         run: |
