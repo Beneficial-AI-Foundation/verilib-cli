@@ -56,14 +56,18 @@ pub async fn handle_atomize(
 
     let config = ConfigPaths::load(&project_root)?;
 
-    // Step 1: Generate stubs.json from .md files using probe-verus stubify
-    let stubs = generate_stubs(
-        &project_root,
-        &config.structure_root,
-        &config.structure_json_path,
-        &config.command_config,
-    )?;
-    println!("Loaded {} stubs from structure files", stubs.len());
+    // Step 1: Generate stubs from .md files
+    let stubs = if no_probe {
+        load_stubs_from_md_files(&config.structure_root)?
+    } else {
+        generate_stubs(
+            &project_root,
+            &config.structure_root,
+            &config.structure_json_path,
+            &config.command_config,
+        )?
+    };
+    println!("Loaded {} stubs", stubs.len());
 
     // Step 2: Generate or load atoms.json
     let probe_atoms = if no_probe {
@@ -253,6 +257,48 @@ fn generate_stubs(
 
     let content = std::fs::read_to_string(stubs_path)?;
     let stubs: HashMap<String, Value> = serde_json::from_str(&content)?;
+    Ok(stubs)
+}
+
+/// Walk the structure directory and parse .md frontmatter to build stubs
+/// without requiring probe-verus. This mirrors what `probe-verus stubify` does.
+fn load_stubs_from_md_files(structure_root: &Path) -> Result<HashMap<String, Value>> {
+    if !structure_root.exists() {
+        bail!(
+            "Structure directory not found at {}. Run 'verilib-cli create' first.",
+            structure_root.display()
+        );
+    }
+
+    println!(
+        "Loading stubs from .md files in {}...",
+        structure_root.display()
+    );
+
+    let mut stubs: HashMap<String, Value> = HashMap::new();
+    for entry in WalkDir::new(structure_root)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
+        let path = entry.path();
+        if path.extension().and_then(|e| e.to_str()) != Some("md") {
+            continue;
+        }
+        let rel_path = path
+            .strip_prefix(structure_root)
+            .unwrap_or(path)
+            .to_string_lossy()
+            .to_string();
+        match parse_frontmatter(path) {
+            Ok(fm) => {
+                stubs.insert(rel_path, serde_json::to_value(fm)?);
+            }
+            Err(e) => {
+                eprintln!("Warning: skipping {}: {}", rel_path, e);
+            }
+        }
+    }
+
     Ok(stubs)
 }
 
