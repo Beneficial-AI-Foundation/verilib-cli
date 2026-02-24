@@ -1,6 +1,7 @@
+#[allow(dead_code)]
 mod client;
 mod error;
+#[allow(dead_code)]
 mod types;
 
-pub use client::{download_repo, wait_for_atomization};
 pub use error::handle_api_error;

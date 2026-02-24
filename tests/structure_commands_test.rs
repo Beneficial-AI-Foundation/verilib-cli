@@ -40,7 +40,7 @@ vstd = { git = "https://github.com/verus-lang/verus", rev = "test" }
     // Copy JSON files
     for file in ["atoms.json", "specs.json", "proofs.json", "stubs.json"] {
         fs::copy(fixtures_dir.join(file), verilib_dir.join(file))
-            .expect(&format!("Failed to copy {}", file));
+            .unwrap_or_else(|_| panic!("Failed to copy {}", file));
     }
 
     // Copy structure directory

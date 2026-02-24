@@ -38,7 +38,7 @@ pub fn get_existing_certs(certs_dir: &Path) -> Result<HashSet<String>> {
     for entry in std::fs::read_dir(certs_dir)? {
         let entry = entry?;
         let path = entry.path();
-        if path.extension().map_or(false, |ext| ext == "json") {
+        if path.extension().is_some_and(|ext| ext == "json") {
             if let Some(stem) = path.file_stem() {
                 let encoded_name = stem.to_string_lossy();
                 let name = decode_name(&encoded_name);

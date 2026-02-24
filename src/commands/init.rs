@@ -71,7 +71,7 @@ fn prompt_execution_mode() -> Result<ExecutionMode> {
 
 fn detect_git_url() -> Option<String> {
     let output = Command::new("git")
-        .args(&["config", "--get", "remote.origin.url"])
+        .args(["config", "--get", "remote.origin.url"])
         .output()
         .ok()?;
 
@@ -83,7 +83,7 @@ fn detect_git_url() -> Option<String> {
 
             // Get current branch
             if let Ok(branch_output) = Command::new("git")
-                .args(&["rev-parse", "--abbrev-ref", "HEAD"])
+                .args(["rev-parse", "--abbrev-ref", "HEAD"])
                 .output()
             {
                 if branch_output.status.success() {

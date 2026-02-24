@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::{self, IsTerminal, Read};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub enum ApiSubcommand {
@@ -143,6 +143,7 @@ pub async fn handle_api(subcommand: ApiSubcommand, json_output: bool, dry_run: b
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn handle_create_file(
     path: PathBuf,
     content: Option<String>,
@@ -345,7 +346,7 @@ async fn handle_list(filter: Option<StatusFilter>, json_output: bool) -> Result<
         .filter_map(|e| e.ok())
     {
         let path = entry.path();
-        if path.is_file() && path.extension().map_or(false, |ext| ext == "verilib") {
+        if path.is_file() && path.extension().is_some_and(|ext| ext == "verilib") {
             let file_name = path.file_name().unwrap_or_default().to_string_lossy();
             if file_name.contains(".meta.") {
                 if let Ok(content) = fs::read_to_string(path) {
@@ -590,7 +591,7 @@ fn check_admin_status() -> Result<()> {
     Ok(())
 }
 
-fn resolve_file_path(input: &PathBuf) -> Result<PathBuf> {
+fn resolve_file_path(input: &Path) -> Result<PathBuf> {
     use regex::Regex;
 
     let input_str = input.to_string_lossy().to_string();

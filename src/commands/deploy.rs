@@ -36,15 +36,15 @@ pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
 
     let repo_id = read_repo_id_from_config()?;
 
-    let deploy_info = if repo_id.is_none() {
-        println!("New repository - collecting deployment information...");
-        Some(collect_deploy_info(&url_base, &api_key, debug).await?)
-    } else {
-        println!(
-            "Updating existing repository (ID: {})...",
-            repo_id.as_ref().unwrap()
-        );
-        None
+    let deploy_info = match &repo_id {
+        None => {
+            println!("New repository - collecting deployment information...");
+            Some(collect_deploy_info(&url_base, &api_key, debug).await?)
+        }
+        Some(id) => {
+            println!("Updating existing repository (ID: {})...", id);
+            None
+        }
     };
 
     println!("\nScanning .verilib directory...");
@@ -633,7 +633,6 @@ fn build_tree(
                     if use_new_content {
                         *has_changes = true;
                     }
-                } else {
                 }
                 (content.clone(), snippets_value)
             } else {

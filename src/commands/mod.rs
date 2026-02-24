@@ -1,7 +1,9 @@
+#[allow(dead_code)]
 pub mod api;
 pub mod atomize;
 pub mod auth;
 pub mod create;
+#[allow(dead_code)]
 pub mod deploy;
 pub mod init;
 pub mod reclone;
@@ -10,11 +12,9 @@ pub mod status;
 pub mod types;
 pub mod verify;
 
-pub use api::handle_api;
 pub use atomize::handle_atomize;
 pub use auth::handle_auth;
 pub use create::handle_create;
-pub use deploy::handle_deploy;
 pub use init::handle_init;
 pub use reclone::handle_reclone;
 pub use specify::handle_specify;

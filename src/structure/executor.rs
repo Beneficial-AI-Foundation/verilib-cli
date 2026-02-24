@@ -4,17 +4,12 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::process::{Command, Output};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum ExecutionMode {
+    #[default]
     Local,
     Docker,
-}
-
-impl Default for ExecutionMode {
-    fn default() -> Self {
-        Self::Local
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -66,7 +61,7 @@ fn run_local(program: &str, args: &[&str], cwd: Option<&Path>) -> Result<Output>
 
 fn ensure_image_pulled(image: &str) -> Result<()> {
     let status = Command::new("docker")
-        .args(&["image", "inspect", image])
+        .args(["image", "inspect", image])
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
         .status();
@@ -80,7 +75,7 @@ fn ensure_image_pulled(image: &str) -> Result<()> {
     println!("Docker image {} not found locally. Pulling...", image);
 
     let status = Command::new("docker")
-        .args(&["pull", "--platform", "linux/amd64", image])
+        .args(["pull", "--platform", "linux/amd64", image])
         .status()
         .context(format!("Failed to pull docker image {}", image))?;
 

@@ -16,7 +16,7 @@ pub async fn handle_auth() -> Result<()> {
 
     let entry = get_credential_storage()?;
 
-    match entry.set_password(&key.trim()) {
+    match entry.set_password(key.trim()) {
         Ok(()) => {
             println!("API key successfully stored.");
             println!("Your API key is securely stored in the system keyring.");
