@@ -1,0 +1,68 @@
+name: Bump Version & Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write 
+      actions: write 
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: recursive
+
+      - name: Git config
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install cargo-edit
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-edit
+
+      - name: Bump version
+        id: bump
+        run: |
+          OLD_VERSION=$(grep "^version" Cargo.toml | head -n 1 | cut -d '"' -f 2)
+          echo "Current version: $OLD_VERSION"
+          
+          cargo set-version --bump ${{ github.event.inputs.bump }}
+          
+          NEW_VERSION=$(grep "^version" Cargo.toml | head -n 1 | cut -d '"' -f 2)
+          echo "New version: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Commit and Tag
+        run: |
+          NEW_VERSION="${{ steps.bump.outputs.new_version }}"
+          TAG="v$NEW_VERSION"
+          
+          cargo check
+          
+          git add Cargo.toml Cargo.lock
+          git commit -m "chore: bump version to $NEW_VERSION"
+          git tag $TAG
+          
+          git push origin HEAD:main
+
+          git push origin $TAG
+          
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
