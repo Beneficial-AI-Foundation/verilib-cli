@@ -458,13 +458,13 @@ mod quantitative_tests {
 }
 
 // ===========================================================================
-// Category 4: Requirement-Derived Tests (from PDF)
+// Category 4: Requirement-Derived Tests (from "Structure for Verif Projects" doc)
 // ===========================================================================
 
 mod requirement_tests {
     use super::*;
 
-    /// PDF p.8: "code-name will always take precedence" over code-path/code-line.
+    /// "Structure for Verif Projects" doc p.8: "code-name will always take precedence" over code-path/code-line.
     #[test]
     fn test_code_name_takes_precedence_over_code_line() {
         let temp_dir = setup_test_project();
@@ -503,7 +503,7 @@ code-line: 25
         );
     }
 
-    /// PDF p.8: ".md files will not be overwritten during specification/verification"
+    /// "Structure for Verif Projects" doc p.8: ".md files will not be overwritten during specification/verification"
     #[test]
     fn test_md_files_unchanged_during_specify() {
         let temp_dir = setup_test_project();
@@ -518,7 +518,7 @@ code-line: 25
         assert_eq!(before, after, ".md files should not change during specify");
     }
 
-    /// PDF p.8: same requirement for verify
+    /// "Structure for Verif Projects" doc p.8: same requirement for verify
     #[test]
     fn test_md_files_unchanged_during_verify() {
         let temp_dir = setup_test_project();
@@ -533,7 +533,7 @@ code-line: 25
         assert_eq!(before, after, ".md files should not change during verify");
     }
 
-    /// PDF p.9: "For the MVP, the spec cert will just contain a timestamp"
+    /// "Structure for Verif Projects" doc p.9: "For the MVP, the spec cert will just contain a timestamp"
     #[test]
     fn test_cert_contains_timestamp() {
         let temp_dir = setup_test_project_with_config("config_auto_validate.json");
@@ -575,7 +575,7 @@ code-line: 25
         }
     }
 
-    /// PDF p.7: "dependencies can only be code dependencies (comes from atomization)"
+    /// "Structure for Verif Projects" doc p.7: "dependencies can only be code dependencies (comes from atomization)"
     #[test]
     fn test_dependencies_populated_from_atoms() {
         let temp_dir = setup_test_project();
@@ -617,7 +617,7 @@ code-line: 25
         );
     }
 
-    /// PDF p.14: atoms have code-module, code-path, code-text, dependencies
+    /// "Structure for Verif Projects" doc p.14: atoms have code-module, code-path, code-text, dependencies
     #[test]
     fn test_enriched_stubs_have_required_fields() {
         let temp_dir = setup_test_project();
