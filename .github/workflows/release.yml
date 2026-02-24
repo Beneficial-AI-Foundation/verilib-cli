@@ -64,6 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
           submodules: recursive
           persist-credentials: false
       - name: Verify version consistency
@@ -167,6 +168,7 @@ jobs:
           git config --global core.longpaths true
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
           persist-credentials: false
           submodules: recursive
       - name: Install system dependencies for keyring
@@ -283,6 +285,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
           persist-credentials: false
           submodules: recursive
       - name: Install cached dist
@@ -333,6 +336,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
           persist-credentials: false
           submodules: recursive
       - name: Install cached dist

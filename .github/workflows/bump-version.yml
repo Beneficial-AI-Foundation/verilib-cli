@@ -69,6 +69,12 @@ jobs:
           git push origin HEAD:release/$NEW_VERSION
           git push origin $TAG
           
+          # Trigger the release workflow explicitly
+          gh workflow run release.yml -f tag=$TAG
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Create Pull Request
         run: |
           NEW_VERSION="${{ steps.bump.outputs.new_version }}"
