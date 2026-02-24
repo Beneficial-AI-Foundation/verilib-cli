@@ -36,9 +36,8 @@ async fn main() -> Result<()> {
         Commands::Create {
             project_root,
             root,
-            github_base_url,
         } => {
-            handle_create(project_root, root, github_base_url).await?;
+            handle_create(project_root, root).await?;
         }
         Commands::Atomize {
             project_root,

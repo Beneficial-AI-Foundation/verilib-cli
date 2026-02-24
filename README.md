@@ -206,16 +206,14 @@ Initialize structure files from source analysis. Uses `probe-verus tracked-csv` 
 exec functions with Verus specs and generate `.md` stub files.
 
 ```bash
-verilib-cli create                  # Default structure root (GitHub URL auto-derived from git remote)
+verilib-cli create                  # Default structure root
 verilib-cli create --root custom/path
-verilib-cli create --github-base-url "https://github.com/Org/Repo"
 ```
 
 **Options:**
 | Option | Description |
 |--------|-------------|
 | `--root <path>` | Custom structure root (default: `.verilib/structure`) |
-| `--github-base-url <url>` | GitHub repo URL for links, e.g. `https://github.com/Org/Repo` (auto-derived from git remote `origin` if omitted; uses placeholder when no remote) |
 
 **Requirements:**
 - `probe-verus` installed and in PATH

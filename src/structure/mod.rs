@@ -18,4 +18,4 @@ pub use probe::{
     cleanup_intermediate_files, require_probe_installed, ATOMIZE_INTERMEDIATE_FILES,
     VERIFY_INTERMEDIATE_FILES,
 };
-pub use utils::{display_menu, get_display_name, parse_github_link, run_command};
+pub use utils::{display_menu, get_display_name, run_command};
