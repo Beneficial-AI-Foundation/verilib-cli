@@ -11,6 +11,7 @@ use intervaltree::IntervalTree;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use walkdir::WalkDir;
 
 /// Run the atomize subcommand.
 pub async fn handle_atomize(
@@ -131,23 +132,14 @@ fn handle_atoms_only(
     Ok(())
 }
 
-/// Check if a project uses Verus by inspecting Cargo.toml.
+/// Check whether a parsed Cargo.toml contains Verus indicators.
 ///
-/// Returns true if any of these indicators are found:
-/// - `vstd`, `verus_builtin`, or `verus_builtin_macros` in dependencies
+/// Returns true if any of these are found:
 /// - `[package.metadata.verus]` section
-fn is_verus_project(project_root: &Path) -> bool {
-    let cargo_toml_path = project_root.join("Cargo.toml");
-    let content = match std::fs::read_to_string(&cargo_toml_path) {
-        Ok(c) => c,
-        Err(_) => return false,
-    };
-
-    let parsed: toml::Value = match content.parse() {
-        Ok(v) => v,
-        Err(_) => return false,
-    };
-
+/// - `vstd`, `verus_builtin`, or `verus_builtin_macros` in `[dependencies]`,
+///   `[dev-dependencies]`, or `[build-dependencies]`
+/// - Same crates in `[workspace.dependencies]`
+fn has_verus_indicators(parsed: &toml::Value) -> bool {
     if parsed
         .get("package")
         .and_then(|p| p.get("metadata"))
@@ -180,6 +172,40 @@ fn is_verus_project(project_root: &Path) -> bool {
         }
     }
 
+    false
+}
+
+const SKIP_DIRS: &[&str] = &["target", ".git", "node_modules"];
+
+/// Check if a project uses Verus by scanning all Cargo.toml files under the
+/// project root. Skips `target/`, `.git/`, and `node_modules/` directories.
+fn is_verus_project(project_root: &Path) -> bool {
+    for entry in WalkDir::new(project_root)
+        .into_iter()
+        .filter_entry(|e| {
+            !e.file_type().is_dir()
+                || !SKIP_DIRS.contains(&e.file_name().to_str().unwrap_or(""))
+        })
+    {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        if entry.file_name() != "Cargo.toml" || !entry.file_type().is_file() {
+            continue;
+        }
+        let content = match std::fs::read_to_string(entry.path()) {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+        let parsed: toml::Value = match content.parse() {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+        if has_verus_indicators(&parsed) {
+            return true;
+        }
+    }
     false
 }
 
@@ -731,6 +757,88 @@ tokio = "1"
     #[test]
     fn test_is_not_verus_project_no_cargo_toml() {
         let dir = TempDir::new().unwrap();
+        assert!(!is_verus_project(dir.path()));
+    }
+
+    #[test]
+    fn test_is_verus_project_nested_cargo_toml() {
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            r#"[workspace]
+members = ["sub-crate"]
+"#,
+        )
+        .unwrap();
+        let sub = dir.path().join("sub-crate");
+        std::fs::create_dir_all(&sub).unwrap();
+        std::fs::write(
+            sub.join("Cargo.toml"),
+            r#"[package]
+name = "sub-crate"
+version = "0.1.0"
+
+[dependencies]
+vstd = { git = "https://github.com/verus-lang/verus" }
+"#,
+        )
+        .unwrap();
+        assert!(is_verus_project(dir.path()));
+    }
+
+    #[test]
+    fn test_is_not_verus_project_nested_plain_rust() {
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            r#"[workspace]
+members = ["sub-crate"]
+"#,
+        )
+        .unwrap();
+        let sub = dir.path().join("sub-crate");
+        std::fs::create_dir_all(&sub).unwrap();
+        std::fs::write(
+            sub.join("Cargo.toml"),
+            r#"[package]
+name = "sub-crate"
+version = "0.1.0"
+
+[dependencies]
+serde = "1.0"
+"#,
+        )
+        .unwrap();
+        assert!(!is_verus_project(dir.path()));
+    }
+
+    #[test]
+    fn test_is_verus_project_skips_target_dir() {
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            r#"[package]
+name = "test"
+version = "0.1.0"
+
+[dependencies]
+serde = "1.0"
+"#,
+        )
+        .unwrap();
+        let target_sub = dir.path().join("target").join("debug").join("build");
+        std::fs::create_dir_all(&target_sub).unwrap();
+        std::fs::write(
+            target_sub.join("Cargo.toml"),
+            r#"[package]
+name = "hidden"
+version = "0.1.0"
+
+[dependencies]
+vstd = { git = "https://github.com/verus-lang/verus" }
+"#,
+        )
+        .unwrap();
         assert!(!is_verus_project(dir.path()));
     }
 }
