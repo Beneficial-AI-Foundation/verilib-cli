@@ -44,8 +44,10 @@ async fn main() -> Result<()> {
             update_stubs,
             no_probe,
             check_only,
+            atoms_only,
+            rust_analyzer,
         } => {
-            handle_atomize(project_root, update_stubs, no_probe, check_only).await?;
+            handle_atomize(project_root, update_stubs, no_probe, check_only, atoms_only, rust_analyzer).await?;
         }
         Commands::Specify {
             project_root,
