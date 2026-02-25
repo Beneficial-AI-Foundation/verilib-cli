@@ -13,7 +13,8 @@ use std::path::{Path, PathBuf};
 use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
 use crate::commands::status::get_stored_api_key;
 use crate::download::handle_api_error;
-use super::types::{Config, DeployNode, DeployResponse, RepoConfig, VerifierVersionsResponse, LANGUAGES, TYPES};
+use crate::config::{ProjectConfig, RepoConfig};
+use super::types::{DeployNode, DeployResponse, VerifierVersionsResponse, LANGUAGES, TYPES};
 
 #[derive(Debug, Clone, Copy)]
 enum ChangeDecision {
@@ -140,47 +141,27 @@ pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
 }
 
 fn read_repo_id_from_config() -> Result<Option<String>> {
-    let config_path = PathBuf::from(".verilib/config.json");
+    let project_root = PathBuf::from(".");
+    let config = ProjectConfig::load(&project_root)?;
 
-    if !config_path.exists() {
-        return Ok(None);
-    }
-
-    let config_content = fs::read_to_string(&config_path)
-        .context("Failed to read config.json")?;
-
-    let config: Config = serde_json::from_str(&config_content)
-        .context("Failed to parse config.json")?;
-
-    Ok(Some(config.repo.id))
+    Ok(config.repo.map(|r| r.id))
 }
 
 fn save_config_from_response(response_data: &DeployResponse, base_url: &str) -> Result<()> {
     let repo_id_str = response_data.data.id.to_string();
 
-    let mut is_admin = false;
-    let config_path = PathBuf::from(".verilib/config.json");
-    if config_path.exists() {
-         if let Ok(content) = fs::read_to_string(&config_path) {
-             if let Ok(cfg) = serde_json::from_str::<Config>(&content) {
-                 is_admin = cfg.repo.is_admin;
-             }
-         }
-    }
+    let project_root = PathBuf::from(".");
+    let mut config = ProjectConfig::load(&project_root)?;
 
-    let config = Config {
-        repo: RepoConfig {
-            id: repo_id_str.clone(),
-            url: base_url.to_string(),
-            is_admin,
-        },
-    };
+    let is_admin = config.repo.as_ref().map(|r| r.is_admin).unwrap_or(false);
 
-    let config_json = serde_json::to_string_pretty(&config)
-        .context("Failed to serialize config")?;
+    config.repo = Some(RepoConfig {
+        id: repo_id_str.clone(),
+        url: base_url.to_string(),
+        is_admin,
+    });
 
-    fs::write(&config_path, config_json)
-        .context("Failed to write config.json")?;
+    config.save(&project_root)?;
 
     println!("Config saved to .verilib/config.json");
     println!("Repository ID: {}", response_data.data.id);

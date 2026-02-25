@@ -1,13 +1,12 @@
 use anyhow::{Context, Result};
 use reqwest::Client;
 use serde_json::Value;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 
 use crate::constants::{auth_required_msg, init_required_msg};
 use crate::commands::status::get_stored_api_key;
-use crate::commands::types::Config;
+use crate::config::ProjectConfig;
 use crate::download::handle_api_error;
 
 pub async fn handle_reclone(debug: bool) -> Result<()> {
@@ -21,20 +20,13 @@ pub async fn handle_reclone(debug: bool) -> Result<()> {
     get_stored_api_key()
         .context(auth_required_msg())?;
     
-    // Check if project is initialized (.verilib/config.json exists)
-    if !Path::new(".verilib/config.json").exists() {
-        anyhow::bail!(init_required_msg());
-    }
+    let project_root = PathBuf::from(".");
+    let config = ProjectConfig::load(&project_root)?;
 
-    // Read and parse config.json to get repo_id and url
-    let config_content = fs::read_to_string(".verilib/config.json")
-        .context("Failed to read .verilib/config.json")?;
+    let repo = config.repo.ok_or_else(|| anyhow::anyhow!(init_required_msg()))?;
 
-    let config: Config = serde_json::from_str(&config_content)
-        .context("Failed to parse config.json")?;
-
-    let repo_id = config.repo.id.clone();
-    let url_base = config.repo.url.clone();
+    let repo_id = repo.id;
+    let url_base = repo.url;
     
     println!("Found repository ID: {}", repo_id);
     if debug {

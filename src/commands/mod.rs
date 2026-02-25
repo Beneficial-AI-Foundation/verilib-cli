@@ -10,10 +10,8 @@ pub mod create;
 pub mod verify;
 pub mod types;
 
-pub use api::handle_api;
 pub use atomize::handle_atomize;
 pub use auth::handle_auth;
-pub use deploy::handle_deploy;
 pub use init::handle_init;
 pub use reclone::handle_reclone;
 pub use specify::handle_specify;

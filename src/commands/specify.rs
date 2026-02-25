@@ -2,9 +2,10 @@
 //!
 //! Check specification status and manage spec certs.
 
+use crate::config::ProjectConfig;
 use crate::structure::{
-    create_cert, display_menu, get_existing_certs, require_probe_installed, run_command,
-    CommandConfig, ConfigPaths, ATOMIZE_INTERMEDIATE_FILES, cleanup_intermediate_files,
+    create_cert, display_menu, get_existing_certs, run_command,
+    CommandConfig, ExternalTool, ATOMIZE_INTERMEDIATE_FILES, cleanup_intermediate_files,
 };
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
@@ -25,22 +26,28 @@ pub async fn handle_specify(project_root: PathBuf, no_probe: bool, check_only: b
     let project_root = project_root
         .canonicalize()
         .context("Failed to resolve project root")?;
-    let config = ConfigPaths::load(&project_root)?;
+    ProjectConfig::init(&project_root)?;
+    let config = ProjectConfig::global().unwrap();
+    let stubs_path = config.stubs_path();
+    let atoms_path = config.atoms_path();
+    let certs_dir = config.certs_specify_dir();
+    let cmd_config = config.command_config();
+    let auto_validate = config.auto_validate_specs;
 
     // Load stubs from stubs.json
-    let mut stubs_data = read_stubs_json(&config.structure_json_path)?;
+    let mut stubs_data = read_stubs_json(&stubs_path)?;
     println!("Loaded {} stubs from stubs.json", stubs_data.len());
 
     // Run probe-verus specify or load from existing file
-    let specs_path = config.verilib_path.join("specs.json");
+    let specs_path = config.verilib_path().join("specs.json");
     let specs_data = if no_probe {
         load_specs_from_file(&specs_path)?
     } else {
         run_probe_specify(
             &project_root,
             &specs_path,
-            &config.atoms_path,
-            &config.command_config,
+            &atoms_path,
+            &cmd_config,
         )?
     };
 
@@ -48,7 +55,7 @@ pub async fn handle_specify(project_root: PathBuf, no_probe: bool, check_only: b
     incorporate_spec_text(&mut stubs_data, &specs_data);
 
     // Find stubs with spec-text that are not yet certified
-    let existing_certs = get_existing_certs(&config.certs_specify_dir)?;
+    let existing_certs = get_existing_certs(&certs_dir)?;
     println!("Found {} existing certs", existing_certs.len());
     let uncertified = find_uncertified_functions(&stubs_data, &existing_certs);
 
@@ -59,9 +66,9 @@ pub async fn handle_specify(project_root: PathBuf, no_probe: bool, check_only: b
 
     // Display menu and create certs for selected functions
     let newly_certified = collect_certifications(
-        &uncertified, 
-        &config.certs_specify_dir, 
-        config.auto_validate_specs
+        &uncertified,
+        &certs_dir,
+        auto_validate
     )?;
 
     // Update specified status based on all certified functions
@@ -69,7 +76,7 @@ pub async fn handle_specify(project_root: PathBuf, no_probe: bool, check_only: b
     update_stubs_specification_status(&mut stubs_data, &all_certified);
 
     // Write updated stubs back to stubs.json
-    write_stubs_json(&config.structure_json_path, &stubs_data)?;
+    write_stubs_json(&stubs_path, &stubs_data)?;
 
     println!("Done.");
     Ok(())
@@ -260,8 +267,6 @@ fn run_probe_specify(
     atoms_path: &Path,
     config: &CommandConfig,
 ) -> Result<HashMap<String, Value>> {
-    require_probe_installed(config)?;
-
     if let Some(parent) = specs_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
@@ -272,7 +277,7 @@ fn run_probe_specify(
     );
 
     let output = run_command(
-        "probe-verus",
+        &ExternalTool::Probe,
         &[
             "specify",
             ".",
