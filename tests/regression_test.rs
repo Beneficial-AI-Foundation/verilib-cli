@@ -234,7 +234,7 @@ mod atomize {
     #[test]
     fn check_only_passes_when_stubs_match() {
         let tmp = setup_project();
-        cli(&["atomize", "--no-probe"], tmp.path());
+        assert_success(&cli(&["atomize", "--no-probe"], tmp.path()), "atomize setup");
         assert_success(
             &cli(&["atomize", "--no-probe", "--check-only"], tmp.path()),
             "atomize --check-only",
@@ -416,7 +416,7 @@ mod specify {
     #[test]
     fn populates_spec_text_for_specified_stubs_only() {
         let tmp = setup_project_with_config("config_auto_validate.json");
-        cli(&["atomize", "--no-probe"], tmp.path());
+        assert_success(&cli(&["atomize", "--no-probe"], tmp.path()), "atomize setup");
         assert_success(&cli(&["specify", "--no-probe"], tmp.path()), "specify");
 
         let stubs = read_stubs(tmp.path());
@@ -434,7 +434,7 @@ mod specify {
     #[test]
     fn does_not_modify_md_files() {
         let tmp = setup_project_with_config("config_auto_validate.json");
-        cli(&["atomize", "--no-probe"], tmp.path());
+        assert_success(&cli(&["atomize", "--no-probe"], tmp.path()), "atomize setup");
 
         let dir = tmp.path().join(".verilib/structure");
         let before = collect_md_checksums(&dir);
@@ -452,7 +452,7 @@ mod specify {
     #[test]
     fn certs_contain_iso8601_timestamp() {
         let tmp = setup_project_with_config("config_auto_validate.json");
-        cli(&["atomize", "--no-probe"], tmp.path());
+        assert_success(&cli(&["atomize", "--no-probe"], tmp.path()), "atomize setup");
         assert_success(
             &cli(&["specify", "--no-probe"], tmp.path()),
             "specify (auto-validate)",
@@ -527,7 +527,7 @@ mod verify {
     #[test]
     fn sets_verified_field_from_proofs() {
         let tmp = setup_project();
-        cli(&["atomize", "--no-probe"], tmp.path());
+        assert_success(&cli(&["atomize", "--no-probe"], tmp.path()), "atomize setup");
         assert_success(&cli(&["verify", "--no-probe"], tmp.path()), "verify");
 
         let stubs = read_stubs(tmp.path());
@@ -549,7 +549,7 @@ mod verify {
         let before = collect_md_checksums(&dir);
         assert!(!before.is_empty());
 
-        cli(&["verify", "--no-probe"], tmp.path());
+        assert_success(&cli(&["verify", "--no-probe"], tmp.path()), "verify");
 
         assert_eq!(before, collect_md_checksums(&dir));
     }
@@ -593,7 +593,7 @@ mod verify {
     #[test]
     fn two_runs_produce_identical_output() {
         let tmp = setup_project();
-        cli(&["atomize", "--no-probe"], tmp.path());
+        assert_success(&cli(&["atomize", "--no-probe"], tmp.path()), "atomize setup");
 
         assert_success(&cli(&["verify", "--no-probe"], tmp.path()), "first run");
         let first: serde_json::Value = read_json(&tmp.path().join(".verilib/stubs.json"));
