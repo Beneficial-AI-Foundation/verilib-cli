@@ -86,11 +86,11 @@ pub async fn handle_atomize(
     println!("Loaded {} atoms", probe_atoms.len());
 
     // Step 3: Build probe index for fast lookups
-    let probe_index = build_line_index(&probe_atoms);
+    let probe_index = build_line_index(&probe_atoms, &project_root);
 
     // Step 4: Enrich stubs with code-name and all atom metadata
     println!("Enriching stubs with atom metadata...");
-    let enriched = enrich_stubs(&stubs, &probe_index, &probe_atoms)?;
+    let enriched = enrich_stubs(&stubs, &probe_index, &probe_atoms, &project_root)?;
 
     // If check_only, compare .md stubs against enriched and report mismatches
     if check_only {
@@ -117,11 +117,7 @@ pub async fn handle_atomize(
 }
 
 /// Atoms-only mode: just produce atoms.json without stubs enrichment.
-fn handle_atoms_only(
-    project_root: &Path,
-    no_probe: bool,
-    rust_analyzer: bool,
-) -> Result<()> {
+fn handle_atoms_only(project_root: &Path, no_probe: bool, rust_analyzer: bool) -> Result<()> {
     let verilib_path = project_root.join(".verilib");
     std::fs::create_dir_all(&verilib_path).context("Failed to create .verilib directory")?;
 
@@ -187,13 +183,9 @@ const SKIP_DIRS: &[&str] = &["target", ".git", "node_modules"];
 /// Check if a project uses Verus by scanning all Cargo.toml files under the
 /// project root. Skips `target/`, `.git/`, and `node_modules/` directories.
 fn is_verus_project(project_root: &Path) -> bool {
-    for entry in WalkDir::new(project_root)
-        .into_iter()
-        .filter_entry(|e| {
-            !e.file_type().is_dir()
-                || !SKIP_DIRS.contains(&e.file_name().to_str().unwrap_or(""))
-        })
-    {
+    for entry in WalkDir::new(project_root).into_iter().filter_entry(|e| {
+        !e.file_type().is_dir() || !SKIP_DIRS.contains(&e.file_name().to_str().unwrap_or(""))
+    }) {
         let entry = match entry {
             Ok(e) => e,
             Err(_) => continue,
@@ -340,13 +332,29 @@ fn generate_probe_atoms(
     Ok(atoms)
 }
 
+/// Canonicalize a code-path relative to the project root, resolving symlinks.
+/// Falls back to the original path if the file doesn't exist or canonicalization fails.
+fn canonicalize_code_path(project_root: &Path, code_path: &str) -> String {
+    project_root
+        .join(code_path)
+        .canonicalize()
+        .ok()
+        .and_then(|p| p.strip_prefix(project_root).ok().map(|r| r.to_path_buf()))
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| code_path.to_string())
+}
+
 /// Build an interval tree index for fast line-based lookups.
-fn build_line_index(atoms: &HashMap<String, Value>) -> HashMap<String, IntervalTree<u32, String>> {
+/// Canonicalizes code-paths to resolve symlinks, ensuring stubs and atoms match.
+fn build_line_index(
+    atoms: &HashMap<String, Value>,
+    project_root: &Path,
+) -> HashMap<String, IntervalTree<u32, String>> {
     let mut trees: HashMap<String, Vec<(std::ops::Range<u32>, String)>> = HashMap::new();
 
     for (probe_name, atom_data) in atoms {
         let code_path = match atom_data.get("code-path").and_then(|v| v.as_str()) {
-            Some(p) => p.to_string(),
+            Some(p) => canonicalize_code_path(project_root, p),
             None => continue,
         };
 
@@ -378,12 +386,15 @@ fn build_line_index(atoms: &HashMap<String, Value>) -> HashMap<String, IntervalT
 }
 
 /// Look up code-name from code-path and code-line using the probe index.
+/// Canonicalizes the code-path to resolve symlinks before lookup.
 fn lookup_code_name(
     code_path: &str,
     code_line: u32,
     index: &HashMap<String, IntervalTree<u32, String>>,
+    project_root: &Path,
 ) -> Option<String> {
-    let tree = index.get(code_path)?;
+    let canonical = canonicalize_code_path(project_root, code_path);
+    let tree = index.get(&canonical)?;
 
     let matching: Vec<_> = tree.query(code_line..code_line + 1).collect();
 
@@ -410,6 +421,7 @@ fn resolve_code_name_and_atom<'a>(
     file_path: &str,
     index: &HashMap<String, IntervalTree<u32, String>>,
     atoms: &'a HashMap<String, Value>,
+    project_root: &Path,
 ) -> Option<(String, &'a Value)> {
     // First try: use existing code-name if present and atom exists
     if let Some(name) = entry.get("code-name").and_then(|v| v.as_str()) {
@@ -433,7 +445,7 @@ fn resolve_code_name_and_atom<'a>(
         }
     };
 
-    let code_name = lookup_code_name(code_path, code_line, index)?;
+    let code_name = lookup_code_name(code_path, code_line, index, project_root)?;
     let atom = atoms.get(&code_name)?;
 
     Some((code_name, atom))
@@ -444,20 +456,22 @@ fn enrich_stubs(
     stubs: &HashMap<String, Value>,
     index: &HashMap<String, IntervalTree<u32, String>>,
     atoms: &HashMap<String, Value>,
+    project_root: &Path,
 ) -> Result<HashMap<String, Value>> {
     let mut result = HashMap::new();
     let mut enriched_count = 0;
     let mut skipped_count = 0;
 
     for (file_path, entry) in stubs {
-        let (code_name, atom) = match resolve_code_name_and_atom(entry, file_path, index, atoms) {
-            Some(r) => r,
-            None => {
-                skipped_count += 1;
-                result.insert(file_path.clone(), entry.clone());
-                continue;
-            }
-        };
+        let (code_name, atom) =
+            match resolve_code_name_and_atom(entry, file_path, index, atoms, project_root) {
+                Some(r) => r,
+                None => {
+                    skipped_count += 1;
+                    result.insert(file_path.clone(), entry.clone());
+                    continue;
+                }
+            };
 
         let enriched_entry = build_enriched_entry(&code_name, atom);
         result.insert(file_path.clone(), enriched_entry);
@@ -472,10 +486,7 @@ fn enrich_stubs(
 
 /// Build an enriched entry from atom data.
 fn build_enriched_entry(code_name: &str, atom: &Value) -> Value {
-    let code_path = atom
-        .get("code-path")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+    let code_path = atom.get("code-path").and_then(|v| v.as_str()).unwrap_or("");
 
     let code_text = atom.get("code-text");
 
@@ -579,7 +590,11 @@ fn check_stubs_match(
         println!("All {} stub files match enriched stubs.", stubs.len());
         Ok(())
     } else {
-        eprintln!("Found {} mismatches in {} stub files:", mismatches.len(), mismatched_files.len());
+        eprintln!(
+            "Found {} mismatches in {} stub files:",
+            mismatches.len(),
+            mismatched_files.len()
+        );
         for mismatch in &mismatches {
             eprintln!("  {}", mismatch);
         }
@@ -597,10 +612,7 @@ fn check_stubs_match(
 }
 
 /// Update structure .md files with code-name field from enriched data.
-fn update_structure_files(
-    enriched: &HashMap<String, Value>,
-    structure_root: &Path,
-) -> Result<()> {
+fn update_structure_files(enriched: &HashMap<String, Value>, structure_root: &Path) -> Result<()> {
     let mut updated_count = 0;
     let mut skipped_count = 0;
 
@@ -671,6 +683,118 @@ fn update_structure_files(
 mod tests {
     use super::*;
     use tempfile::TempDir;
+
+    #[cfg(unix)]
+    #[test]
+    fn test_canonicalize_code_path_resolves_symlinks() {
+        let dir = TempDir::new().unwrap();
+        let project_root = dir.path().canonicalize().unwrap();
+
+        let real_dir = project_root.join("deps").join("my-crate").join("my-crate");
+        std::fs::create_dir_all(real_dir.join("src")).unwrap();
+        std::fs::write(real_dir.join("src").join("lib.rs"), "fn main() {}").unwrap();
+
+        std::os::unix::fs::symlink(real_dir.to_str().unwrap(), project_root.join("my-crate"))
+            .unwrap();
+
+        let via_symlink = canonicalize_code_path(&project_root, "my-crate/src/lib.rs");
+        let via_real = canonicalize_code_path(&project_root, "deps/my-crate/my-crate/src/lib.rs");
+
+        assert_eq!(via_symlink, via_real);
+        assert_eq!(via_real, "deps/my-crate/my-crate/src/lib.rs");
+    }
+
+    #[test]
+    fn test_canonicalize_code_path_nonexistent_falls_back() {
+        let dir = TempDir::new().unwrap();
+        let project_root = dir.path().canonicalize().unwrap();
+
+        let result = canonicalize_code_path(&project_root, "nonexistent/src/lib.rs");
+        assert_eq!(result, "nonexistent/src/lib.rs");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_enrich_stubs_matches_through_symlinks() {
+        let dir = TempDir::new().unwrap();
+        let project_root = dir.path().canonicalize().unwrap();
+
+        let real_dir = project_root.join("deps").join("my-crate").join("my-crate");
+        std::fs::create_dir_all(real_dir.join("src")).unwrap();
+        std::fs::write(real_dir.join("src").join("lib.rs"), "fn main() {}").unwrap();
+
+        std::os::unix::fs::symlink(real_dir.to_str().unwrap(), project_root.join("my-crate"))
+            .unwrap();
+
+        let mut atoms = HashMap::new();
+        atoms.insert(
+            "probe:my-crate/0.1.0/func_a()".to_string(),
+            json!({
+                "code-path": "my-crate/src/lib.rs",
+                "code-text": { "lines-start": 10, "lines-end": 20 },
+                "code-module": "my_crate",
+                "dependencies": [],
+                "display-name": "func_a",
+            }),
+        );
+
+        let mut stubs = HashMap::new();
+        stubs.insert(
+            "deps/my-crate/my-crate/src/lib.rs/func_a.md".to_string(),
+            json!({
+                "code-path": "deps/my-crate/my-crate/src/lib.rs",
+                "code-line": 10,
+            }),
+        );
+
+        let index = build_line_index(&atoms, &project_root);
+        let enriched = enrich_stubs(&stubs, &index, &atoms, &project_root).unwrap();
+
+        let entry = &enriched["deps/my-crate/my-crate/src/lib.rs/func_a.md"];
+        assert_eq!(
+            entry.get("code-name").and_then(|v| v.as_str()).unwrap(),
+            "probe:my-crate/0.1.0/func_a()"
+        );
+    }
+
+    #[test]
+    fn test_enrich_stubs_direct_path_match() {
+        let dir = TempDir::new().unwrap();
+        let project_root = dir.path().canonicalize().unwrap();
+
+        std::fs::create_dir_all(project_root.join("src")).unwrap();
+        std::fs::write(project_root.join("src").join("lib.rs"), "").unwrap();
+
+        let mut atoms = HashMap::new();
+        atoms.insert(
+            "probe:test/0.1.0/func_a()".to_string(),
+            json!({
+                "code-path": "src/lib.rs",
+                "code-text": { "lines-start": 5, "lines-end": 15 },
+                "code-module": "test",
+                "dependencies": [],
+                "display-name": "func_a",
+            }),
+        );
+
+        let mut stubs = HashMap::new();
+        stubs.insert(
+            "src/lib.rs/func_a.md".to_string(),
+            json!({
+                "code-path": "src/lib.rs",
+                "code-line": 5,
+            }),
+        );
+
+        let index = build_line_index(&atoms, &project_root);
+        let enriched = enrich_stubs(&stubs, &index, &atoms, &project_root).unwrap();
+
+        let entry = &enriched["src/lib.rs/func_a.md"];
+        assert_eq!(
+            entry.get("code-name").and_then(|v| v.as_str()).unwrap(),
+            "probe:test/0.1.0/func_a()"
+        );
+    }
 
     #[test]
     fn test_is_verus_project_with_vstd_dep() {
