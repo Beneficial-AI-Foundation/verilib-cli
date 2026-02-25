@@ -3,8 +3,10 @@ use clap::Parser;
 
 mod cli;
 mod commands;
+mod config;
 mod constants;
 mod download;
+mod executor;
 mod storage;
 mod structure;
 

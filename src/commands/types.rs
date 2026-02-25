@@ -57,19 +57,6 @@ pub struct VerifierVersion {
     pub version: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Config {
-    pub repo: RepoConfig,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct RepoConfig {
-    pub id: String,
-    pub url: String,
-    #[serde(default)]
-    pub is_admin: bool,
-}
-
 #[derive(Debug, Deserialize)]
 pub struct DeployResponse {
     #[allow(dead_code)]

@@ -2,9 +2,10 @@
 //!
 //! Enrich structure files with metadata from SCIP atoms.
 
+use crate::config::ProjectConfig;
 use crate::structure::{
-    cleanup_intermediate_files, parse_frontmatter, require_probe_installed, run_command,
-    write_frontmatter, CommandConfig, ConfigPaths, ATOMIZE_INTERMEDIATE_FILES,
+    cleanup_intermediate_files, parse_frontmatter, run_command,
+    write_frontmatter, CommandConfig, ExternalTool, ATOMIZE_INTERMEDIATE_FILES,
 };
 use anyhow::{bail, Context, Result};
 use intervaltree::IntervalTree;
@@ -39,7 +40,8 @@ pub async fn handle_atomize(
         println!("Auto-enabling atoms-only mode for pure Rust project.\n");
         true
     } else {
-        if ConfigPaths::load(&project_root).is_err() {
+        ProjectConfig::init(&project_root)?;
+        if ProjectConfig::global().unwrap().structure_root_path().is_err() {
             bail!(
                 "Verus project detected but no .verilib/config.json found. \
                  Run 'verilib-cli create' first."
@@ -54,25 +56,30 @@ pub async fn handle_atomize(
         return handle_atoms_only(&project_root, no_probe, use_rust_analyzer);
     }
 
-    let config = ConfigPaths::load(&project_root)?;
+    // init already called when checking structure_root above
+    let config = ProjectConfig::global().unwrap();
+    let structure_root = config.structure_root_path()?;
+    let stubs_path = config.stubs_path();
+    let atoms_path = config.atoms_path();
+    let cmd_config = config.command_config();
 
     // Step 1: Generate stubs.json from .md files using probe-verus stubify
     let stubs = generate_stubs(
         &project_root,
-        &config.structure_root,
-        &config.structure_json_path,
-        &config.command_config,
+        &structure_root,
+        &stubs_path,
+        &cmd_config,
     )?;
     println!("Loaded {} stubs from structure files", stubs.len());
 
     // Step 2: Generate or load atoms.json
     let probe_atoms = if no_probe {
-        load_atoms_from_file(&config.atoms_path)?
+        load_atoms_from_file(&atoms_path)?
     } else {
         generate_probe_atoms(
             &project_root,
-            &config.atoms_path,
-            &config.command_config,
+            &atoms_path,
+            &cmd_config,
             use_rust_analyzer,
         )?
     };
@@ -94,15 +101,15 @@ pub async fn handle_atomize(
     // Step 5: Save enriched stubs.json
     println!(
         "Saving enriched stubs to {}...",
-        config.structure_json_path.display()
+        stubs_path.display()
     );
     let content = serde_json::to_string_pretty(&enriched)?;
-    std::fs::write(&config.structure_json_path, content)?;
+    std::fs::write(&stubs_path, content)?;
 
     // Optionally update .md files with code-name
     if update_stubs {
         println!("Updating structure files with code-names...");
-        update_structure_files(&enriched, &config.structure_root)?;
+        update_structure_files(&enriched, &structure_root)?;
     }
 
     println!("Done.");
@@ -216,8 +223,6 @@ fn generate_stubs(
     stubs_path: &Path,
     config: &CommandConfig,
 ) -> Result<HashMap<String, Value>> {
-    require_probe_installed(config)?;
-
     if let Some(parent) = stubs_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
@@ -228,7 +233,7 @@ fn generate_stubs(
     );
 
     let output = run_command(
-        "probe-verus",
+        &ExternalTool::Probe,
         &[
             "stubify",
             structure_root
@@ -288,8 +293,6 @@ fn generate_probe_atoms(
     config: &CommandConfig,
     use_rust_analyzer: bool,
 ) -> Result<HashMap<String, Value>> {
-    require_probe_installed(config)?;
-
     if let Some(parent) = atoms_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
@@ -316,7 +319,7 @@ fn generate_probe_atoms(
         args.push("--rust-analyzer");
     }
 
-    let output = run_command("probe-verus", &args, Some(project_root), config)?;
+    let output = run_command(&ExternalTool::Probe, &args, Some(project_root), config)?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);

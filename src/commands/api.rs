@@ -537,29 +537,12 @@ fn validate_meta_file(file: &PathBuf) -> Result<()> {
 }
 
 fn check_admin_status() -> Result<()> {
-    let config_path = PathBuf::from(".verilib/config.json");
+    let project_root = PathBuf::from(".");
+    let config = crate::config::ProjectConfig::load(&project_root)?;
 
-    if !config_path.exists() {
-        anyhow::bail!("No config.json found. Please run 'init' first.");
-    }
+    let is_admin = config.repo.map(|r| r.is_admin).unwrap_or(false);
 
-    let content = fs::read_to_string(&config_path)
-        .context("Failed to read config.json")?;
-
-    #[derive(Deserialize)]
-    struct TempMeta {
-        repo: TempRepo,
-    }
-    #[derive(Deserialize)]
-    struct TempRepo {
-        #[serde(default)]
-        is_admin: bool,
-    }
-
-    let meta: TempMeta = serde_json::from_str(&content)
-        .context("Failed to parse config.json")?;
-
-    if !meta.repo.is_admin {
+    if !is_admin {
         anyhow::bail!("Admin access required to modify verified status");
     }
 

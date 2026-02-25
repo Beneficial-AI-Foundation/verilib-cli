@@ -8,7 +8,6 @@ use std::process::Command;
 
 use crate::commands::deploy::collect_deploy_info_with_path;
 use crate::commands::status::get_stored_api_key;
-use crate::commands::types::Config;
 use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
 use crate::download::{handle_api_error};
 use crate::structure::{create_gitignore, ExecutionMode};
@@ -222,47 +221,20 @@ fn save_config(
     is_admin: bool,
     execution_mode: ExecutionMode,
 ) -> Result<()> {
-    let config_path = PathBuf::from(".verilib/config.json");
-    let verilib_path = PathBuf::from(".verilib");
+    let project_root = PathBuf::from(".");
+    let mut config = crate::config::ProjectConfig::load(&project_root)?;
 
-    // Build the repo config
-    let repo_config = crate::commands::types::RepoConfig {
+    config.repo = Some(crate::config::RepoConfig {
         id: repo_id.to_string(),
         url: base_url.to_string(),
         is_admin,
-    };
+    });
+    config.execution_mode = execution_mode;
 
-    // Check if config.json exists
-    let mut config_json_value = if config_path.exists() {
-        // Read existing config and preserve structure-root if present
-        let existing_content =
-            fs::read_to_string(&config_path).context("Failed to read existing config.json")?;
-
-        let mut existing_json: serde_json::Value =
-            serde_json::from_str(&existing_content).unwrap_or(serde_json::json!({}));
-
-        // Update the repo field while preserving other fields (like structure-root)
-        existing_json["repo"] = serde_json::to_value(&repo_config)
-            .context("Failed to serialize repo config")?;
-
-        existing_json
-    } else {
-        // Create new config with only repo field (no structure-root)
-        let config = Config { repo: repo_config };
-        
-        serde_json::to_value(&config).context("Failed to serialize config to Value")?
-    };
-
-    // Add execution-mode
-    config_json_value["execution-mode"] = serde_json::to_value(&execution_mode)
-        .context("Failed to serialize execution mode")?;
-
-    let config_json = serde_json::to_string_pretty(&config_json_value)
-        .context("Failed to serialize config to JSON")?;
-
-    fs::write(&config_path, &config_json).context("Failed to write config.json file")?;
+    config.save(&project_root)?;
 
     // Create .gitignore for generated files
+    let verilib_path = project_root.join(".verilib");
     create_gitignore(&verilib_path)?;
 
     Ok(())

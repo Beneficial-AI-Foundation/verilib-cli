@@ -1,8 +1,25 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use crate::constants::DEFAULT_DOCKER_IMAGE;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::process::{Command, Output};
+
+pub const PROBE_REPO_URL: &str = "https://github.com/Beneficial-AI-Foundation/probe-verus";
+
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ExternalTool {
+    /// The `probe-verus` CLI tool.
+    Probe,
+}
+
+impl ExternalTool {
+    pub fn binary_name(&self) -> &str {
+        match self {
+            ExternalTool::Probe => "probe-verus",
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -38,12 +55,45 @@ impl Default for CommandConfig {
     }
 }
 
+pub fn check_tool_available(tool: &ExternalTool, config: &CommandConfig) -> Result<()> {
+    match config.execution_mode {
+        ExecutionMode::Docker => {
+            if which::which("docker").is_err() {
+                eprintln!("Error: Docker is not installed or not in PATH.");
+                eprintln!("Docker is required for execution mode 'docker'.");
+                eprintln!("Please install Docker: https://docs.docker.com/get-docker/");
+                bail!("docker not installed");
+            }
+        }
+        ExecutionMode::Local => match tool {
+            ExternalTool::Probe => {
+                if which::which("probe-verus").is_err() {
+                    eprintln!("Error: probe-verus is not installed.");
+                    eprintln!(
+                        "Please visit {} for installation instructions.",
+                        PROBE_REPO_URL
+                    );
+                    eprintln!();
+                    eprintln!("Quick install:");
+                    eprintln!("  git clone {}", PROBE_REPO_URL);
+                    eprintln!("  cd probe-verus");
+                    eprintln!("  cargo install --path .");
+                    bail!("probe-verus not installed");
+                }
+            }
+        },
+    }
+    Ok(())
+}
+
 pub fn run_command(
-    program: &str,
+    tool: &ExternalTool,
     args: &[&str],
     cwd: Option<&Path>,
     config: &CommandConfig,
 ) -> Result<Output> {
+    check_tool_available(tool, config)?;
+    let program = tool.binary_name();
     match config.execution_mode {
         ExecutionMode::Local => run_local(program, args, cwd),
         ExecutionMode::Docker => run_docker(program, args, cwd, &config.docker_image),
@@ -78,7 +128,7 @@ fn ensure_image_pulled(image: &str) -> Result<()> {
     }
 
     println!("Docker image {} not found locally. Pulling...", image);
-    
+
     let status = Command::new("docker")
         .args(&["pull", "--platform", "linux/amd64", image])
         .status()
@@ -87,7 +137,7 @@ fn ensure_image_pulled(image: &str) -> Result<()> {
     if !status.success() {
         anyhow::bail!("Failed to pull docker image {}", image);
     }
-    
+
     Ok(())
 }
 
@@ -102,7 +152,7 @@ fn run_docker(
     let host_cwd = cwd
         .map(|p| p.to_path_buf())
         .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf()));
-    
+
     let host_cwd_str = host_cwd.to_string_lossy();
 
     #[cfg(unix)]
@@ -114,7 +164,6 @@ fn run_docker(
 
     #[cfg(not(unix))]
     let user_arg = "1000:1000".to_string();
-
 
     let mut docker_args = vec![
         "run",

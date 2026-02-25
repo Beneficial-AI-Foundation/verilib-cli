@@ -3,9 +3,9 @@
 //! Initialize structure files from source analysis using probe-verus.
 
 use crate::structure::{
-    require_probe_installed, run_command, write_frontmatter, CommandConfig, ConfigPaths,
-    StructureConfig,
+    run_command, write_frontmatter, CommandConfig, ExternalTool,
 };
+use crate::config::ProjectConfig;
 use anyhow::{bail, Context, Result};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
@@ -23,14 +23,15 @@ pub async fn handle_create(project_root: PathBuf, root: Option<PathBuf>) -> Resu
         .map(|r| r.to_string_lossy().to_string())
         .unwrap_or_else(|| ".verilib/structure".to_string());
 
-    let config = StructureConfig::new(&structure_root_relative);
+    let mut config = ProjectConfig::load(&project_root)?;
+    config.structure_root = Some(structure_root_relative.clone());
     let config_path = config.save(&project_root)?;
     println!("Wrote config to {}", config_path.display());
 
     let tracked_output_path = verilib_path.join("tracked_functions.csv");
 
-    let paths = ConfigPaths::load(&project_root)?;
-    run_probe_verus_tracked_csv(&project_root, &tracked_output_path, &paths.command_config)?;
+    let cmd_config = config.command_config();
+    run_probe_verus_tracked_csv(&project_root, &tracked_output_path, &cmd_config)?;
 
     let tracked = read_tracked_csv(&tracked_output_path)?;
     let tracked = disambiguate_names(tracked);
@@ -52,8 +53,6 @@ fn run_probe_verus_tracked_csv(
     output_path: &Path,
     config: &CommandConfig,
 ) -> Result<()> {
-    require_probe_installed(config)?;
-
     if let Some(parent) = output_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
@@ -69,7 +68,7 @@ fn run_probe_verus_tracked_csv(
         .context("Output path contains non-UTF-8 characters")?;
 
     let output = run_command(
-        "probe-verus",
+        &ExternalTool::Probe,
         &["tracked-csv", ".", "--output", output_str],
         Some(project_root),
         config,

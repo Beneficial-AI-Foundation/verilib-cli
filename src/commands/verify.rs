@@ -2,9 +2,10 @@
 //!
 //! Run verification and update stubs.json with verification status.
 
+use crate::config::ProjectConfig;
 use crate::structure::{
-    cleanup_intermediate_files, get_display_name, require_probe_installed, run_command,
-    CommandConfig, ConfigPaths, VERIFY_INTERMEDIATE_FILES,
+    cleanup_intermediate_files, get_display_name, run_command,
+    CommandConfig, ExternalTool, VERIFY_INTERMEDIATE_FILES,
 };
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
@@ -21,17 +22,20 @@ pub async fn handle_verify(
     let project_root = project_root
         .canonicalize()
         .context("Failed to resolve project root")?;
-    let config = ConfigPaths::load(&project_root)?;
+    ProjectConfig::init(&project_root)?;
+    let config = ProjectConfig::global().unwrap();
+    let stubs_path = config.stubs_path();
+    let atoms_path = config.atoms_path();
+    let cmd_config = config.command_config();
 
     // Load existing stubs.json
-    let stubs_path = &config.structure_json_path;
     if !stubs_path.exists() {
         bail!(
             "{} not found. Run 'verilib-cli atomize' first.",
             stubs_path.display()
         );
     }
-    let stubs_content = std::fs::read_to_string(stubs_path)?;
+    let stubs_content = std::fs::read_to_string(&stubs_path)?;
     let mut stubs: HashMap<String, Value> = serde_json::from_str(&stubs_content)?;
 
     // If check_only, just check for failures in existing stubs
@@ -41,16 +45,16 @@ pub async fn handle_verify(
     }
 
     // Run probe-verus verify or load from existing file
-    let proofs_path = config.verilib_path.join("proofs.json");
+    let proofs_path = config.verilib_path().join("proofs.json");
     let proofs_data = if no_probe {
         load_proofs_from_file(&proofs_path)?
     } else {
         run_probe_verify(
             &project_root,
             &proofs_path,
-            &config.atoms_path,
+            &atoms_path,
             verify_only_module.as_deref(),
-            &config.command_config,
+            &cmd_config,
         )?
     };
 
@@ -60,7 +64,7 @@ pub async fn handle_verify(
 
     // Save updated stubs.json
     let stubs_content = serde_json::to_string_pretty(&stubs)?;
-    std::fs::write(stubs_path, stubs_content)?;
+    std::fs::write(&stubs_path, stubs_content)?;
     println!("\nUpdated {}", stubs_path.display());
 
     // Print summary
@@ -226,8 +230,6 @@ fn run_probe_verify(
     verify_only_module: Option<&str>,
     config: &CommandConfig,
 ) -> Result<HashMap<String, Value>> {
-    require_probe_installed(config)?;
-
     if let Some(parent) = proofs_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
@@ -264,7 +266,7 @@ fn run_probe_verify(
         );
     }
 
-    let output = run_command("probe-verus", &args, Some(project_root), config)?;
+    let output = run_command(&ExternalTool::Probe, &args, Some(project_root), config)?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
