@@ -26,7 +26,7 @@ fn main() {
         }
     };
 
-    let src = format!("{}/{}", fixtures, fixture_file);
+    let src = std::path::PathBuf::from(&fixtures).join(fixture_file);
     if let Some(dest) = output_path {
         if let Some(parent) = std::path::Path::new(dest.as_str()).parent() {
             let _ = fs::create_dir_all(parent);
@@ -34,7 +34,9 @@ fn main() {
         fs::copy(&src, dest).unwrap_or_else(|e| {
             eprintln!(
                 "mock-probe-verus: failed to copy {} -> {}: {}",
-                src, dest, e
+                src.display(),
+                dest,
+                e
             );
             process::exit(1);
         });
