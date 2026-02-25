@@ -15,6 +15,7 @@ use std::path::{Path, PathBuf};
 /// Run the verify subcommand.
 pub async fn handle_verify(
     project_root: PathBuf,
+    package: Option<String>,
     verify_only_module: Option<String>,
     no_probe: bool,
     check_only: bool,
@@ -53,6 +54,7 @@ pub async fn handle_verify(
             &project_root,
             &proofs_path,
             &atoms_path,
+            package.as_deref(),
             verify_only_module.as_deref(),
             &cmd_config,
         )?
@@ -106,7 +108,10 @@ fn check_for_failures(stubs: &HashMap<String, Value>) -> Result<()> {
 
     failed_stubs.sort_by(|a, b| a.0.cmp(&b.0));
 
-    eprintln!("Found {} stubs with status \"failure\":", failed_stubs.len());
+    eprintln!(
+        "Found {} stubs with status \"failure\":",
+        failed_stubs.len()
+    );
     for (stub_path, display_name, code_name) in &failed_stubs {
         eprintln!("  {}: {} ({})", stub_path, display_name, code_name);
     }
@@ -227,6 +232,7 @@ fn run_probe_verify(
     project_root: &Path,
     proofs_path: &Path,
     atoms_path: &Path,
+    package: Option<&str>,
     verify_only_module: Option<&str>,
     config: &CommandConfig,
 ) -> Result<HashMap<String, Value>> {
@@ -251,6 +257,11 @@ fn run_probe_verify(
             .unwrap(),
     ];
 
+    if let Some(pkg) = package {
+        args.push("-p");
+        args.push(pkg);
+    }
+
     if let Some(module) = verify_only_module {
         args.push("--verify-only-module");
         args.push(module);
@@ -268,19 +279,28 @@ fn run_probe_verify(
 
     let output = run_command(&ExternalTool::Probe, &args, Some(project_root), config)?;
 
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        eprintln!("Error: probe-verus verify failed.");
-        if !stderr.is_empty() {
-            eprintln!("{}", stderr);
-        }
-        cleanup_intermediate_files(project_root, VERIFY_INTERMEDIATE_FILES);
-        bail!("probe-verus verify failed");
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    if !stdout.is_empty() {
+        println!("{}", stdout);
+    }
+    if !stderr.is_empty() {
+        eprintln!("{}", stderr);
+    }
+
+    cleanup_intermediate_files(project_root, VERIFY_INTERMEDIATE_FILES);
+
+    // probe-verus exits non-zero when verification has failures, but still
+    // produces a valid proofs.json. Only bail if it didn't write the file.
+    if !proofs_path.exists() {
+        bail!(
+            "probe-verus verify failed (exit code: {:?}) and no results were produced",
+            output.status.code()
+        );
     }
 
     println!("Verification results saved to {}", proofs_path.display());
-
-    cleanup_intermediate_files(project_root, VERIFY_INTERMEDIATE_FILES);
 
     let content = std::fs::read_to_string(proofs_path)?;
     let proofs: HashMap<String, Value> = serde_json::from_str(&content)?;
