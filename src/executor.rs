@@ -1,5 +1,6 @@
 use anyhow::{bail, Context, Result};
-use crate::constants::DEFAULT_DOCKER_IMAGE;
+use crate::constants::{DEFAULT_DOCKER_IMAGE, PROBE_VERUS_MIN_VERSION, PROBE_VERUS_TESTED_MAX_VERSION};
+use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::process::{Command, Output};
@@ -80,9 +81,59 @@ pub fn check_tool_available(tool: &ExternalTool, config: &CommandConfig) -> Resu
                     eprintln!("  cargo install --path .");
                     bail!("probe-verus not installed");
                 }
+                check_probe_verus_version()?;
             }
         },
     }
+    Ok(())
+}
+
+fn check_probe_verus_version() -> Result<()> {
+    let output = Command::new("probe-verus")
+        .arg("--version")
+        .output()
+        .context("Failed to run 'probe-verus --version'")?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let raw = format!("{}{}", stdout, stderr);
+
+    let version = raw
+        .split_whitespace()
+        .find_map(|token| Version::parse(token).ok())
+        .ok_or_else(|| {
+            anyhow::anyhow!(
+                "Could not parse a semver version from 'probe-verus --version' output: {}",
+                raw.trim()
+            )
+        })?;
+
+    let min_req = VersionReq::parse(PROBE_VERUS_MIN_VERSION)
+        .expect("PROBE_VERUS_MIN_VERSION is a valid semver requirement");
+    let tested_max_req = VersionReq::parse(PROBE_VERUS_TESTED_MAX_VERSION)
+        .expect("PROBE_VERUS_TESTED_MAX_VERSION is a valid semver requirement");
+
+    if !min_req.matches(&version) {
+        eprintln!("Error: probe-verus {} is too old for this version of verilib-cli.", version);
+        eprintln!("  Minimum required: {}", PROBE_VERUS_MIN_VERSION);
+        eprintln!("  Installed:        {}", version);
+        eprintln!();
+        eprintln!("Please update probe-verus:");
+        eprintln!("  git clone {}", PROBE_REPO_URL);
+        eprintln!("  cd probe-verus");
+        eprintln!("  cargo install --path .");
+        bail!("probe-verus {} is below the minimum required version ({})", version, PROBE_VERUS_MIN_VERSION);
+    }
+
+    if !tested_max_req.matches(&version) {
+        eprintln!(
+            "Warning: probe-verus {} has not been tested with this version of verilib-cli (tested up to {}).",
+            version, PROBE_VERUS_TESTED_MAX_VERSION
+        );
+        eprintln!("  It may work, but you could encounter unexpected behaviour.");
+        eprintln!("  Consider filing an issue at {} if you hit problems.", PROBE_REPO_URL);
+    }
+
     Ok(())
 }
 
