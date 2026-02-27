@@ -40,7 +40,6 @@ pub enum Commands {
     /// Reclone repository after checking for uncommitted changes
     Reclone,
     // ===== Structure Commands (merged from verilib-structure) =====
-
     /// Initialize structure files from source analysis
     Create {
         /// Project root directory (default: current working directory)
@@ -100,6 +99,10 @@ pub enum Commands {
         /// Project root directory (default: current working directory)
         #[arg(default_value = ".")]
         project_root: PathBuf,
+
+        /// Package to verify (for workspace projects, passed to probe-verus -p)
+        #[arg(short, long)]
+        package: Option<String>,
 
         /// Only verify functions in this module
         #[arg(long)]

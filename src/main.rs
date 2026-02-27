@@ -12,9 +12,8 @@ mod structure;
 
 use cli::{Cli, Commands};
 use commands::{
-    handle_atomize, handle_auth, handle_create, handle_init,
-    handle_reclone, handle_specify, handle_status,
-    handle_verify,
+    handle_atomize, handle_auth, handle_create, handle_init, handle_reclone, handle_specify,
+    handle_status, handle_verify,
 };
 
 #[tokio::main]
@@ -35,10 +34,7 @@ async fn main() -> Result<()> {
             handle_reclone(cli.debug).await?;
         }
         // Structure commands (merged from verilib-structure)
-        Commands::Create {
-            project_root,
-            root,
-        } => {
+        Commands::Create { project_root, root } => {
             handle_create(project_root, root).await?;
         }
         Commands::Atomize {
@@ -49,7 +45,15 @@ async fn main() -> Result<()> {
             atoms_only,
             rust_analyzer,
         } => {
-            handle_atomize(project_root, update_stubs, no_probe, check_only, atoms_only, rust_analyzer).await?;
+            handle_atomize(
+                project_root,
+                update_stubs,
+                no_probe,
+                check_only,
+                atoms_only,
+                rust_analyzer,
+            )
+            .await?;
         }
         Commands::Specify {
             project_root,
@@ -60,11 +64,12 @@ async fn main() -> Result<()> {
         }
         Commands::Verify {
             project_root,
+            package,
             verify_only_module,
             no_probe,
             check_only,
         } => {
-            handle_verify(project_root, verify_only_module, no_probe, check_only).await?;
+            handle_verify(project_root, package, verify_only_module, no_probe, check_only).await?;
         }
     }
 
