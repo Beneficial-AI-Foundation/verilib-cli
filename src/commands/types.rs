@@ -1,3 +1,5 @@
+#![allow(dead_code)] // WIP: deploy types not yet wired into CLI — see https://github.com/Beneficial-AI-Foundation/verilib-cli/issues/36
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
@@ -8,16 +10,56 @@ pub struct Language {
 }
 
 pub const LANGUAGES: &[Language] = &[
-    Language { id: 1, name: "Dafny", extensions: &[".dfy"] },
-    Language { id: 2, name: "Lean", extensions: &[".lean"] },
-    Language { id: 3, name: "Rocq", extensions: &[".v"] },
-    Language { id: 4, name: "Isabelle", extensions: &[".thy"] },
-    Language { id: 5, name: "Metamath", extensions: &[".mm"] },
-    Language { id: 6, name: "Rust", extensions: &[".rs"] },
-    Language { id: 7, name: "RefinedC", extensions: &[".c"] },
-    Language { id: 8, name: "Python", extensions: &[".py"] },
-    Language { id: 9, name: "Kani", extensions: &[".rs"] },
-    Language { id: 10, name: "Verus", extensions: &[".rs"] },
+    Language {
+        id: 1,
+        name: "Dafny",
+        extensions: &[".dfy"],
+    },
+    Language {
+        id: 2,
+        name: "Lean",
+        extensions: &[".lean"],
+    },
+    Language {
+        id: 3,
+        name: "Rocq",
+        extensions: &[".v"],
+    },
+    Language {
+        id: 4,
+        name: "Isabelle",
+        extensions: &[".thy"],
+    },
+    Language {
+        id: 5,
+        name: "Metamath",
+        extensions: &[".mm"],
+    },
+    Language {
+        id: 6,
+        name: "Rust",
+        extensions: &[".rs"],
+    },
+    Language {
+        id: 7,
+        name: "RefinedC",
+        extensions: &[".c"],
+    },
+    Language {
+        id: 8,
+        name: "Python",
+        extensions: &[".py"],
+    },
+    Language {
+        id: 9,
+        name: "Kani",
+        extensions: &[".rs"],
+    },
+    Language {
+        id: 10,
+        name: "Verus",
+        extensions: &[".rs"],
+    },
 ];
 
 pub const TYPES: &[(u32, &str)] = &[

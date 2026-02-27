@@ -25,16 +25,16 @@ pub struct ProjectConfig {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub repo: Option<RepoConfig>,
-    
+
     #[serde(rename = "structure-root", skip_serializing_if = "Option::is_none")]
     pub structure_root: Option<String>,
-    
+
     #[serde(default, rename = "execution-mode")]
     pub execution_mode: ExecutionMode,
-    
+
     #[serde(default = "default_docker_image", rename = "docker-image")]
     pub docker_image: String,
-    
+
     #[serde(default, rename = "auto-validate-specs")]
     pub auto_validate_specs: bool,
 }
@@ -111,9 +111,7 @@ impl ProjectConfig {
 
     pub fn structure_root_path(&self) -> Result<PathBuf> {
         let root = self.structure_root.as_deref().ok_or_else(|| {
-            anyhow::anyhow!(
-                "No 'structure-root' in config.json. Run 'verilib-cli create' first."
-            )
+            anyhow::anyhow!("No 'structure-root' in config.json. Run 'verilib-cli create' first.")
         })?;
         Ok(self.project_root.join(root))
     }
@@ -125,27 +123,23 @@ impl ProjectConfig {
             return Ok(Self::default());
         }
 
-        let content = std::fs::read_to_string(&config_path)
-            .context("Failed to read config.json")?;
+        let content =
+            std::fs::read_to_string(&config_path).context("Failed to read config.json")?;
 
-        let config: Self = serde_json::from_str(&content)
-            .context("Failed to parse config.json")?;
+        let config: Self = serde_json::from_str(&content).context("Failed to parse config.json")?;
 
         Ok(config)
     }
 
     pub fn save(&self, project_root: &Path) -> Result<PathBuf> {
         let verilib_path = project_root.join(".verilib");
-        std::fs::create_dir_all(&verilib_path)
-            .context("Failed to create .verilib directory")?;
+        std::fs::create_dir_all(&verilib_path).context("Failed to create .verilib directory")?;
 
         let config_path = verilib_path.join("config.json");
 
-        let content = serde_json::to_string_pretty(self)
-            .context("Failed to serialize config")?;
-            
-        std::fs::write(&config_path, content)
-            .context("Failed to write config.json")?;
+        let content = serde_json::to_string_pretty(self).context("Failed to serialize config")?;
+
+        std::fs::write(&config_path, content).context("Failed to write config.json")?;
 
         Ok(config_path)
     }

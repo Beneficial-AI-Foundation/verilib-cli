@@ -1,12 +1,12 @@
-mod types;
-mod file;
 mod factory;
+mod file;
+mod types;
 
 #[cfg(not(target_os = "linux"))]
 mod keyring;
 
-pub use types::{CredentialStorage, StorageType};
 pub use factory::CredentialStorageFactory;
+pub use types::{CredentialStorage, StorageType};
 
 use anyhow::Result;
 
@@ -16,22 +16,22 @@ pub fn get_credential_storage() -> Result<Box<dyn CredentialStorage>> {
 
 pub fn get_platform_info() -> String {
     let storage_type = StorageType::from_env();
-    
+
     let base_info = if storage_type.should_use_file_storage() {
         "Secure file storage (~/.verilib_credentials)"
     } else {
         #[cfg(target_os = "macos")]
         let platform = "macOS Keychain (apple-native)";
-        
+
         #[cfg(target_os = "windows")]
         let platform = "Windows Credential Manager (windows-native)";
-        
+
         #[cfg(not(any(target_os = "macos", target_os = "windows")))]
         let platform = "Generic keyring backend";
-        
+
         platform
     };
-    
+
     match storage_type {
         StorageType::Auto => base_info.to_string(),
         StorageType::File => format!("{} (forced via VERILIB_STORAGE=file)", base_info),
@@ -41,11 +41,11 @@ pub fn get_platform_info() -> String {
 
 pub fn print_platform_help() {
     let storage_type = StorageType::from_env();
-    
+
     eprintln!("Storage configuration:");
     eprintln!("   • Current: {}", get_platform_info());
     eprintln!();
-    
+
     if storage_type.should_use_file_storage() {
         eprintln!("File storage tips:");
         eprintln!("   • Credentials are stored in a secure file: ~/.verilib_credentials");
@@ -58,7 +58,7 @@ pub fn print_platform_help() {
             eprintln!("   • Make sure you allow access to the keychain when prompted");
             eprintln!("   • You may need to unlock your keychain");
         }
-        
+
         #[cfg(target_os = "windows")]
         {
             eprintln!("Credential Manager tips:");
@@ -66,7 +66,7 @@ pub fn print_platform_help() {
             eprintln!("   • You may need administrator privileges");
         }
     }
-    
+
     eprintln!();
     eprintln!("Environment variable options:");
     eprintln!("   • VERILIB_STORAGE=auto    (default, platform-specific)");

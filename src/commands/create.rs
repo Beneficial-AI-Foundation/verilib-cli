@@ -2,10 +2,8 @@
 //!
 //! Initialize structure files from source analysis using probe-verus.
 
-use crate::structure::{
-    run_command, write_frontmatter, CommandConfig, ExternalTool,
-};
 use crate::config::ProjectConfig;
+use crate::structure::{run_command, write_frontmatter, CommandConfig, ExternalTool};
 use anyhow::{bail, Context, Result};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
@@ -100,8 +98,12 @@ struct TrackedFunction {
 /// Read tracked functions CSV and return a HashMap.
 fn read_tracked_csv(csv_path: &Path) -> Result<HashMap<String, TrackedFunction>> {
     let mut results = HashMap::new();
-    let mut reader = csv::Reader::from_path(csv_path)
-        .with_context(|| format!("Failed to read tracked functions from {}", csv_path.display()))?;
+    let mut reader = csv::Reader::from_path(csv_path).with_context(|| {
+        format!(
+            "Failed to read tracked functions from {}",
+            csv_path.display()
+        )
+    })?;
 
     for result in reader.records() {
         let record = result?;
@@ -285,7 +287,6 @@ mod tests {
             Some(("src/module.rs".to_string(), 0))
         );
     }
-
 
     #[test]
     fn test_parse_empty_link() {

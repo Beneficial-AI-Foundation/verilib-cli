@@ -4,8 +4,8 @@
 
 use crate::config::ProjectConfig;
 use crate::structure::{
-    cleanup_intermediate_files, get_display_name, run_command,
-    CommandConfig, ExternalTool, VERIFY_INTERMEDIATE_FILES,
+    cleanup_intermediate_files, get_display_name, run_command, CommandConfig, ExternalTool,
+    VERIFY_INTERMEDIATE_FILES,
 };
 use anyhow::{bail, Context, Result};
 use serde_json::Value;

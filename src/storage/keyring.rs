@@ -1,5 +1,5 @@
-use anyhow::{Context, Result};
 use crate::storage::types::CredentialStorage;
+use anyhow::{Context, Result};
 
 const SERVICE_NAME: &str = "verilib";
 
@@ -12,8 +12,8 @@ pub struct KeyringStorage {
 impl KeyringStorage {
     pub fn new() -> Result<Self> {
         let user = whoami::username();
-        let entry = keyring::Entry::new(SERVICE_NAME, &user)
-            .context("Failed to create keyring entry")?;
+        let entry =
+            keyring::Entry::new(SERVICE_NAME, &user).context("Failed to create keyring entry")?;
         Ok(Self { entry })
     }
 }

@@ -32,7 +32,7 @@ impl StorageType {
 pub trait CredentialStorage {
     fn set_password(&self, password: &str) -> Result<()>;
     fn get_password(&self) -> Result<String>;
-    
+
     #[allow(dead_code)]
     fn delete_password(&self) -> Result<()>;
 }

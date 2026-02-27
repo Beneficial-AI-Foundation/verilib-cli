@@ -24,9 +24,7 @@ pub fn encode_name(name: &str) -> String {
 
 /// Decode a filename back to an identifier.
 pub fn decode_name(encoded: &str) -> String {
-    percent_decode_str(encoded)
-        .decode_utf8_lossy()
-        .to_string()
+    percent_decode_str(encoded).decode_utf8_lossy().to_string()
 }
 
 /// Get the set of identifiers that already have certs.
@@ -40,7 +38,7 @@ pub fn get_existing_certs(certs_dir: &Path) -> Result<HashSet<String>> {
     for entry in std::fs::read_dir(certs_dir)? {
         let entry = entry?;
         let path = entry.path();
-        if path.extension().map_or(false, |ext| ext == "json") {
+        if path.extension().is_some_and(|ext| ext == "json") {
             if let Some(stem) = path.file_stem() {
                 let encoded_name = stem.to_string_lossy();
                 let name = decode_name(&encoded_name);

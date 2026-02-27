@@ -4,8 +4,8 @@
 
 use crate::config::ProjectConfig;
 use crate::structure::{
-    create_cert, display_menu, get_existing_certs, run_command,
-    CommandConfig, ExternalTool, ATOMIZE_INTERMEDIATE_FILES, cleanup_intermediate_files,
+    cleanup_intermediate_files, create_cert, display_menu, get_existing_certs, run_command,
+    CommandConfig, ExternalTool, ATOMIZE_INTERMEDIATE_FILES,
 };
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
@@ -43,12 +43,7 @@ pub async fn handle_specify(project_root: PathBuf, no_probe: bool, check_only: b
     let specs_data = if no_probe {
         load_specs_from_file(&specs_path)?
     } else {
-        run_probe_specify(
-            &project_root,
-            &specs_path,
-            &atoms_path,
-            &cmd_config,
-        )?
+        run_probe_specify(&project_root, &specs_path, &atoms_path, &cmd_config)?
     };
 
     // Enrich stubs with spec-text (only for functions where specified=true)
@@ -65,11 +60,7 @@ pub async fn handle_specify(project_root: PathBuf, no_probe: bool, check_only: b
     }
 
     // Display menu and create certs for selected functions
-    let newly_certified = collect_certifications(
-        &uncertified,
-        &certs_dir,
-        auto_validate
-    )?;
+    let newly_certified = collect_certifications(&uncertified, &certs_dir, auto_validate)?;
 
     // Update specified status based on all certified functions
     let all_certified: HashSet<String> = existing_certs.union(&newly_certified).cloned().collect();
@@ -133,10 +124,7 @@ fn find_uncertified_functions(
     let uncertified: HashMap<String, Value> = stubs_with_specs
         .into_iter()
         .filter(|(_, stub)| {
-            let code_name = stub
-                .get("code-name")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let code_name = stub.get("code-name").and_then(|v| v.as_str()).unwrap_or("");
             !existing_certs.contains(code_name)
         })
         .collect();
@@ -221,10 +209,7 @@ fn collect_certifications(
 
     for idx in &selected_indices {
         let (_stub_path, stub) = &uncertified_list[*idx];
-        let code_name = stub
-            .get("code-name")
-            .and_then(|v| v.as_str())
-            .unwrap_or("");
+        let code_name = stub.get("code-name").and_then(|v| v.as_str()).unwrap_or("");
         newly_certified.insert(code_name.to_string());
         let cert_path = create_cert(certs_dir, code_name)?;
         println!(
@@ -367,10 +352,7 @@ fn incorporate_spec_text(
     let mut count = 0;
     for stub in stubs_data.values_mut() {
         if let Some(obj) = stub.as_object_mut() {
-            let code_name = obj
-                .get("code-name")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let code_name = obj.get("code-name").and_then(|v| v.as_str()).unwrap_or("");
 
             if let Some(spec_info) = specs_data.get(code_name) {
                 // Only add spec-text if specified is true
