@@ -185,6 +185,7 @@ The actions need to install:
 - scip CLI
 - probe-verus
 - verilib-cli
+- System package `libdbus-1-dev` (required for verilib-cli's keyring support)
 
 ### Authentication
 
