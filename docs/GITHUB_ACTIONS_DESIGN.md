@@ -69,19 +69,23 @@ We analyzed each command for standalone CI value:
 
 **Conclusion**: The pipeline commands (create → atomize → specify → verify) are tightly coupled. There's no strong use case for running just one in CI. However, `deploy` must be separate because it runs at a different trigger point (merge vs PR).
 
-### Chosen Architecture: Two Actions + Reusable Workflow
+### Chosen Architecture: Three Actions + Two Reusable Workflows
 
 ```
 verilib-cli/
 ├── action/
-│   ├── action.yml           # Main action (mode: check | generate)
+│   ├── action.yml           # Verus action (mode: check | generate)
 │   ├── README.md
-│   └── deploy/
-│       ├── action.yml       # Deploy action (uses artifacts)
+│   ├── deploy/
+│   │   ├── action.yml       # Deploy action (reclone)
+│   │   └── README.md
+│   └── rust/
+│       ├── action.yml       # Pure Rust action (atomize only)
 │       └── README.md
 └── .github/
     └── workflows/
-        └── verilib-verify.yml  # Reusable workflow
+        ├── verilib-verify.yml   # Reusable workflow (Verus)
+        └── verilib-atomize.yml  # Reusable workflow (pure Rust)
 ```
 
 #### Main Action (`action/action.yml`)
@@ -192,9 +196,11 @@ The deploy action requires `VERILIB_API_KEY` secret. This should be:
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Main action (`action/action.yml`) | Implemented | Supports `check` and `generate` modes |
-| Reusable workflow | Implemented | Auto-selects mode based on event type; deploy job enabled |
-| Deploy action (`action/deploy/action.yml`) | Implemented (stopgap) | Uses `verilib-cli reclone`; will switch to `deploy` once CLI is ready |
+| Verus action (`action/action.yml`) | Implemented | Supports `check` and `generate` modes |
+| Verus workflow (`verilib-verify.yml`) | Implemented | Auto-selects mode based on event type; deploy job enabled |
+| Rust action (`action/rust/action.yml`) | Implemented | Runs `atomize` with rust-analyzer for pure Rust projects |
+| Rust workflow (`verilib-atomize.yml`) | Implemented | Atomize + optional deploy |
+| Deploy action (`action/deploy/action.yml`) | Implemented (stopgap) | Uses `verilib-cli reclone`; shared by both workflows |
 | CLI `deploy` command | Not wired up | Handler exists in `deploy.rs` but not in CLI ([#36](https://github.com/Beneficial-AI-Foundation/verilib-cli/issues/36)) |
 | CLI `reclone` command | Implemented | Used by deploy action as stopgap |
 
@@ -210,15 +216,9 @@ The deploy action requires `VERILIB_API_KEY` secret. This should be:
    - Add artifact download step in the workflow's deploy job
    - Pass `.verilib/` artifacts from the verify job to the deploy action
 
-3. **Add GitHub Actions workflow for pure Rust projects**
-   - verilib-cli supports pure Rust atomization (`atomize --rust-analyzer`), but the current
-     workflow is Verus-specific (installs Verus, verus-analyzer, runs specify/verify)
-   - A separate action + reusable workflow for pure Rust projects would run only `atomize`
-     with a simpler tool stack (no Verus, no verus-analyzer, stable Rust)
-
-4. **Test end-to-end**
-   - Test on curve25519-dalek project (Verus)
-   - Test on a pure Rust project (once the Rust workflow exists)
+3. **Test end-to-end**
+   - Test Verus workflow on curve25519-dalek project
+   - Test Rust workflow on a pure Rust project
    - Verify backend receives correct data via reclone (and later, deploy)
 
 ## Future Considerations

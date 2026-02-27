@@ -1,0 +1,131 @@
+# verilib-cli Rust Atomize Action
+# Runs verilib-cli atomize on a pure Rust (non-Verus) project
+#
+# Usage:
+#   - uses: beneficial-ai-foundation/verilib-cli/action/rust@v1
+#     with:
+#       project-path: .
+
+name: 'verilib Atomize (Rust)'
+description: 'Run verilib-cli atomize on a pure Rust project using rust-analyzer'
+author: 'Beneficial AI Foundation'
+
+branding:
+  icon: 'box'
+  color: 'orange'
+
+inputs:
+  project-path:
+    description: 'Path to the Rust project (directory containing Cargo.toml)'
+    required: true
+    default: '.'
+  token:
+    description: 'GitHub token for API calls (avoids rate limiting)'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  atoms-path:
+    description: 'Path to generated .verilib/atoms.json'
+    value: ${{ steps.results.outputs.atoms_path }}
+
+runs:
+  using: 'composite'
+  steps:
+    # Step 1: Install Rust stable + rust-analyzer
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rust-analyzer
+
+    # Step 2: Cache cargo registry
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          ~/.cargo/bin
+        key: ${{ runner.os }}-cargo-verilib-rust-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-verilib-rust-
+          ${{ runner.os }}-cargo-
+
+    # Step 3: Install scip CLI
+    - name: Install scip CLI
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        if command -v scip &> /dev/null; then
+          echo "scip already installed (from cache)"
+          scip --version
+        else
+          echo "Installing scip..."
+          SCIP_URL=$(curl -sL -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/sourcegraph/scip/releases/latest | \
+            jq -r '.assets[] | select(.name == "scip-linux-amd64.tar.gz") | .browser_download_url')
+          if [ -z "$SCIP_URL" ] || [ "$SCIP_URL" = "null" ]; then
+            echo "::error::Failed to determine SCIP download URL"
+            exit 1
+          fi
+          wget -q "$SCIP_URL" -O scip-linux.tar.gz
+          tar -xzf scip-linux.tar.gz
+          chmod +x scip
+          sudo mv scip /usr/local/bin/
+          scip --version
+        fi
+
+    # Step 4: Install probe-verus
+    - name: Install probe-verus
+      shell: bash
+      run: |
+        if command -v probe-verus &> /dev/null; then
+          echo "probe-verus already installed (from cache)"
+          probe-verus --version
+        else
+          echo "Installing probe-verus..."
+          cargo install --git https://github.com/Beneficial-AI-Foundation/probe-verus
+          probe-verus --version || echo "probe-verus installed"
+        fi
+
+    # Step 5: Install system dependencies (libdbus for keyring crate)
+    - name: Install system dependencies
+      shell: bash
+      run: |
+        echo "Installing system dependencies for verilib-cli (libdbus for keyring)..."
+        sudo apt-get update
+        sudo apt-get install -y libdbus-1-dev pkg-config
+
+    # Step 6: Install verilib-cli
+    - name: Install verilib-cli
+      shell: bash
+      run: |
+        if command -v verilib-cli &> /dev/null; then
+          echo "verilib-cli already installed (from cache)"
+          verilib-cli --version
+        else
+          echo "Installing verilib-cli..."
+          cargo install --git https://github.com/Beneficial-AI-Foundation/verilib-cli
+          verilib-cli --version || echo "verilib-cli installed"
+        fi
+
+    # Step 7: Run atomize
+    - name: Run verilib-cli atomize
+      id: results
+      shell: bash
+      working-directory: ${{ inputs.project-path }}
+      run: |
+        echo "=== Running verilib-cli atomize (pure Rust mode) ==="
+        verilib-cli atomize
+        echo "=== Atomize complete ==="
+
+        ATOMS_PATH="$(pwd)/.verilib/atoms.json"
+        if [ -f "$ATOMS_PATH" ]; then
+          ATOM_COUNT=$(jq 'length' "$ATOMS_PATH")
+          echo "Generated $ATOM_COUNT atoms"
+          echo "atoms_path=$ATOMS_PATH" >> $GITHUB_OUTPUT
+        else
+          echo "::warning::atoms.json not found after atomize"
+          echo "atoms_path=" >> $GITHUB_OUTPUT
+        fi
