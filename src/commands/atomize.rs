@@ -86,11 +86,11 @@ pub async fn handle_atomize(
     println!("Loaded {} atoms", probe_atoms.len());
 
     // Step 3: Build probe index for fast lookups
-    let probe_index = build_line_index(&probe_atoms, &project_root);
+    let probe_index = ProbeIndex::build(&probe_atoms, project_root);
 
     // Step 4: Enrich stubs with code-name and all atom metadata
     println!("Enriching stubs with atom metadata...");
-    let enriched = enrich_stubs(&stubs, &probe_index, &probe_atoms, &project_root)?;
+    let enriched = probe_index.enrich_stubs(&stubs, &probe_atoms)?;
 
     // If check_only, compare .md stubs against enriched and report mismatches
     if check_only {
@@ -332,6 +332,146 @@ fn generate_probe_atoms(
     Ok(atoms)
 }
 
+/// Interval-tree index for fast line-based atom lookups, bundled with the
+/// project root used to canonicalize code-paths (resolving symlinks).
+struct ProbeIndex {
+    trees: HashMap<String, IntervalTree<u32, String>>,
+    project_root: PathBuf,
+}
+
+impl ProbeIndex {
+    /// Build the index from parsed atoms, canonicalizing every code-path
+    /// relative to `project_root` so that symlinks are transparent.
+    fn build(atoms: &HashMap<String, Value>, project_root: PathBuf) -> Self {
+        let mut trees: HashMap<String, Vec<(std::ops::Range<u32>, String)>> = HashMap::new();
+
+        for (probe_name, atom_data) in atoms {
+            let code_path = match atom_data.get("code-path").and_then(|v| v.as_str()) {
+                Some(p) => canonicalize_code_path(&project_root, p),
+                None => continue,
+            };
+
+            let code_text = match atom_data.get("code-text") {
+                Some(ct) => ct,
+                None => continue,
+            };
+
+            let lines_start = match code_text.get("lines-start").and_then(|v| v.as_u64()) {
+                Some(l) => l as u32,
+                None => continue,
+            };
+
+            let lines_end = match code_text.get("lines-end").and_then(|v| v.as_u64()) {
+                Some(l) => l as u32,
+                None => continue,
+            };
+
+            trees
+                .entry(code_path)
+                .or_default()
+                .push((lines_start..lines_end + 1, probe_name.clone()));
+        }
+
+        Self {
+            trees: trees
+                .into_iter()
+                .map(|(k, v)| (k, v.into_iter().collect()))
+                .collect(),
+            project_root,
+        }
+    }
+
+    /// Look up code-name from code-path and code-line.
+    /// Canonicalizes the code-path to resolve symlinks before lookup.
+    fn lookup_code_name(&self, code_path: &str, code_line: u32) -> Option<String> {
+        let canonical = canonicalize_code_path(&self.project_root, code_path);
+        let tree = self.trees.get(&canonical)?;
+
+        let matching: Vec<_> = tree.query(code_line..code_line + 1).collect();
+
+        if matching.is_empty() {
+            return None;
+        }
+
+        let exact: Vec<_> = matching
+            .iter()
+            .filter(|iv| iv.range.start == code_line)
+            .collect();
+
+        if !exact.is_empty() {
+            return Some(exact[0].value.clone());
+        }
+
+        Some(matching[0].value.clone())
+    }
+
+    /// Resolve code-name and atom for an entry.
+    /// First tries existing code-name, then falls back to inference from code-path/code-line.
+    fn resolve_code_name_and_atom<'a>(
+        &self,
+        entry: &Value,
+        file_path: &str,
+        atoms: &'a HashMap<String, Value>,
+    ) -> Option<(String, &'a Value)> {
+        if let Some(name) = entry.get("code-name").and_then(|v| v.as_str()) {
+            if let Some(atom) = atoms.get(name) {
+                return Some((name.to_string(), atom));
+            }
+        }
+
+        let code_path = entry.get("code-path").and_then(|v| v.as_str());
+        let code_line = entry
+            .get("code-line")
+            .and_then(|v| v.as_u64())
+            .map(|l| l as u32);
+
+        let (code_path, code_line) = match (code_path, code_line) {
+            (Some(p), Some(l)) => (p, l),
+            _ => {
+                eprintln!("WARNING: Missing code-path or code-line for {}", file_path);
+                return None;
+            }
+        };
+
+        let code_name = self.lookup_code_name(code_path, code_line)?;
+        let atom = atoms.get(&code_name)?;
+
+        Some((code_name, atom))
+    }
+
+    /// Enrich stubs with code-name and all metadata from atoms.
+    fn enrich_stubs(
+        &self,
+        stubs: &HashMap<String, Value>,
+        atoms: &HashMap<String, Value>,
+    ) -> Result<HashMap<String, Value>> {
+        let mut result = HashMap::new();
+        let mut enriched_count = 0;
+        let mut skipped_count = 0;
+
+        for (file_path, entry) in stubs {
+            let (code_name, atom) =
+                match self.resolve_code_name_and_atom(entry, file_path, atoms) {
+                    Some(r) => r,
+                    None => {
+                        skipped_count += 1;
+                        result.insert(file_path.clone(), entry.clone());
+                        continue;
+                    }
+                };
+
+            let enriched_entry = build_enriched_entry(&code_name, atom);
+            result.insert(file_path.clone(), enriched_entry);
+            enriched_count += 1;
+        }
+
+        println!("Entries enriched: {}", enriched_count);
+        println!("Skipped: {}", skipped_count);
+
+        Ok(result)
+    }
+}
+
 /// Canonicalize a code-path relative to the project root, resolving symlinks.
 /// Falls back to the original path if the file doesn't exist or canonicalization fails.
 fn canonicalize_code_path(project_root: &Path, code_path: &str) -> String {
@@ -342,146 +482,6 @@ fn canonicalize_code_path(project_root: &Path, code_path: &str) -> String {
         .and_then(|p| p.strip_prefix(project_root).ok().map(|r| r.to_path_buf()))
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_else(|| code_path.to_string())
-}
-
-/// Build an interval tree index for fast line-based lookups.
-/// Canonicalizes code-paths to resolve symlinks, ensuring stubs and atoms match.
-fn build_line_index(
-    atoms: &HashMap<String, Value>,
-    project_root: &Path,
-) -> HashMap<String, IntervalTree<u32, String>> {
-    let mut trees: HashMap<String, Vec<(std::ops::Range<u32>, String)>> = HashMap::new();
-
-    for (probe_name, atom_data) in atoms {
-        let code_path = match atom_data.get("code-path").and_then(|v| v.as_str()) {
-            Some(p) => canonicalize_code_path(project_root, p),
-            None => continue,
-        };
-
-        let code_text = match atom_data.get("code-text") {
-            Some(ct) => ct,
-            None => continue,
-        };
-
-        let lines_start = match code_text.get("lines-start").and_then(|v| v.as_u64()) {
-            Some(l) => l as u32,
-            None => continue,
-        };
-
-        let lines_end = match code_text.get("lines-end").and_then(|v| v.as_u64()) {
-            Some(l) => l as u32,
-            None => continue,
-        };
-
-        trees
-            .entry(code_path)
-            .or_default()
-            .push((lines_start..lines_end + 1, probe_name.clone()));
-    }
-
-    trees
-        .into_iter()
-        .map(|(k, v)| (k, v.into_iter().collect()))
-        .collect()
-}
-
-/// Look up code-name from code-path and code-line using the probe index.
-/// Canonicalizes the code-path to resolve symlinks before lookup.
-fn lookup_code_name(
-    code_path: &str,
-    code_line: u32,
-    index: &HashMap<String, IntervalTree<u32, String>>,
-    project_root: &Path,
-) -> Option<String> {
-    let canonical = canonicalize_code_path(project_root, code_path);
-    let tree = index.get(&canonical)?;
-
-    let matching: Vec<_> = tree.query(code_line..code_line + 1).collect();
-
-    if matching.is_empty() {
-        return None;
-    }
-
-    let exact: Vec<_> = matching
-        .iter()
-        .filter(|iv| iv.range.start == code_line)
-        .collect();
-
-    if !exact.is_empty() {
-        return Some(exact[0].value.clone());
-    }
-
-    Some(matching[0].value.clone())
-}
-
-/// Resolve code-name and atom for an entry.
-/// First tries existing code-name, then falls back to inference from code-path/code-line.
-fn resolve_code_name_and_atom<'a>(
-    entry: &Value,
-    file_path: &str,
-    index: &HashMap<String, IntervalTree<u32, String>>,
-    atoms: &'a HashMap<String, Value>,
-    project_root: &Path,
-) -> Option<(String, &'a Value)> {
-    // First try: use existing code-name if present and atom exists
-    if let Some(name) = entry.get("code-name").and_then(|v| v.as_str()) {
-        if let Some(atom) = atoms.get(name) {
-            return Some((name.to_string(), atom));
-        }
-    }
-
-    // Fallback: infer from code-path and code-line
-    let code_path = entry.get("code-path").and_then(|v| v.as_str());
-    let code_line = entry
-        .get("code-line")
-        .and_then(|v| v.as_u64())
-        .map(|l| l as u32);
-
-    let (code_path, code_line) = match (code_path, code_line) {
-        (Some(p), Some(l)) => (p, l),
-        _ => {
-            eprintln!("WARNING: Missing code-path or code-line for {}", file_path);
-            return None;
-        }
-    };
-
-    let code_name = lookup_code_name(code_path, code_line, index, project_root)?;
-    let atom = atoms.get(&code_name)?;
-
-    Some((code_name, atom))
-}
-
-/// Enrich stubs with code-name and all metadata from atoms.
-fn enrich_stubs(
-    stubs: &HashMap<String, Value>,
-    index: &HashMap<String, IntervalTree<u32, String>>,
-    atoms: &HashMap<String, Value>,
-    project_root: &Path,
-) -> Result<HashMap<String, Value>> {
-    let mut result = HashMap::new();
-    let mut enriched_count = 0;
-    let mut skipped_count = 0;
-
-    for (file_path, entry) in stubs {
-        let (code_name, atom) =
-            match resolve_code_name_and_atom(entry, file_path, index, atoms, project_root) {
-                Some(r) => r,
-                None => {
-                    skipped_count += 1;
-                    result.insert(file_path.clone(), entry.clone());
-                    continue;
-                }
-            };
-
-        let enriched_entry = build_enriched_entry(&code_name, atom);
-        result.insert(file_path.clone(), enriched_entry);
-        enriched_count += 1;
-    }
-
-    println!("Entries enriched: {}", enriched_count);
-    println!("Skipped: {}", skipped_count);
-
-    Ok(result)
 }
 
 /// Build an enriched entry from atom data.
@@ -747,8 +747,8 @@ mod tests {
             }),
         );
 
-        let index = build_line_index(&atoms, &project_root);
-        let enriched = enrich_stubs(&stubs, &index, &atoms, &project_root).unwrap();
+        let index = ProbeIndex::build(&atoms, project_root);
+        let enriched = index.enrich_stubs(&stubs, &atoms).unwrap();
 
         let entry = &enriched["deps/my-crate/my-crate/src/lib.rs/func_a.md"];
         assert_eq!(
@@ -786,8 +786,8 @@ mod tests {
             }),
         );
 
-        let index = build_line_index(&atoms, &project_root);
-        let enriched = enrich_stubs(&stubs, &index, &atoms, &project_root).unwrap();
+        let index = ProbeIndex::build(&atoms, project_root);
+        let enriched = index.enrich_stubs(&stubs, &atoms).unwrap();
 
         let entry = &enriched["src/lib.rs/func_a.md"];
         assert_eq!(
