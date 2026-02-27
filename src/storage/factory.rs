@@ -1,6 +1,6 @@
-use anyhow::Result;
-use crate::storage::types::{CredentialStorage, StorageType};
 use crate::storage::file::FileStorage;
+use crate::storage::types::{CredentialStorage, StorageType};
+use anyhow::Result;
 
 #[cfg(not(target_os = "linux"))]
 use crate::storage::keyring::KeyringStorage;
@@ -20,7 +20,7 @@ impl CredentialStorageFactory {
             {
                 Ok(Box::new(KeyringStorage::new()?))
             }
-            
+
             #[cfg(target_os = "linux")]
             {
                 anyhow::bail!(

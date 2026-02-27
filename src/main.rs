@@ -69,7 +69,14 @@ async fn main() -> Result<()> {
             no_probe,
             check_only,
         } => {
-            handle_verify(project_root, package, verify_only_module, no_probe, check_only).await?;
+            handle_verify(
+                project_root,
+                package,
+                verify_only_module,
+                no_probe,
+                check_only,
+            )
+            .await?;
         }
     }
 

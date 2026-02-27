@@ -1,12 +1,13 @@
+use crate::constants::{
+    DEFAULT_DOCKER_IMAGE, PROBE_VERUS_MIN_VERSION, PROBE_VERUS_TESTED_MAX_VERSION,
+};
 use anyhow::{bail, Context, Result};
-use crate::constants::{DEFAULT_DOCKER_IMAGE, PROBE_VERUS_MIN_VERSION, PROBE_VERUS_TESTED_MAX_VERSION};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::process::{Command, Output};
 
 pub const PROBE_REPO_URL: &str = "https://github.com/Beneficial-AI-Foundation/probe-verus";
-
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ExternalTool {
@@ -22,17 +23,12 @@ impl ExternalTool {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum ExecutionMode {
+    #[default]
     Local,
     Docker,
-}
-
-impl Default for ExecutionMode {
-    fn default() -> Self {
-        Self::Local
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -114,7 +110,10 @@ fn check_probe_verus_version() -> Result<()> {
         .expect("PROBE_VERUS_TESTED_MAX_VERSION is a valid semver requirement");
 
     if !min_req.matches(&version) {
-        eprintln!("Error: probe-verus {} is too old for this version of verilib-cli.", version);
+        eprintln!(
+            "Error: probe-verus {} is too old for this version of verilib-cli.",
+            version
+        );
         eprintln!("  Minimum required: {}", PROBE_VERUS_MIN_VERSION);
         eprintln!("  Installed:        {}", version);
         eprintln!();
@@ -122,7 +121,11 @@ fn check_probe_verus_version() -> Result<()> {
         eprintln!("  git clone {}", PROBE_REPO_URL);
         eprintln!("  cd probe-verus");
         eprintln!("  cargo install --path .");
-        bail!("probe-verus {} is below the minimum required version ({})", version, PROBE_VERUS_MIN_VERSION);
+        bail!(
+            "probe-verus {} is below the minimum required version ({})",
+            version,
+            PROBE_VERUS_MIN_VERSION
+        );
     }
 
     if !tested_max_req.matches(&version) {
@@ -131,7 +134,10 @@ fn check_probe_verus_version() -> Result<()> {
             version, PROBE_VERUS_TESTED_MAX_VERSION
         );
         eprintln!("  It may work, but you could encounter unexpected behaviour.");
-        eprintln!("  Consider filing an issue at {} if you hit problems.", PROBE_REPO_URL);
+        eprintln!(
+            "  Consider filing an issue at {} if you hit problems.",
+            PROBE_REPO_URL
+        );
     }
 
     Ok(())
@@ -167,7 +173,7 @@ fn run_local(program: &str, args: &[&str], cwd: Option<&Path>) -> Result<Output>
 
 fn ensure_image_pulled(image: &str) -> Result<()> {
     let status = Command::new("docker")
-        .args(&["image", "inspect", image])
+        .args(["image", "inspect", image])
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
         .status();
@@ -181,7 +187,7 @@ fn ensure_image_pulled(image: &str) -> Result<()> {
     println!("Docker image {} not found locally. Pulling...", image);
 
     let status = Command::new("docker")
-        .args(&["pull", "--platform", "linux/amd64", image])
+        .args(["pull", "--platform", "linux/amd64", image])
         .status()
         .context(format!("Failed to pull docker image {}", image))?;
 
@@ -192,17 +198,12 @@ fn ensure_image_pulled(image: &str) -> Result<()> {
     Ok(())
 }
 
-fn run_docker(
-    program: &str,
-    args: &[&str],
-    cwd: Option<&Path>,
-    image: &str,
-) -> Result<Output> {
+fn run_docker(program: &str, args: &[&str], cwd: Option<&Path>, image: &str) -> Result<Output> {
     ensure_image_pulled(image)?;
 
-    let host_cwd = cwd
-        .map(|p| p.to_path_buf())
-        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf()));
+    let host_cwd = cwd.map(|p| p.to_path_buf()).unwrap_or_else(|| {
+        std::env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf())
+    });
 
     let host_cwd_str = host_cwd.to_string_lossy();
 
@@ -219,9 +220,12 @@ fn run_docker(
     let mut docker_args = vec![
         "run",
         "--rm",
-        "--platform", "linux/amd64",
-        "--entrypoint", program,
-        "-u", &user_arg,
+        "--platform",
+        "linux/amd64",
+        "--entrypoint",
+        program,
+        "-u",
+        &user_arg,
         "-v",
     ];
 
@@ -229,10 +233,13 @@ fn run_docker(
     docker_args.push(&mount_arg);
 
     docker_args.extend_from_slice(&[
-        "--tmpfs", "/tmp",
-        "--tmpfs", "/home/tooluser/.cache",
+        "--tmpfs",
+        "/tmp",
+        "--tmpfs",
+        "/home/tooluser/.cache",
         "--security-opt=no-new-privileges",
-        "-w", "/workspace",
+        "-w",
+        "/workspace",
         image,
     ]);
 

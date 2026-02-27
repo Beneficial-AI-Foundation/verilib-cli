@@ -4,8 +4,8 @@
 
 use crate::config::ProjectConfig;
 use crate::structure::{
-    cleanup_intermediate_files, parse_frontmatter, run_command,
-    write_frontmatter, CommandConfig, ExternalTool, ATOMIZE_INTERMEDIATE_FILES,
+    cleanup_intermediate_files, parse_frontmatter, run_command, write_frontmatter, CommandConfig,
+    ExternalTool, ATOMIZE_INTERMEDIATE_FILES,
 };
 use anyhow::{bail, Context, Result};
 use intervaltree::IntervalTree;
@@ -41,7 +41,11 @@ pub async fn handle_atomize(
         true
     } else {
         ProjectConfig::init(&project_root)?;
-        if ProjectConfig::global().unwrap().structure_root_path().is_err() {
+        if ProjectConfig::global()
+            .unwrap()
+            .structure_root_path()
+            .is_err()
+        {
             bail!(
                 "Verus project detected but no .verilib/config.json found. \
                  Run 'verilib-cli create' first."
@@ -67,12 +71,7 @@ pub async fn handle_atomize(
     let stubs = if no_probe {
         load_stubs_from_md_files(&structure_root)?
     } else {
-        generate_stubs(
-            &project_root,
-            &structure_root,
-            &stubs_path,
-            &cmd_config,
-        )?
+        generate_stubs(&project_root, &structure_root, &stubs_path, &cmd_config)?
     };
     println!("Loaded {} stubs", stubs.len());
 
@@ -80,12 +79,7 @@ pub async fn handle_atomize(
     let probe_atoms = if no_probe {
         load_atoms_from_file(&atoms_path)?
     } else {
-        generate_probe_atoms(
-            &project_root,
-            &atoms_path,
-            &cmd_config,
-            use_rust_analyzer,
-        )?
+        generate_probe_atoms(&project_root, &atoms_path, &cmd_config, use_rust_analyzer)?
     };
     println!("Loaded {} atoms", probe_atoms.len());
 
@@ -103,10 +97,7 @@ pub async fn handle_atomize(
     }
 
     // Step 5: Save enriched stubs.json
-    println!(
-        "Saving enriched stubs to {}...",
-        stubs_path.display()
-    );
+    println!("Saving enriched stubs to {}...", stubs_path.display());
     let content = serde_json::to_string_pretty(&enriched)?;
     std::fs::write(&stubs_path, content)?;
 
@@ -496,15 +487,14 @@ impl ProbeIndex {
         let mut skipped_count = 0;
 
         for (file_path, entry) in stubs {
-            let (code_name, atom) =
-                match self.resolve_code_name_and_atom(entry, file_path, atoms) {
-                    Some(r) => r,
-                    None => {
-                        skipped_count += 1;
-                        result.insert(file_path.clone(), entry.clone());
-                        continue;
-                    }
-                };
+            let (code_name, atom) = match self.resolve_code_name_and_atom(entry, file_path, atoms) {
+                Some(r) => r,
+                None => {
+                    skipped_count += 1;
+                    result.insert(file_path.clone(), entry.clone());
+                    continue;
+                }
+            };
 
             let enriched_entry = build_enriched_entry(&code_name, atom);
             result.insert(file_path.clone(), enriched_entry);
