@@ -144,7 +144,7 @@ mod atomize {
 
     /// Enrichment must populate every stub with the six fields that downstream
     /// commands depend on: code-name, code-path, code-text, code-module,
-    /// dependencies, and display-name.
+    /// dependencies, and display-name. (design: Section 3.5)
     #[test]
     fn enriched_stubs_have_all_required_fields() {
         let tmp = setup_project();
@@ -173,7 +173,7 @@ mod atomize {
 
     /// When a stub already has a code-name that matches an atom, the code-name
     /// takes precedence over code-line for atom matching -- even when the
-    /// code-line falls inside a different atom's range.
+    /// code-line falls inside a different atom's range. (design: Section 2.9)
     #[test]
     fn code_name_takes_precedence_over_code_line() {
         let tmp = setup_project();
@@ -200,7 +200,7 @@ mod atomize {
     }
 
     /// The dependency arrays in enriched stubs must be populated from atom
-    /// data, not invented or left empty.
+    /// data, not invented or left empty. (design: Sections 2.8, 3.3)
     #[test]
     fn dependencies_come_from_atoms() {
         let tmp = setup_project();
@@ -231,7 +231,7 @@ mod atomize {
     }
 
     /// `--check-only` exits successfully when .md stub frontmatter is
-    /// consistent with the enriched output (no drift).
+    /// consistent with the enriched output (no drift). (design: Section 2.7)
     #[test]
     fn check_only_passes_when_stubs_match() {
         let tmp = setup_project();
@@ -246,7 +246,7 @@ mod atomize {
     }
 
     /// `--check-only` exits non-zero when a .md file has a code-name that
-    /// disagrees with the enriched atom data.
+    /// disagrees with the enriched atom data. (design: Section 2.7)
     #[test]
     fn check_only_detects_code_name_mismatch() {
         let tmp = setup_project();
@@ -267,7 +267,7 @@ mod atomize {
     }
 
     /// `--update-stubs` writes the enriched code-name back into the .md
-    /// frontmatter so that future `--check-only` runs pass.
+    /// frontmatter so that future `--check-only` runs pass. (design: Section 2.9)
     #[test]
     fn update_stubs_writes_code_name_to_md_files() {
         let tmp = setup_project();
@@ -321,7 +321,7 @@ mod atomize {
     }
 
     /// A Verus project (vstd dependency) without .verilib/config.json must
-    /// exit non-zero -- the user needs to run `create` first.
+    /// exit non-zero -- the user needs to run `create` first. (design: Section 2.4)
     #[test]
     fn fails_on_verus_project_without_config() {
         let tmp = TempDir::new().unwrap();
@@ -416,7 +416,7 @@ mod specify {
 
     /// After specify, stubs whose specs have `specified=true` in specs.json
     /// (func_a, func_b) must gain a `spec-text` field. Stubs with
-    /// `specified=false` (func_c) must not.
+    /// `specified=false` (func_c) must not. (design: Sections 2.10, 3.5)
     #[test]
     fn populates_spec_text_for_specified_stubs_only() {
         let tmp = setup_project_with_config("config_auto_validate.json");
@@ -437,7 +437,7 @@ mod specify {
     }
 
     /// The full specify flow (with auto-validate creating certs) must never
-    /// modify the .md structure files on disk.
+    /// modify the .md structure files on disk. (design: Section 2.9)
     #[test]
     fn does_not_modify_md_files() {
         let tmp = setup_project_with_config("config_auto_validate.json");
@@ -459,6 +459,7 @@ mod specify {
     }
 
     /// Cert files created by specify must contain an ISO 8601 timestamp.
+    /// (design: Section 2.10)
     #[test]
     fn certs_contain_iso8601_timestamp() {
         let tmp = setup_project_with_config("config_auto_validate.json");
@@ -495,7 +496,7 @@ mod specify {
     }
 
     /// `--check-only` exits successfully when every specified stub has a
-    /// corresponding cert file on disk.
+    /// corresponding cert file on disk. (design: Section 2.10)
     #[test]
     fn check_only_passes_when_all_stubs_certified() {
         let tmp = setup_project();
@@ -536,7 +537,7 @@ mod verify {
     use super::*;
 
     /// After verify, each stub's `verified` field must reflect the
-    /// corresponding entry in proofs.json.
+    /// corresponding entry in proofs.json. (design: Sections 2.11, 3.5)
     #[test]
     fn sets_verified_field_from_proofs() {
         let tmp = setup_project();
@@ -558,6 +559,7 @@ mod verify {
     }
 
     /// The verify flow must never modify the .md structure files on disk.
+    /// (design: Section 2.9)
     #[test]
     fn does_not_modify_md_files() {
         let tmp = setup_project();
@@ -571,7 +573,7 @@ mod verify {
     }
 
     /// `--check-only` exits non-zero when stubs.json contains entries with
-    /// `status: "failure"`.
+    /// `status: "failure"`. (design: Section 2.11)
     #[test]
     fn check_only_detects_failure_status() {
         let tmp = setup_project();
@@ -582,6 +584,7 @@ mod verify {
     }
 
     /// `--check-only` exits successfully when no stub has a failure status.
+    /// (design: Section 2.11)
     #[test]
     fn check_only_passes_when_no_failures() {
         let tmp = setup_project();
@@ -693,7 +696,7 @@ mod create {
     use super::*;
 
     /// `create` must produce `.verilib/config.json` with a `structure-root`
-    /// field pointing at the structure directory.
+    /// field pointing at the structure directory. (design: Sections 2.3, 2.4)
     #[test]
     fn produces_config_with_structure_root() {
         let mock_dir = setup_mock_probe_dir();
@@ -722,7 +725,7 @@ mod pipeline {
 
     /// End-to-end: create -> atomize --update-stubs -> specify -> verify,
     /// all driven by a mock probe-verus binary. Verifies the pipeline
-    /// produces the expected artifacts at each stage.
+    /// produces the expected artifacts at each stage. (design: Section 2.3)
     #[test]
     fn full_create_atomize_specify_verify_workflow() {
         let mock_dir = setup_mock_probe_dir();
