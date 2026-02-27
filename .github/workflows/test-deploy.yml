@@ -1,0 +1,38 @@
+# Temporary workflow to test the deploy (reclone) action with an org secret.
+# Trigger manually from the Actions tab. Remove once testing is complete.
+
+name: Test Deploy (reclone)
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo-id:
+        description: 'Verilib repository ID to test reclone against'
+        required: true
+        type: string
+      api-url:
+        description: 'Verilib API base URL'
+        required: false
+        type: string
+        default: 'https://verilib.org'
+      debug:
+        description: 'Enable debug output'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  test-reclone:
+    name: Test reclone
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run deploy action
+        uses: ./action/deploy
+        with:
+          api-key: ${{ secrets.VERRILIB_CLI_AUTH_KEY }}
+          repo-id: ${{ inputs.repo-id }}
+          api-url: ${{ inputs.api-url }}
+          debug: ${{ inputs.debug }}
