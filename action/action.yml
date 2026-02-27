@@ -1,0 +1,363 @@
+# verilib-cli GitHub Action
+# Runs verilib verification workflow on a Verus project
+#
+# Usage:
+#   - uses: beneficial-ai-foundation/verilib-cli/action@v1
+#     with:
+#       project-path: .
+#       mode: check  # or 'generate'
+
+name: 'verilib Verify'
+description: 'Run verilib verification workflow on a Verus project'
+author: 'Beneficial AI Foundation'
+
+branding:
+  icon: 'check-circle'
+  color: 'blue'
+
+inputs:
+  project-path:
+    description: 'Path to the Verus project (directory containing Cargo.toml)'
+    required: true
+    default: '.'
+  mode:
+    description: 'Mode: "check" (PR validation with --check-only) or "generate" (full pipeline)'
+    required: true
+    default: 'check'
+  verus-version:
+    description: 'Verus version to use (default: auto-detect from Cargo.toml)'
+    required: false
+    default: ''
+  rust-version:
+    description: 'Rust toolchain version (default: auto-detect from Cargo.toml)'
+    required: false
+    default: ''
+  functions-to-track:
+    description: 'Path to functions_to_track.csv (default: functions_to_track.csv in project root)'
+    required: false
+    default: ''
+  token:
+    description: 'GitHub token for API calls (avoids rate limiting)'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  verified-count:
+    description: 'Number of functions verified'
+    value: ${{ steps.results.outputs.verified_count }}
+  total-functions:
+    description: 'Total number of tracked functions'
+    value: ${{ steps.results.outputs.total_count }}
+  results-path:
+    description: 'Path to .verilib directory with results'
+    value: ${{ steps.results.outputs.results_path }}
+  results-archive:
+    description: 'Path to archived .verilib results (tar.gz, safe for artifact upload)'
+    value: ${{ steps.results.outputs.results_archive }}
+
+runs:
+  using: 'composite'
+  steps:
+    # Step 1: Extract versions from Cargo.toml
+    - name: Extract versions from Cargo.toml
+      id: versions
+      shell: bash
+      run: |
+        set -euo pipefail
+        PROJECT_PATH="${{ inputs.project-path }}"
+
+        # Find Cargo.toml with [package.metadata.verus] section
+        # First try root, then search in subdirectories (for workspaces)
+        CARGO_TOML=""
+        METADATA=""
+
+        if [ -f "$PROJECT_PATH/Cargo.toml" ]; then
+          METADATA=$(awk '/^\[package.metadata.verus\]/{flag=1;next}/^\[.*\]/{flag=0}flag' "$PROJECT_PATH/Cargo.toml")
+          if [ -n "$METADATA" ]; then
+            CARGO_TOML="$PROJECT_PATH/Cargo.toml"
+            echo "Found verus metadata in $CARGO_TOML"
+          fi
+        fi
+
+        # If not found in root, search subdirectories (workspace members)
+        if [ -z "$METADATA" ]; then
+          echo "No verus metadata in root Cargo.toml, searching subdirectories..."
+          for toml in "$PROJECT_PATH"/*/Cargo.toml; do
+            if [ -f "$toml" ]; then
+              METADATA=$(awk '/^\[package.metadata.verus\]/{flag=1;next}/^\[.*\]/{flag=0}flag' "$toml")
+              if [ -n "$METADATA" ]; then
+                CARGO_TOML="$toml"
+                echo "Found verus metadata in $CARGO_TOML"
+                break
+              fi
+            fi
+          done
+        fi
+
+        if [ -z "$CARGO_TOML" ]; then
+          echo "::error::No Cargo.toml with [package.metadata.verus] found in $PROJECT_PATH or its subdirectories"
+          exit 1
+        fi
+
+        # Get Verus version
+        VERUS_VERSION="${{ inputs.verus-version }}"
+        if [ -z "$VERUS_VERSION" ]; then
+          VERUS_VERSION=$(echo "$METADATA" | grep -E '^\s*release\s*=' | sed 's/.*= *"\([^"]*\)".*/\1/' | head -1)
+          if [ -z "$VERUS_VERSION" ]; then
+            echo "::error::No Verus version found. Provide verus-version input or add [package.metadata.verus] release to Cargo.toml"
+            exit 1
+          fi
+          echo "Auto-detected Verus version: $VERUS_VERSION"
+        fi
+
+        # Get Rust version
+        RUST_VERSION="${{ inputs.rust-version }}"
+        if [ -z "$RUST_VERSION" ]; then
+          RUST_VERSION=$(echo "$METADATA" | grep -E '^\s*rust-version\s*=' | sed 's/.*= *"\([^"]*\)".*/\1/' | head -1)
+          if [ -z "$RUST_VERSION" ]; then
+            RUST_VERSION="stable"
+            echo "No Rust version found, using: $RUST_VERSION"
+          else
+            echo "Auto-detected Rust version: $RUST_VERSION"
+          fi
+        fi
+
+        echo "verus_version=$VERUS_VERSION" >> $GITHUB_OUTPUT
+        echo "rust_version=$RUST_VERSION" >> $GITHUB_OUTPUT
+
+    # Step 2: Install Rust toolchain
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ steps.versions.outputs.rust_version }}
+
+    # Step 3: Cache cargo registry
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          ~/.cargo/bin
+        key: ${{ runner.os }}-cargo-verilib-${{ steps.versions.outputs.verus_version }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-verilib-${{ steps.versions.outputs.verus_version }}-
+          ${{ runner.os }}-cargo-verilib-
+          ${{ runner.os }}-cargo-
+
+    # Step 4: Install verus-analyzer
+    - name: Install verus-analyzer
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        if command -v verus-analyzer &> /dev/null; then
+          echo "verus-analyzer already installed (from cache)"
+          verus-analyzer --version
+        else
+          echo "Installing verus-analyzer..."
+          VERUS_URL=$(curl -sL -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/verus-lang/verus-analyzer/releases/latest | \
+            jq -r '.assets[] | select(.name == "verus-analyzer-x86_64-unknown-linux-gnu.gz") | .browser_download_url')
+          if [ -z "$VERUS_URL" ] || [ "$VERUS_URL" = "null" ]; then
+            echo "::error::Failed to determine verus-analyzer download URL"
+            exit 1
+          fi
+          wget -q "$VERUS_URL" -O verus-analyzer.gz
+          gunzip verus-analyzer.gz
+          chmod +x verus-analyzer
+          sudo mv verus-analyzer /usr/local/bin/
+          verus-analyzer --version
+        fi
+
+    # Step 5: Install Verus
+    - name: Install Verus
+      shell: bash
+      env:
+        VERUS_VERSION: ${{ steps.versions.outputs.verus_version }}
+      run: |
+        if [ -x ~/.cargo/bin/verus-x86-linux/verus ]; then
+          CACHED_VERSION=$(~/.cargo/bin/verus-x86-linux/verus --version 2>/dev/null | head -1 || echo "unknown")
+          if echo "$CACHED_VERSION" | grep -q "$VERUS_VERSION"; then
+            echo "Verus $VERUS_VERSION already installed (from cache)"
+            exit 0
+          else
+            echo "Cached Verus version mismatch, reinstalling..."
+            rm -rf ~/.cargo/bin/verus-x86-linux
+          fi
+        fi
+
+        echo "Installing Verus $VERUS_VERSION..."
+        VERUS_URL="https://github.com/verus-lang/verus/releases/download/release%2F${VERUS_VERSION}/verus-${VERUS_VERSION}-x86-linux.zip"
+        wget -q "$VERUS_URL" -O verus.zip
+        unzip -q verus.zip
+        mv verus-x86-linux ~/.cargo/bin/
+        cd ~/.cargo/bin
+        ln -sf verus-x86-linux/cargo-verus
+        echo "Verus $VERUS_VERSION installed"
+
+    # Step 6: Install scip CLI
+    - name: Install scip CLI
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        if command -v scip &> /dev/null; then
+          echo "scip already installed (from cache)"
+          scip --version
+        else
+          echo "Installing scip..."
+          SCIP_URL=$(curl -sL -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/sourcegraph/scip/releases/latest | \
+            jq -r '.assets[] | select(.name == "scip-linux-amd64.tar.gz") | .browser_download_url')
+          if [ -z "$SCIP_URL" ] || [ "$SCIP_URL" = "null" ]; then
+            echo "::error::Failed to determine SCIP download URL"
+            exit 1
+          fi
+          wget -q "$SCIP_URL" -O scip-linux.tar.gz
+          tar -xzf scip-linux.tar.gz
+          chmod +x scip
+          sudo mv scip /usr/local/bin/
+          scip --version
+        fi
+
+    # Step 7: Install probe-verus
+    - name: Install probe-verus
+      shell: bash
+      run: |
+        if command -v probe-verus &> /dev/null; then
+          echo "probe-verus already installed (from cache)"
+          probe-verus --version
+        else
+          echo "Installing probe-verus..."
+          cargo install --git https://github.com/Beneficial-AI-Foundation/probe-verus
+          probe-verus --version || echo "probe-verus installed"
+        fi
+
+    # Step 8: Install system dependencies for verilib-cli
+    - name: Install system dependencies
+      shell: bash
+      run: |
+        echo "Installing system dependencies for verilib-cli (libdbus for keyring)..."
+        sudo apt-get update
+        sudo apt-get install -y libdbus-1-dev pkg-config
+
+    # Step 9: Install verilib-cli
+    - name: Install verilib-cli
+      shell: bash
+      run: |
+        if command -v verilib-cli &> /dev/null; then
+          echo "verilib-cli already installed (from cache)"
+          verilib-cli --version
+        else
+          echo "Installing verilib-cli..."
+          cargo install --git https://github.com/Beneficial-AI-Foundation/verilib-cli
+          verilib-cli --version || echo "verilib-cli installed"
+        fi
+
+    # Step 10: Install uv (for Python scripts)
+    - name: Install uv
+      shell: bash
+      run: |
+        if command -v uv &> /dev/null; then
+          echo "uv already installed"
+        else
+          echo "Installing uv..."
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.cargo/bin:$PATH"
+          if ! command -v uv &> /dev/null; then
+            echo "::error::uv installation failed"
+            exit 1
+          fi
+        fi
+
+    # Step 11: Run verilib-cli in check mode
+    - name: Run verilib-cli (check mode)
+      if: inputs.mode == 'check'
+      shell: bash
+      working-directory: ${{ inputs.project-path }}
+      run: |
+        echo "=== Running verilib-cli in CHECK mode ==="
+
+        # Check if .verilib exists (required for check mode)
+        if [ ! -d ".verilib" ]; then
+          echo "::error::.verilib directory not found. Run 'generate' mode first to initialize."
+          exit 1
+        fi
+
+        echo "Checking atomize..."
+        verilib-cli atomize --check-only
+
+        echo "Checking specify..."
+        verilib-cli specify --check-only
+
+        echo "Checking verify..."
+        verilib-cli verify --check-only
+
+        echo "=== All checks passed ==="
+
+    # Step 12: Run verilib-cli in generate mode
+    - name: Run verilib-cli (generate mode)
+      if: inputs.mode == 'generate'
+      shell: bash
+      working-directory: ${{ inputs.project-path }}
+      run: |
+        echo "=== Running verilib-cli in GENERATE mode ==="
+
+        # Check for functions_to_track.csv
+        FUNCTIONS_CSV="${{ inputs.functions-to-track }}"
+        if [ -z "$FUNCTIONS_CSV" ]; then
+          FUNCTIONS_CSV="functions_to_track.csv"
+        fi
+
+        if [ ! -f "$FUNCTIONS_CSV" ]; then
+          echo "::error::$FUNCTIONS_CSV not found. This file is required for the create step."
+          exit 1
+        fi
+
+        echo "Step 1: Create structure..."
+        verilib-cli create
+
+        echo "Step 2: Atomize (enrich with SCIP data)..."
+        verilib-cli atomize --update-stubs
+
+        echo "Step 3: Specify (auto-certify all for CI)..."
+        echo "all" | verilib-cli specify
+
+        echo "Step 4: Verify..."
+        verilib-cli verify
+
+        echo "=== Generate complete ==="
+
+    # Step 13: Extract results and create archive
+    - name: Extract results
+      id: results
+      shell: bash
+      working-directory: ${{ inputs.project-path }}
+      run: |
+        RESULTS_PATH="$(pwd)/.verilib"
+        echo "results_path=$RESULTS_PATH" >> $GITHUB_OUTPUT
+
+        if [ -f ".verilib/stubs.json" ]; then
+          VERIFIED=$(jq '[to_entries[] | select(.value.verified == true)] | length' .verilib/stubs.json)
+          TOTAL=$(jq 'length' .verilib/stubs.json)
+          echo "verified_count=$VERIFIED" >> $GITHUB_OUTPUT
+          echo "total_count=$TOTAL" >> $GITHUB_OUTPUT
+          echo ""
+          echo "=== Verification Summary ==="
+          echo "Verified: $VERIFIED / $TOTAL"
+        else
+          echo "verified_count=0" >> $GITHUB_OUTPUT
+          echo "total_count=0" >> $GITHUB_OUTPUT
+          echo "No stubs.json found"
+        fi
+
+        # Create archive for safe artifact upload
+        # (Structure filenames may contain <, >, etc. which are invalid for GitHub artifacts)
+        if [ -d ".verilib" ]; then
+          ARCHIVE_PATH="$(pwd)/verilib-results-${GITHUB_RUN_ID:-unknown}-${GITHUB_JOB:-job}-${GITHUB_RUN_ATTEMPT:-1}-$(date +%s)-$RANDOM.tar.gz"
+          tar -czf "$ARCHIVE_PATH" -C "$(pwd)" .verilib
+          echo "results_archive=$ARCHIVE_PATH" >> $GITHUB_OUTPUT
+          echo "Created archive: $ARCHIVE_PATH"
+        fi
