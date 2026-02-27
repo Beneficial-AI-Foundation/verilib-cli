@@ -70,7 +70,7 @@ runs:
         # First try root, then search in subdirectories (for workspaces)
         CARGO_TOML=""
         METADATA=""
-        
+
         if [ -f "$PROJECT_PATH/Cargo.toml" ]; then
           METADATA=$(awk '/^\[package.metadata.verus\]/{flag=1;next}/^\[.*\]/{flag=0}flag' "$PROJECT_PATH/Cargo.toml")
           if [ -n "$METADATA" ]; then
@@ -78,7 +78,7 @@ runs:
             echo "Found verus metadata in $CARGO_TOML"
           fi
         fi
-        
+
         # If not found in root, search subdirectories (workspace members)
         if [ -z "$METADATA" ]; then
           echo "No verus metadata in root Cargo.toml, searching subdirectories..."
@@ -93,12 +93,12 @@ runs:
             fi
           done
         fi
-        
+
         if [ -z "$CARGO_TOML" ]; then
           echo "::error::No Cargo.toml with [package.metadata.verus] found in $PROJECT_PATH or its subdirectories"
           exit 1
         fi
-        
+
         # Get Verus version
         VERUS_VERSION="${{ inputs.verus-version }}"
         if [ -z "$VERUS_VERSION" ]; then
@@ -109,7 +109,7 @@ runs:
           fi
           echo "Auto-detected Verus version: $VERUS_VERSION"
         fi
-        
+
         # Get Rust version
         RUST_VERSION="${{ inputs.rust-version }}"
         if [ -z "$RUST_VERSION" ]; then
@@ -121,7 +121,7 @@ runs:
             echo "Auto-detected Rust version: $RUST_VERSION"
           fi
         fi
-        
+
         echo "verus_version=$VERUS_VERSION" >> $GITHUB_OUTPUT
         echo "rust_version=$RUST_VERSION" >> $GITHUB_OUTPUT
 
@@ -186,7 +186,7 @@ runs:
             rm -rf ~/.cargo/bin/verus-x86-linux
           fi
         fi
-        
+
         echo "Installing Verus $VERUS_VERSION..."
         VERUS_URL="https://github.com/verus-lang/verus/releases/download/release%2F${VERUS_VERSION}/verus-${VERUS_VERSION}-x86-linux.zip"
         wget -q "$VERUS_URL" -O verus.zip
@@ -225,9 +225,14 @@ runs:
     - name: Install probe-verus
       shell: bash
       run: |
-        echo "Installing probe-verus..."
-        cargo install --force --git https://github.com/Beneficial-AI-Foundation/probe-verus
-        probe-verus --version || echo "probe-verus installed"
+        if command -v probe-verus &> /dev/null; then
+          echo "probe-verus already installed (from cache)"
+          probe-verus --version
+        else
+          echo "Installing probe-verus..."
+          cargo install --git https://github.com/Beneficial-AI-Foundation/probe-verus
+          probe-verus --version || echo "probe-verus installed"
+        fi
 
     # Step 8: Install system dependencies for verilib-cli
     - name: Install system dependencies
@@ -241,9 +246,14 @@ runs:
     - name: Install verilib-cli
       shell: bash
       run: |
-        echo "Installing verilib-cli..."
-        cargo install --force --git https://github.com/Beneficial-AI-Foundation/verilib-cli
-        verilib-cli --version || echo "verilib-cli installed"
+        if command -v verilib-cli &> /dev/null; then
+          echo "verilib-cli already installed (from cache)"
+          verilib-cli --version
+        else
+          echo "Installing verilib-cli..."
+          cargo install --git https://github.com/Beneficial-AI-Foundation/verilib-cli
+          verilib-cli --version || echo "verilib-cli installed"
+        fi
 
     # Step 10: Install uv (for Python scripts)
     - name: Install uv
@@ -255,6 +265,11 @@ runs:
           echo "Installing uv..."
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.cargo/bin:$PATH"
+          if ! command -v uv &> /dev/null; then
+            echo "::error::uv installation failed"
+            exit 1
+          fi
         fi
 
     # Step 11: Run verilib-cli in check mode
@@ -264,22 +279,22 @@ runs:
       working-directory: ${{ inputs.project-path }}
       run: |
         echo "=== Running verilib-cli in CHECK mode ==="
-        
+
         # Check if .verilib exists (required for check mode)
         if [ ! -d ".verilib" ]; then
           echo "::error::.verilib directory not found. Run 'generate' mode first to initialize."
           exit 1
         fi
-        
+
         echo "Checking atomize..."
         verilib-cli atomize --check-only
-        
+
         echo "Checking specify..."
         verilib-cli specify --check-only
-        
+
         echo "Checking verify..."
         verilib-cli verify --check-only
-        
+
         echo "=== All checks passed ==="
 
     # Step 12: Run verilib-cli in generate mode
@@ -289,30 +304,30 @@ runs:
       working-directory: ${{ inputs.project-path }}
       run: |
         echo "=== Running verilib-cli in GENERATE mode ==="
-        
+
         # Check for functions_to_track.csv
         FUNCTIONS_CSV="${{ inputs.functions-to-track }}"
         if [ -z "$FUNCTIONS_CSV" ]; then
           FUNCTIONS_CSV="functions_to_track.csv"
         fi
-        
+
         if [ ! -f "$FUNCTIONS_CSV" ]; then
           echo "::error::$FUNCTIONS_CSV not found. This file is required for the create step."
           exit 1
         fi
-        
+
         echo "Step 1: Create structure..."
         verilib-cli create
-        
+
         echo "Step 2: Atomize (enrich with SCIP data)..."
         verilib-cli atomize --update-stubs
-        
+
         echo "Step 3: Specify (auto-certify all for CI)..."
         echo "all" | verilib-cli specify
-        
+
         echo "Step 4: Verify..."
         verilib-cli verify
-        
+
         echo "=== Generate complete ==="
 
     # Step 13: Extract results and create archive
@@ -323,7 +338,7 @@ runs:
       run: |
         RESULTS_PATH="$(pwd)/.verilib"
         echo "results_path=$RESULTS_PATH" >> $GITHUB_OUTPUT
-        
+
         if [ -f ".verilib/stubs.json" ]; then
           VERIFIED=$(jq '[to_entries[] | select(.value.verified == true)] | length' .verilib/stubs.json)
           TOTAL=$(jq 'length' .verilib/stubs.json)
@@ -337,7 +352,7 @@ runs:
           echo "total_count=0" >> $GITHUB_OUTPUT
           echo "No stubs.json found"
         fi
-        
+
         # Create archive for safe artifact upload
         # (Structure filenames may contain <, >, etc. which are invalid for GitHub artifacts)
         if [ -d ".verilib" ]; then
