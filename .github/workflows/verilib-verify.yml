@@ -118,8 +118,9 @@ jobs:
     needs: verify
     if: |
       inputs.deploy-enabled &&
-      github.event_name == 'push' &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' &&
+        (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')))
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
