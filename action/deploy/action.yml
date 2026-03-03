@@ -31,8 +31,9 @@ inputs:
     description: 'Verilib API key (from secrets)'
     required: true
   repo-id:
-    description: 'Verilib repository ID'
-    required: true
+    description: 'Verilib repository ID (optional if .verilib/config.json already contains repo.id)'
+    required: false
+    default: ''
   api-url:
     description: 'Verilib API base URL'
     required: false
@@ -82,7 +83,7 @@ runs:
           echo "verilib-cli already installed (from cache)"
         else
           echo "Installing verilib-cli..."
-          cargo install --force --git https://github.com/Beneficial-AI-Foundation/verilib-cli
+          cargo install --git https://github.com/Beneficial-AI-Foundation/verilib-cli
         fi
         verilib-cli --version || echo "verilib-cli installed"
 
@@ -115,7 +116,11 @@ runs:
           fi
         fi
 
-        # Create config.json with provided repo-id
+        if [ -z "$REPO_ID" ]; then
+          echo "::error::No repo-id provided and no existing .verilib/config.json with repo.id found. Provide the repo-id input or commit a .verilib/config.json with repo.id."
+          exit 1
+        fi
+
         jq -n \
           --arg id "$REPO_ID" \
           --arg url "$API_URL" \

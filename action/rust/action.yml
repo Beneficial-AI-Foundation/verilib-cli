@@ -72,7 +72,8 @@ runs:
           wget -q "$SCIP_URL" -O scip-linux.tar.gz
           tar -xzf scip-linux.tar.gz
           chmod +x scip
-          sudo mv scip /usr/local/bin/
+          mkdir -p "$HOME/.cargo/bin"
+          mv scip "$HOME/.cargo/bin/"
           scip --version
         fi
 

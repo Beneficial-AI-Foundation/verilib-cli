@@ -91,8 +91,12 @@ runs:
         fi
 
         if [ -z "$CARGO_TOML" ]; then
-          echo "::error::No Cargo.toml with [package.metadata.verus] found in $PROJECT_PATH or its subdirectories"
-          exit 1
+          if [ -n "${{ inputs.verus-version }}" ] && [ -n "${{ inputs.rust-version }}" ]; then
+            echo "No Cargo.toml with [package.metadata.verus] found, but verus-version and rust-version inputs are provided; skipping metadata discovery."
+          else
+            echo "::error::No Cargo.toml with [package.metadata.verus] found in $PROJECT_PATH or its subdirectories, and verus-version/rust-version inputs are not both provided"
+            exit 1
+          fi
         fi
 
         # Get Verus version
@@ -123,7 +127,7 @@ runs:
 
     # Step 2: Install Rust toolchain
     - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@master
+      uses: dtolnay/rust-toolchain@stable
       with:
         toolchain: ${{ steps.versions.outputs.rust_version }}
 
@@ -213,7 +217,8 @@ runs:
           wget -q "$SCIP_URL" -O scip-linux.tar.gz
           tar -xzf scip-linux.tar.gz
           chmod +x scip
-          sudo mv scip /usr/local/bin/
+          mkdir -p "$HOME/.cargo/bin"
+          mv scip "$HOME/.cargo/bin/"
           scip --version
         fi
 

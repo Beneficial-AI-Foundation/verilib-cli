@@ -53,7 +53,6 @@ This runs:
 | `mode` | Yes | `check` | Mode: `check` or `generate` |
 | `verus-version` | No | auto-detect | Verus version (e.g., `1.85.0`) |
 | `rust-version` | No | auto-detect | Rust toolchain version |
-| `functions-to-track` | No | `functions_to_track.csv` | Path to functions CSV (for generate mode) |
 | `token` | No | `github.token` | GitHub token for API calls |
 
 ## Outputs
@@ -63,7 +62,7 @@ This runs:
 | `verified-count` | Number of functions verified |
 | `total-functions` | Total number of tracked functions |
 | `results-path` | Path to `.verilib/` directory |
-| `results-archive` | Path to archived results (`verilib-results.tar.gz`) - use this for artifact upload |
+| `results-archive` | Path to archived results (tar.gz with run ID and timestamp) - use this for artifact upload |
 
 > **Note**: Use `results-archive` instead of `results-path` for artifact uploads. Function signatures may contain characters like `<` and `>` that are invalid for GitHub artifact paths.
 
@@ -116,8 +115,7 @@ jobs:
 
 - Linux runner (ubuntu-latest recommended)
 - Project must be a valid Verus/Rust project
-- `functions_to_track.csv` required for generate mode
-- You must either provide versions via inputs or include `[package.metadata.verus]` in Cargo.toml; if neither is provided, the action will fail with an error during setup.
+- You must either provide both `verus-version` and `rust-version` via inputs, or include `[package.metadata.verus]` in Cargo.toml; if neither is provided, the action will fail with an error during setup.
 
 ## License
 

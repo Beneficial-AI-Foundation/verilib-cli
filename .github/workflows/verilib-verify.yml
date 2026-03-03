@@ -71,10 +71,10 @@ jobs:
       - name: Run verilib verification
         id: verilib
         # NOTE: Update ref when tagging a release (e.g., @v1)
-        uses: beneficial-ai-foundation/verilib-cli/action@la/create_github_actions
+        uses: beneficial-ai-foundation/verilib-cli/action@main
         with:
           project-path: ${{ inputs.project-path }}
-          mode: ${{ inputs.mode || ((github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) && 'generate' || 'check') }}
+          mode: ${{ inputs.mode || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && 'generate' || 'check') }}
           verus-version: ${{ inputs.verus-version }}
           rust-version: ${{ inputs.rust-version }}
 
@@ -93,7 +93,7 @@ jobs:
           fi
 
       - name: Upload verilib artifacts
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v4
         with:
           name: verilib-results
@@ -112,9 +112,7 @@ jobs:
     needs: verify
     if: |
       inputs.deploy-enabled &&
-      (github.event_name == 'workflow_dispatch' ||
-       (github.event_name == 'push' &&
-        (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')))
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -122,7 +120,7 @@ jobs:
 
       - name: Deploy to verilib backend
         # NOTE: Update ref when tagging a release (e.g., @v1)
-        uses: beneficial-ai-foundation/verilib-cli/action/deploy@la/create_github_actions
+        uses: beneficial-ai-foundation/verilib-cli/action/deploy@main
         with:
           api-key: ${{ secrets.VERILIB_API_KEY }}
           repo-id: ${{ inputs.repo-id }}
