@@ -75,7 +75,7 @@ jobs:
           project-path: ${{ inputs.project-path }}
           # On push to main/master: generate mode
           # On PR: check mode
-          mode: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') ? 'generate' : 'check' }}
+          mode: ${{ (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) && 'generate' || 'check' }}
           verus-version: ${{ inputs.verus-version }}
           rust-version: ${{ inputs.rust-version }}
           functions-to-track: ${{ inputs.functions-to-track }}
