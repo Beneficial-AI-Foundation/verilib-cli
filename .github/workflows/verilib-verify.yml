@@ -70,7 +70,8 @@ jobs:
 
       - name: Run verilib verification
         id: verilib
-        uses: ./action
+        # NOTE: Update ref when tagging a release (e.g., @v1)
+        uses: beneficial-ai-foundation/verilib-cli/action@la/create_github_actions
         with:
           project-path: ${{ inputs.project-path }}
           # On push to main/master: generate mode
@@ -122,7 +123,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy to verilib backend
-        uses: ./action/deploy
+        # NOTE: Update ref when tagging a release (e.g., @v1)
+        uses: beneficial-ai-foundation/verilib-cli/action/deploy@la/create_github_actions
         with:
           api-key: ${{ secrets.VERILIB_API_KEY }}
           repo-id: ${{ inputs.repo-id }}
