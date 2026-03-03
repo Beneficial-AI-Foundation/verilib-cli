@@ -32,10 +32,6 @@ inputs:
     description: 'Rust toolchain version (default: auto-detect from Cargo.toml)'
     required: false
     default: ''
-  functions-to-track:
-    description: 'Path to functions_to_track.csv (default: functions_to_track.csv in project root)'
-    required: false
-    default: ''
   token:
     description: 'GitHub token for API calls (avoids rate limiting)'
     required: false
@@ -304,17 +300,6 @@ runs:
       working-directory: ${{ inputs.project-path }}
       run: |
         echo "=== Running verilib-cli in GENERATE mode ==="
-
-        # Check for functions_to_track.csv
-        FUNCTIONS_CSV="${{ inputs.functions-to-track }}"
-        if [ -z "$FUNCTIONS_CSV" ]; then
-          FUNCTIONS_CSV="functions_to_track.csv"
-        fi
-
-        if [ ! -f "$FUNCTIONS_CSV" ]; then
-          echo "::error::$FUNCTIONS_CSV not found. This file is required for the create step."
-          exit 1
-        fi
 
         echo "Step 1: Create structure..."
         verilib-cli create

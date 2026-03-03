@@ -35,11 +35,6 @@ on:
         required: false
         type: string
         default: ''
-      functions-to-track:
-        description: 'Path to functions_to_track.csv'
-        required: false
-        type: string
-        default: ''
       deploy-enabled:
         description: 'Enable deployment to verilib backend after verification (requires VERILIB_API_KEY secret and repo-id)'
         required: false
@@ -82,7 +77,6 @@ jobs:
           mode: ${{ inputs.mode || ((github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) && 'generate' || 'check') }}
           verus-version: ${{ inputs.verus-version }}
           rust-version: ${{ inputs.rust-version }}
-          functions-to-track: ${{ inputs.functions-to-track }}
 
       - name: Create summary
         run: |
