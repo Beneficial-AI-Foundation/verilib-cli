@@ -272,7 +272,7 @@ verilib-cli verify --verify-only-module my_module
 | Option | Description |
 |--------|-------------|
 | `--verify-only-module <name>` | Only verify functions in this module |
-| `-n, --no-probe` | Skip running probe-verus verify and read existing proofs.json |
+| `-n, --no-probe` | Skip running probe-verus extract and read existing proofs.json |
 | `-c, --check-only` | Check if any stub has status "failure", error if any are found |
 
 ---
@@ -392,7 +392,7 @@ Workflow for server environments where `probe-verus` runs separately in job queu
 # probe-verus commands run separately in Docker containers:
 #   probe-verus atomize ... -o .verilib/atoms.json
 #   probe-verus specify ... -o .verilib/specs.json
-#   probe-verus verify ... -o .verilib/proofs.json
+#   probe-verus extract ... -o .verilib/proofs.json
 
 # Step 1: Verify structure files match atoms.json
 verilib-cli atomize --no-probe --check-only

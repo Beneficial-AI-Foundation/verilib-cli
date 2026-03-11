@@ -45,7 +45,7 @@ pub async fn handle_verify(
         return check_for_failures(&stubs);
     }
 
-    // Run probe-verus verify or load from existing file
+    // Run probe-verus extract or load from existing file
     let proofs_path = config.verilib_path().join("proofs.json");
     let proofs_data = if no_probe {
         load_proofs_from_file(&proofs_path)?
@@ -227,7 +227,7 @@ fn load_proofs_from_file(proofs_path: &Path) -> Result<HashMap<String, Value>> {
     Ok(proofs)
 }
 
-/// Run probe-verus verify and return the results.
+/// Run probe-verus extract and return the results.
 fn run_probe_verify(
     project_root: &Path,
     proofs_path: &Path,
@@ -241,7 +241,7 @@ fn run_probe_verify(
     }
 
     let mut args = vec![
-        "verify",
+        "extract",
         ".",
         "-o",
         proofs_path
@@ -266,13 +266,13 @@ fn run_probe_verify(
         args.push("--verify-only-module");
         args.push(module);
         println!(
-            "Running probe-verus verify on {} (module: {})...",
+            "Running probe-verus extract on {} (module: {})...",
             project_root.display(),
             module
         );
     } else {
         println!(
-            "Running probe-verus verify on {}...",
+            "Running probe-verus extract on {}...",
             project_root.display()
         );
     }
@@ -295,7 +295,7 @@ fn run_probe_verify(
     // produces a valid proofs.json. Only bail if it didn't write the file.
     if !proofs_path.exists() {
         bail!(
-            "probe-verus verify failed (exit code: {:?}) and no results were produced",
+            "probe-verus extract failed (exit code: {:?}) and no results were produced",
             output.status.code()
         );
     }

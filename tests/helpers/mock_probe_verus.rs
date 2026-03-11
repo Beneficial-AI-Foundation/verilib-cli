@@ -24,7 +24,7 @@ fn main() {
         "stubify" => "stubs.json",
         "atomize" => "atoms.json",
         "specify" => "specs.json",
-        "verify" => "proofs.json",
+        "extract" => "proofs.json",
         _ => {
             eprintln!("mock-probe-verus: unknown subcommand '{}'", subcommand);
             process::exit(1);
