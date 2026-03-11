@@ -360,7 +360,7 @@ A `config.json` file in the `.verilib` folder with:
 }
 ```
 
-**proofs.json** (output of `probe-verus verify`):
+**proofs.json** (output of `probe-verus extract`):
 
 ```json
 {

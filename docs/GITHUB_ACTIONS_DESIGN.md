@@ -26,7 +26,7 @@ verilib-cli is a CLI tool for managing Verus verification workflows. It provides
 | **probe-verus** | Low-level Verus analysis | `atoms.json`, `specs.json`, `proofs.json` |
 | **verilib-cli** | State management + backend sync | `.md` stubs, cert files, backend updates |
 
-probe-verus already has a GitHub Action (`beneficial-ai-foundation/probe-verus/action@v1`) that runs `atomize` + `verify` and outputs JSON results.
+probe-verus already has a GitHub Action (`beneficial-ai-foundation/probe-verus/action@v4`) that runs `atomize` + `run-verus` and outputs JSON results.
 
 verilib-cli adds:
 - Human-trackable `.md` stub files

@@ -108,7 +108,7 @@ pub enum Commands {
         #[arg(long)]
         verify_only_module: Option<String>,
 
-        /// Skip running probe-verus verify and read proofs.json from disk
+        /// Skip running probe-verus extract and read proofs.json from disk
         #[arg(short = 'n', long)]
         no_probe: bool,
 
