@@ -1,5 +1,3 @@
-#![allow(dead_code)] // WIP: not yet wired into CLI — see https://github.com/Beneficial-AI-Foundation/verilib-cli/issues/36
-
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 

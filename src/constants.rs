@@ -1,5 +1,13 @@
 pub const DEFAULT_BASE_URL: &str = "https://verilib.org";
 
+/// Resolve API base URL: CLI flag → `VERILIB_BASE_URL` env → config URL → default.
+pub fn resolve_base_url(url_override: Option<String>, config_url: Option<&str>) -> String {
+    url_override
+        .or_else(|| std::env::var("VERILIB_BASE_URL").ok())
+        .or_else(|| config_url.map(|s| s.to_string()))
+        .unwrap_or_else(|| DEFAULT_BASE_URL.to_string())
+}
+
 // CLI binary name - could also get this from env!("CARGO_PKG_NAME")
 pub const CLI_NAME: &str = env!("CARGO_PKG_NAME");
 

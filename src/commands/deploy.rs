@@ -1,5 +1,3 @@
-#![allow(dead_code)] // WIP: not yet wired into CLI — see https://github.com/Beneficial-AI-Foundation/verilib-cli/issues/36
-
 use anyhow::{Context, Result};
 use dialoguer::Select;
 use regex::Regex;
@@ -15,7 +13,7 @@ use std::path::{Path, PathBuf};
 use super::types::{DeployNode, DeployResponse, VerifierVersionsResponse, LANGUAGES, TYPES};
 use crate::commands::status::get_stored_api_key;
 use crate::config::{ProjectConfig, RepoConfig};
-use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
+use crate::constants::{auth_required_msg, resolve_base_url};
 use crate::download::handle_api_error;
 
 #[derive(Debug, Clone, Copy)]
@@ -33,7 +31,10 @@ pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
 
     let api_key = get_stored_api_key().context(auth_required_msg())?;
 
-    let url_base = url.unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
+    let project_root = PathBuf::from(".");
+    let config = ProjectConfig::load(&project_root)?;
+    let config_url = config.repo.as_ref().map(|r| r.url.as_str());
+    let url_base = resolve_base_url(url, config_url);
 
     let repo_id = read_repo_id_from_config()?;
 

@@ -8,7 +8,7 @@ use std::process::Command;
 
 use crate::commands::deploy::collect_deploy_info_with_path;
 use crate::commands::status::get_stored_api_key;
-use crate::constants::{auth_required_msg, DEFAULT_BASE_URL};
+use crate::constants::{auth_required_msg, resolve_base_url};
 use crate::download::handle_api_error;
 use crate::structure::{create_gitignore, ExecutionMode};
 
@@ -25,7 +25,7 @@ struct CreateRepoData {
 pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -> Result<()> {
     let api_key = get_stored_api_key().context(auth_required_msg())?;
 
-    let url_base = url.unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
+    let url_base = resolve_base_url(url, None);
 
     let repo_id = if let Some(repo_id) = id {
         println!("Initializing project with repository ID: {}", repo_id);

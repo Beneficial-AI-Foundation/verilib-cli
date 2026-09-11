@@ -406,7 +406,29 @@ verilib-cli verify --no-probe --check-only
 
 ---
 
+## Cursor MCP (agents)
+
+An MCP server in [`mcp/`](mcp/) exposes `verilib-cli` commands as tools for Cursor and other MCP clients.
+
+```bash
+cd mcp && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+```
+
+Copy [`mcp/cursor-mcp.example.json`](mcp/cursor-mcp.example.json) into `~/.cursor/mcp.json` (adjust absolute paths), reload MCP, then ask the agent to use `verilib_*` tools. See [mcp/README.md](mcp/README.md).
+
+---
+
 ## Configuration
+
+### API base URL
+
+Override the default production API (`https://verilib.org`) for demo or staging:
+
+```bash
+export VERILIB_BASE_URL=https://your-verilib-host.example.com
+```
+
+CLI flags `--url` on `init`, `deploy`, and `pull` take precedence over this variable.
 
 ### API Key Storage
 
