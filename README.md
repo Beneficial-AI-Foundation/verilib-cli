@@ -183,6 +183,8 @@ verilib-cli reclone
 
 Commands for managing verification structure files. These integrate with `probe-verus` for static analysis.
 
+> **Language support:** structure commands (`create`, `atomize`, `specify`, `verify`) work **only for Verus/Rust projects**, since they depend on `probe-verus`. Repository commands (`init`, `pull`, `deploy`, `api`, `reclone`) are language-agnostic and work with all platform languages (Dafny, Lean, Rocq, Isabelle, Metamath, Rust, RefinedC, Python, Kani, Verus) — `deploy` auto-detects the language from file extensions and falls back to an interactive picker.
+
 ### Prerequisites
 
 1. **Install proof tools** (Verus, Verus Analyzer, SCIP):
