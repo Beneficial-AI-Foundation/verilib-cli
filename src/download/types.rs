@@ -87,8 +87,3 @@ pub struct RepoInfo {
     #[allow(dead_code)]
     pub id: String,
 }
-
-#[derive(Debug, Deserialize)]
-pub struct AtomizationStatusResponse {
-    pub status_id: String,
-}

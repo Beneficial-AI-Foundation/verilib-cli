@@ -47,7 +47,11 @@ pub async fn handle_pull(url: Option<String>, debug: bool) -> Result<()> {
     println!("Creating files and folders...");
 
     let base_path = PathBuf::from(".verilib");
-    process_tree(&download_data.data.tree, &base_path, &download_data.data.layouts)?;
+    process_tree(
+        &download_data.data.tree,
+        &base_path,
+        &download_data.data.layouts,
+    )?;
 
     println!("Repository successfully pulled!");
 

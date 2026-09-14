@@ -100,10 +100,7 @@ fn map_api_command(command: ApiCommands) -> Result<ApiSubcommand> {
             file: PathBuf::from(file),
         }),
         ApiCommands::List { filter } => {
-            let parsed = filter
-                .as_deref()
-                .map(parse_status_filter)
-                .transpose()?;
+            let parsed = filter.as_deref().map(parse_status_filter).transpose()?;
             Ok(ApiSubcommand::List { filter: parsed })
         }
         ApiCommands::Set {
@@ -147,7 +144,10 @@ fn parse_status_filter(value: &str) -> Result<StatusFilter> {
         "specified" => Ok(StatusFilter::Specified),
         "ignored" => Ok(StatusFilter::Ignored),
         "verified" => Ok(StatusFilter::Verified),
-        other => anyhow::bail!("Unknown filter '{}'. Use: specified, ignored, verified", other),
+        other => anyhow::bail!(
+            "Unknown filter '{}'. Use: specified, ignored, verified",
+            other
+        ),
     }
 }
 

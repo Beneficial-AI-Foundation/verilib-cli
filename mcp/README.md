@@ -2,6 +2,12 @@
 
 Python [MCP](https://modelcontextprotocol.io/) server that wraps `verilib-cli` for AI agents in Cursor (and other MCP clients).
 
+## Requirements
+
+- Python 3.10+ (macOS: `brew install python` or Xcode CLT python3)
+- `mcp` SDK **2.x** (the server uses `mcp.server.mcpserver.MCPServer`, introduced in 2.0)
+- `verilib-cli` binary in `~/.cargo/bin` or on `PATH`
+
 ## Setup
 
 1. Install `verilib-cli` (release binary or `cargo install --path ..`).
@@ -44,3 +50,5 @@ python3 -m venv .venv
 ```bash
 python3 mcp/cli.py status
 ```
+
+Note: `--url` is forwarded as a CLI flag only for `pull` and `deploy`; for `reclone` and `create` it is applied via the `VERILIB_BASE_URL` environment variable.

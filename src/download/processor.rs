@@ -2,13 +2,13 @@ use anyhow::{Context, Result};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::Path;
 
 use super::types::{Layout, TreeNode};
 
 pub fn process_tree(
     nodes: &[TreeNode],
-    base_path: &PathBuf,
+    base_path: &Path,
     layouts: &HashMap<String, Layout>,
 ) -> Result<()> {
     for node in nodes {
@@ -19,7 +19,7 @@ pub fn process_tree(
 
 fn process_node(
     node: &TreeNode,
-    current_path: &PathBuf,
+    current_path: &Path,
     layouts: &HashMap<String, Layout>,
 ) -> Result<()> {
     match node.statement_type.as_str() {

@@ -50,7 +50,8 @@ def main() -> int:
         result = run_cli(cmd, cwd=args.cwd, extra_env=env or None)
     elif args.cmd in ("pull", "deploy", "reclone", "create"):
         cmd = [args.cmd]
-        if getattr(args, "url", None):
+        # Only pull/deploy accept --url; reclone/create pick up VERILIB_BASE_URL from env.
+        if args.cmd in ("pull", "deploy") and getattr(args, "url", None):
             cmd.extend(["--url", args.url])
         result = run_cli(cmd, cwd=args.cwd, extra_env=env or None)
     elif args.cmd == "atomize":

@@ -25,6 +25,7 @@ This is a Rust CLI tool for managing Verilib verification repositories. The code
 - **`src/download/`** - HTTP client layer for Verilib API interactions
 - **`src/storage/`** - Credential storage abstraction with platform-specific backends (keyring, file)
 - **`src/structure/`** - Verification structure file management, merged from verilib-structure
+- **`mcp/`** - Python MCP server (mcp SDK 2.x) exposing CLI commands as tools for Cursor agents; see `mcp/README.md`
 
 ### Key Patterns
 
