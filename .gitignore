@@ -1,3 +1,6 @@
 /target
 .DS_Store
 /.verilib
+/mcp/.venv
+__pycache__/
+testing-guide.html

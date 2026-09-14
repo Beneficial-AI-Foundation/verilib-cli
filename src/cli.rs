@@ -39,6 +39,23 @@ pub enum Commands {
     },
     /// Reclone repository after checking for uncommitted changes
     Reclone,
+    /// Push local repository / structure changes to the server
+    Deploy {
+        /// API base URL (defaults to config / VERILIB_BASE_URL / production)
+        #[arg(long)]
+        url: Option<String>,
+    },
+    /// Pull the latest repository structure from the server
+    Pull {
+        /// API base URL (defaults to config / VERILIB_BASE_URL / production)
+        #[arg(long)]
+        url: Option<String>,
+    },
+    /// Manage local .verilib metadata files
+    Api {
+        #[command(subcommand)]
+        command: ApiCommands,
+    },
     // ===== Structure Commands (merged from verilib-structure) =====
     /// Initialize structure files from source analysis
     Create {

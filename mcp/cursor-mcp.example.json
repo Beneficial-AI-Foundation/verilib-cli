@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "verilib-cli": {
+      "command": "/ABSOLUTE/PATH/TO/verilib-cli/mcp/.venv/bin/python",
+      "args": ["-m", "verilib_cli_mcp"],
+      "cwd": "/ABSOLUTE/PATH/TO/verilib-cli/mcp",
+      "env": {
+        "PYTHONPATH": "/ABSOLUTE/PATH/TO/verilib-cli/mcp/lib",
+        "VERILIB_BASE_URL": "https://verilib.org"
+      }
+    }
+  }
+}
