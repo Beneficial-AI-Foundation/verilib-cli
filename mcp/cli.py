@@ -68,7 +68,7 @@ def main() -> int:
         return 1
 
     print(json.dumps(result, indent=2))
-    return 0 if result.get("ok") else result.get("exit_code", 1)
+    return 0 if result.get("ok") else (result.get("exit_code") or 1)
 
 
 if __name__ == "__main__":

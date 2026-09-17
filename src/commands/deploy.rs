@@ -23,10 +23,16 @@ enum ChangeDecision {
     NoToAll,
 }
 
-pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
-    println!("Preparing deployment...");
+pub async fn handle_deploy(
+    url: Option<String>,
+    debug: bool,
+    options: crate::cli::WaitOptions,
+    yes: bool,
+    json_output: bool,
+) -> Result<()> {
+    eprintln!("Preparing deployment...");
     if debug {
-        println!("Debug mode: {}", debug);
+        eprintln!("Debug mode: {}", debug);
     }
 
     let api_key = get_stored_api_key().context(auth_required_msg())?;
@@ -37,26 +43,43 @@ pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
     let url_base = resolve_base_url(url, config_url);
 
     let repo_id = read_repo_id_from_config()?;
+    use std::io::IsTerminal;
+    let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(options.timeout);
+    if let Some(id) = &repo_id {
+        super::repo::validate_id(id)?;
+    }
+    if repo_id.is_none() && (json_output || yes || options.wait || !io::stdin().is_terminal()) {
+        anyhow::bail!("Run 'repo create' or 'init --id' first; non-interactive deploy requires a bound repository");
+    }
+    if options.wait {
+        let api = super::repo::Api::authenticated(&url_base)?;
+        api.wait(repo_id.as_deref().unwrap(), &options, deadline)
+            .await?;
+    }
 
     let deploy_info = match &repo_id {
         None => {
-            println!("New repository - collecting deployment information...");
+            eprintln!("New repository - collecting deployment information...");
             Some(collect_deploy_info(&url_base, &api_key, debug).await?)
         }
         Some(id) => {
-            println!("Updating existing repository (ID: {})...", id);
+            eprintln!("Updating existing repository (ID: {})...", id);
             None
         }
     };
 
-    println!("\nScanning .verilib directory...");
+    eprintln!("\nScanning .verilib directory...");
 
     let verilib_path = PathBuf::from(".verilib");
     if !verilib_path.exists() {
         anyhow::bail!("No .verilib directory found. Please run 'init' first.");
     }
 
-    let mut decision = ChangeDecision::Ask;
+    let mut decision = if yes {
+        ChangeDecision::YesToAll
+    } else {
+        ChangeDecision::Ask
+    };
     let mut has_changes = false;
     let tree = build_tree(
         &verilib_path,
@@ -71,13 +94,13 @@ pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
             .context("Failed to serialize tree for debugging")?;
         fs::write(".verilib/debug_deploy_tree.json", &tree_json)
             .context("Failed to write debug tree file")?;
-        println!("Debug: Tree saved to .verilib/debug_deploy_tree.json");
+        eprintln!("Debug: Tree saved to .verilib/debug_deploy_tree.json");
 
         let layouts_json = serde_json::to_string_pretty(&layouts)
             .context("Failed to serialize layouts for debugging")?;
         fs::write(".verilib/debug_deploy_layouts.json", &layouts_json)
             .context("Failed to write debug layouts file")?;
-        println!("Debug: Layouts saved to .verilib/debug_deploy_layouts.json");
+        eprintln!("Debug: Layouts saved to .verilib/debug_deploy_layouts.json");
     }
 
     let mut payload = serde_json::json!({
@@ -113,40 +136,20 @@ pub async fn handle_deploy(url: Option<String>, debug: bool) -> Result<()> {
         format!("{}/v2/repo/deploy", url_base)
     };
 
-    println!("\nDeploying to {}...", endpoint);
+    eprintln!("\nDeploying to {}...", endpoint);
 
-    let client = Client::new();
-    let response = client
-        .post(&endpoint)
-        .header("Authorization", format!("ApiKey {}", api_key))
-        .header("Content-Type", "application/json")
-        .json(&payload)
-        .send()
-        .await
-        .context("Failed to send deploy request")?;
-
-    let status = response.status();
-
-    if !status.is_success() {
-        let error_msg = handle_api_error(response).await?;
-        anyhow::bail!(error_msg);
-    }
-
-    let response_text = response
-        .text()
-        .await
-        .context("Failed to read response body")?;
-
-    if debug {
-        println!("Debug: API response: {}", response_text);
-    }
-
-    let deploy_response: DeployResponse =
-        serde_json::from_str(&response_text).context("Failed to parse deploy response")?;
+    let api = super::repo::Api::new(&url_base, api_key)?;
+    let deploy_response = api.deploy(repo_id.as_deref(), &payload, deadline).await?;
 
     save_config_from_response(&deploy_response, &url_base).context("Failed to save config file")?;
 
-    println!("Deployment successful!");
+    super::repo::render(
+        &serde_json::json!({"ok":true, "state":"deployed",
+        "repo_id":deploy_response.data.id.to_string(),
+        "repository_url":super::repo::browser_url(&url_base, &deploy_response.data.id.to_string()),
+        "metadata_deployment":"deployed from local .verilib", "source":"cloned remotely from Git, not uploaded by deploy"}),
+        json_output,
+    )?;
 
     Ok(())
 }
@@ -174,16 +177,19 @@ fn save_config_from_response(response_data: &DeployResponse, base_url: &str) -> 
 
     config.save(&project_root)?;
 
-    println!("Config saved to .verilib/config.json");
-    println!("Repository ID: {}", response_data.data.id);
-    println!("Repository URL: {}", base_url);
+    eprintln!("Config saved to .verilib/config.json");
+    eprintln!("Repository ID: {}", response_data.data.id);
+    eprintln!(
+        "Repository URL: {}",
+        super::repo::browser_url(base_url, &repo_id_str)
+    );
     Ok(())
 }
 
 fn detect_language_in_path(search_path: &PathBuf, debug: bool) -> Option<u32> {
     let full_path = std::fs::canonicalize(search_path).unwrap_or_else(|_| search_path.clone());
     if debug {
-        println!(
+        eprintln!(
             "Debug: Scanning for language detection in directory: {}",
             full_path.display()
         );
@@ -191,7 +197,7 @@ fn detect_language_in_path(search_path: &PathBuf, debug: bool) -> Option<u32> {
 
     for language in LANGUAGES {
         if debug {
-            println!(
+            eprintln!(
                 "Debug: Checking for {} with extensions: {:?}",
                 language.name, language.extensions
             );
@@ -199,7 +205,7 @@ fn detect_language_in_path(search_path: &PathBuf, debug: bool) -> Option<u32> {
         for ext in language.extensions {
             if find_files_with_extension(search_path, ext, debug) {
                 if debug {
-                    println!("Debug: Found {} file with extension {}", language.name, ext);
+                    eprintln!("Debug: Found {} file with extension {}", language.name, ext);
                 }
                 return Some(language.id);
             }
@@ -207,7 +213,7 @@ fn detect_language_in_path(search_path: &PathBuf, debug: bool) -> Option<u32> {
     }
 
     if debug {
-        println!("Debug: No matching language detected");
+        eprintln!("Debug: No matching language detected");
     }
     None
 }
@@ -230,7 +236,7 @@ fn find_files_with_extension(dir: &Path, extension: &str, debug: bool) -> bool {
                     || dir_name.ends_with(&format!(".{}", ext_without_dot))
                 {
                     if debug {
-                        println!(
+                        eprintln!(
                             "Debug: Found matching directory: {} with extension {}",
                             dir_name, extension
                         );
@@ -247,7 +253,7 @@ fn find_files_with_extension(dir: &Path, extension: &str, debug: bool) -> bool {
                     let ext_without_dot = extension.trim_start_matches('.');
                     if file_ext_str == ext_without_dot {
                         if debug {
-                            println!(
+                            eprintln!(
                                 "Debug: Found matching file: {} with extension {}",
                                 file_name, extension
                             );
@@ -299,7 +305,7 @@ async fn fetch_verifier_versions(
     let endpoint = format!("{}/v2/verifier/versions/{}", base_url, proof_id);
 
     if debug {
-        println!("Debug: Fetching verifier versions from: {}", endpoint);
+        eprintln!("Debug: Fetching verifier versions from: {}", endpoint);
     }
 
     let client = Client::new();
@@ -312,13 +318,13 @@ async fn fetch_verifier_versions(
         .context("Failed to fetch verifier versions")?;
 
     if debug {
-        println!("Debug: Response status: {}", response.status());
+        eprintln!("Debug: Response status: {}", response.status());
     }
 
     if !response.status().is_success() {
         let error_msg = handle_api_error(response).await?;
         if debug {
-            println!("Debug: Request failed - {}", error_msg);
+            eprintln!("Debug: Request failed - {}", error_msg);
         }
         return Ok(None);
     }
@@ -329,19 +335,19 @@ async fn fetch_verifier_versions(
         .context("Failed to read response body")?;
 
     if debug {
-        println!("Debug: Response body: {}", response_text);
+        eprintln!("Debug: Response body: {}", response_text);
     }
 
     let versions_response: VerifierVersionsResponse = serde_json::from_str(&response_text)
         .context("Failed to parse verifier versions response")?;
 
     if debug {
-        println!("Debug: Found {} versions", versions_response.data.len());
+        eprintln!("Debug: Found {} versions", versions_response.data.len());
     }
 
     if versions_response.data.is_empty() {
         if debug {
-            println!("Debug: No versions available");
+            eprintln!("Debug: No versions available");
         }
         return Ok(None);
     }
@@ -377,28 +383,30 @@ fn prompt_type() -> Result<u32> {
 
 fn prompt_summary() -> Result<String> {
     loop {
-        println!("\nEnter summary (max 128 characters, required):");
+        eprintln!("\nEnter summary (max 128 characters, required):");
         print!("> ");
         io::stdout().flush()?;
 
         let mut input = String::new();
-        io::stdin().read_line(&mut input)?;
+        if io::stdin().read_line(&mut input)? == 0 {
+            anyhow::bail!("No input: use 'repo create' for non-interactive repository creation");
+        }
         let input = input.trim().to_string();
 
         if input.is_empty() {
-            println!("Summary cannot be empty. Please try again.");
+            eprintln!("Summary cannot be empty. Please try again.");
             continue;
         }
 
         if input.chars().all(|c| c.is_whitespace()) {
-            println!("Summary cannot contain only whitespace. Please try again.");
+            eprintln!("Summary cannot contain only whitespace. Please try again.");
             continue;
         }
 
-        if input.len() > 128 {
-            println!(
+        if input.chars().count() > 128 {
+            eprintln!(
                 "Summary must be 128 characters or less (current: {}). Please try again.",
-                input.len()
+                input.chars().count()
             );
             continue;
         }
@@ -408,18 +416,20 @@ fn prompt_summary() -> Result<String> {
 }
 
 fn prompt_description() -> Result<Option<String>> {
-    println!("\nEnter description (optional, press Enter to skip):");
-    print!("> ");
-    io::stdout().flush()?;
-
-    let mut input = String::new();
-    io::stdin().read_line(&mut input)?;
-    let input = input.trim().to_string();
-
-    if input.is_empty() {
-        Ok(None)
-    } else {
-        Ok(Some(input))
+    loop {
+        eprintln!("\nEnter description (max 512 characters, optional, Enter to skip):");
+        print!("> ");
+        io::stdout().flush()?;
+        let mut input = String::new();
+        if io::stdin().read_line(&mut input)? == 0 {
+            anyhow::bail!("No input: use 'repo create' for non-interactive repository creation");
+        }
+        let input = input.trim().to_string();
+        if let Some(error) = super::metadata::field_error("description", &input, 512, false) {
+            eprintln!("{error}");
+            continue;
+        }
+        return Ok(if input.is_empty() { None } else { Some(input) });
     }
 }
 
@@ -446,6 +456,7 @@ pub async fn collect_deploy_info_with_path(
 
     let summary = prompt_summary()?;
     let description = prompt_description()?;
+    super::metadata::validate(&summary, description.as_deref())?;
     let type_id = prompt_type()?;
 
     Ok((
@@ -585,8 +596,12 @@ fn build_tree(
                         ChangeDecision::YesToAll => true,
                         ChangeDecision::NoToAll => false,
                         ChangeDecision::Ask => {
-                            println!("\nFile has been modified: {}", identifier);
-                            println!("   Current file differs from the stored version.");
+                            use std::io::IsTerminal;
+                            if !io::stdin().is_terminal() {
+                                anyhow::bail!("Edited content requires consent. Use deploy --yes after approving the changes");
+                            }
+                            eprintln!("\nFile has been modified: {}", identifier);
+                            eprintln!("   Current file differs from the stored version.");
 
                             let options = vec![
                                 "Yes - Deploy edited content (triggers re-snippetization for entire repository)",

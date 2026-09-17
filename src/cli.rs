@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -30,17 +30,39 @@ pub enum Commands {
     Status,
     /// Initialize project with repository tree
     Init {
-        /// Repository ID to fetch
+        #[arg(long, value_enum)]
+        execution_mode: Option<Mode>,
+        #[command(flatten)]
+        wait: WaitOptions,
+        /// Repository ID to bind (does not download source)
+
         #[arg(long)]
         id: Option<String>,
         /// API base URL (defaults to production)
         #[arg(long)]
         url: Option<String>,
     },
+    /// Create or inspect a remote repository (not local structure generation)
+    Repo {
+        #[command(subcommand)]
+        command: RepoCommands,
+    },
+    /// Wait for server-side upload/atomization using the existing logs API
+    WaitForReady {
+        #[command(flatten)]
+        target: RepoTarget,
+        #[command(flatten)]
+        options: WaitOptions,
+    },
     /// Reclone repository after checking for uncommitted changes
     Reclone,
     /// Push local repository / structure changes to the server
     Deploy {
+        #[command(flatten)]
+        wait: WaitOptions,
+        /// Accept edited .verilib content without interactive prompts
+        #[arg(long)]
+        yes: bool,
         /// API base URL (defaults to config / VERILIB_BASE_URL / production)
         #[arg(long)]
         url: Option<String>,
@@ -132,6 +154,81 @@ pub enum Commands {
         /// Check if any stub has status "failure", error if any are found
         #[arg(short = 'c', long)]
         check_only: bool,
+    },
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+pub enum Mode {
+    Local,
+    Docker,
+}
+
+impl From<Mode> for crate::executor::ExecutionMode {
+    fn from(mode: Mode) -> Self {
+        match mode {
+            Mode::Local => Self::Local,
+            Mode::Docker => Self::Docker,
+        }
+    }
+}
+
+#[derive(Clone, Args)]
+pub struct WaitOptions {
+    /// Wait for remote upload and atomization (not proof verification)
+    #[arg(long)]
+    pub wait: bool,
+    /// Overall wait/request deadline in seconds; timeout does not cancel server work
+    #[arg(long, default_value_t = 600, value_parser = clap::value_parser!(u64).range(1..=86400))]
+    pub timeout: u64,
+    /// Seconds between status requests
+    #[arg(long, default_value_t = 5, value_parser = clap::value_parser!(u64).range(1..=3600))]
+    pub poll_interval: u64,
+}
+
+#[derive(Args)]
+pub struct RepoTarget {
+    /// Repository ID; defaults to .verilib/config.json
+    #[arg(long)]
+    pub id: Option<String>,
+    #[arg(long)]
+    pub url: Option<String>,
+}
+
+#[derive(Args)]
+pub struct RepoCreate {
+    /// HTTP(S) Git URL, optionally suffixed with @branch
+    #[arg(long)]
+    pub git_url: String,
+    /// Required summary, at most 128 Unicode characters
+    #[arg(long)]
+    pub summary: String,
+    /// Optional description, at most 512 Unicode characters
+    #[arg(long)]
+    pub description: Option<String>,
+    #[arg(long, value_parser = clap::value_parser!(u32).range(1..=11))]
+    pub language_id: u32,
+    #[arg(long, value_parser = clap::value_parser!(u32).range(1..))]
+    pub prooflanguage_id: u32,
+    #[arg(long, value_parser = clap::value_parser!(u32).range(1..))]
+    pub type_id: u32,
+    #[arg(long, value_parser = clap::value_parser!(u32).range(1..))]
+    pub verifierversion_id: Option<u32>,
+    #[arg(long)]
+    pub url: Option<String>,
+    #[arg(long, value_enum, default_value = "local")]
+    pub execution_mode: Mode,
+    #[command(flatten)]
+    pub options: WaitOptions,
+}
+
+#[derive(Subcommand)]
+pub enum RepoCommands {
+    Create(RepoCreate),
+    Status {
+        #[command(flatten)]
+        target: RepoTarget,
+        #[command(flatten)]
+        options: WaitOptions,
     },
 }
 

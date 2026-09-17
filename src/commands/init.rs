@@ -22,15 +22,31 @@ struct CreateRepoData {
     id: u32,
 }
 
-pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -> Result<()> {
-    let api_key = get_stored_api_key().context(auth_required_msg())?;
-
+pub async fn handle_init(
+    id: Option<String>,
+    url: Option<String>,
+    debug: bool,
+    mode: Option<crate::cli::Mode>,
+    options: crate::cli::WaitOptions,
+    json_output: bool,
+) -> Result<()> {
+    use std::io::IsTerminal;
+    if id.is_none() && (json_output || !std::io::stdin().is_terminal()) {
+        anyhow::bail!("Use 'repo create' with explicit metadata for non-interactive creation");
+    }
+    // Resolve all prompts BEFORE the create request; a failed prompt must not lose the repo ID.
+    let execution_mode = match mode {
+        Some(mode) => mode.into(),
+        None if json_output || !std::io::stdin().is_terminal() => ExecutionMode::Local,
+        None => prompt_execution_mode()?,
+    };
     let url_base = resolve_base_url(url, None);
 
     let repo_id = if let Some(repo_id) = id {
-        println!("Initializing project with repository ID: {}", repo_id);
+        super::repo::validate_id(&repo_id)?;
         repo_id
     } else {
+        let api_key = get_stored_api_key().context(auth_required_msg())?;
         let git_url = prompt_git_url()?;
 
         println!("Creating new repository from git URL: {}", git_url);
@@ -43,13 +59,24 @@ pub async fn handle_init(id: Option<String>, url: Option<String>, debug: bool) -
         repo_id
     };
 
-    let execution_mode = prompt_execution_mode()?;
-
     fs::create_dir_all(".verilib").context("Failed to create .verilib directory")?;
-
-    save_config(&repo_id, &url_base, true, execution_mode)?;
-
-    Ok(())
+    save_config(&repo_id, &url_base, true, execution_mode).with_context(|| {
+        format!("Could not bind repo {repo_id}; reuse this ID, do not create another repository")
+    })?;
+    let mut result = serde_json::json!({"repo_id":repo_id, "state":"initialized",
+        "repository_url":super::repo::browser_url(&url_base, &repo_id),
+        "metadata_deployment":"not_performed", "next_action":"wait-for-ready before deploy"});
+    if options.wait {
+        let api = super::repo::Api::authenticated(&url_base)?;
+        result["readiness"] = api
+            .wait(
+                &repo_id,
+                &options,
+                tokio::time::Instant::now() + std::time::Duration::from_secs(options.timeout),
+            )
+            .await?;
+    }
+    super::repo::render(&result, json_output)
 }
 
 fn prompt_execution_mode() -> Result<ExecutionMode> {
@@ -220,7 +247,7 @@ async fn create_repo_from_git_url(
     Ok(create_response.data.id.to_string())
 }
 
-fn save_config(
+pub(super) fn save_config(
     repo_id: &str,
     base_url: &str,
     is_admin: bool,
