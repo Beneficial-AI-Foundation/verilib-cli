@@ -151,8 +151,36 @@ When creating a new repository (no `--id`), the CLI will:
 3. Collect metadata (language, proof language, summary)
 4. Create repository and save ID locally
 
+### Non-interactive create, status and wait
+
+```bash
+# Bind an existing repo without prompts (no source download)
+verilib-cli init --id 42 --execution-mode local --json
+
+# Create from Git; required IDs use the existing server catalogs
+verilib-cli repo create --git-url https://github.com/example/repo \
+  --summary "Example" --description "Short description" \
+  --language-id 2 --prooflanguage-id 2 --type-id 8 --wait --json
+
+verilib-cli repo status --json                 # ID/base from .verilib/config.json
+verilib-cli repo status --id 42 --url https://verilib.org
+verilib-cli wait-for-ready --timeout 600 --poll-interval 5 --json
+verilib-cli deploy --wait --yes --json         # Only after approving local edits
+```
+
+- `repo create` is **remote repository creation**; existing `create` still generates local structure stubs.
+- `--summary` is required, max **128 Unicode characters**; `--description` is optional, max **512**. Validation reports `field`, `code`, `actual_length`, `max_length` before sending. Required IDs: language 1–11, proof language/type positive integers; optional `--verifierversion-id` is a positive integer. Server validates catalog membership. Git URLs must be HTTP(S), without embedded credentials; existing `@branch` syntax is supported. No additional URL-length limit is imposed locally.
+- Creation refuses an already-bound directory, saves the returned ID before waiting, and returns a full browser URL. `--execution-mode local|docker` defaults to local for `repo create`; `init` with closed stdin or JSON also defaults to local.
+- `--wait` is opt-in on create/init/deploy/repo status. `wait-for-ready` always waits. `--timeout` defaults to 600 seconds (1–86400); `--poll-interval` defaults to 5 (1–3600). Deadlines include HTTP requests and polling sleeps; numeric `Retry-After` is honored within the remaining deadline.
+- Status/wait reuse **`GET /v2/repo/logs/{id}`**, not a new job service. Initial/submitted/processing wait; approved/verified allow a deploy attempt. Rejected stops with diagnostics (can include failed verification, not just clone failure); unknown states stop conservatively. A zero queue depth is **not** readiness. A deploy can still race with re-atomization: `REPO_NOT_READY` explicitly instructs the agent to wait and retry.
+- **Source:** VeriLib clones the remote Git URL; local uncommitted source is not uploaded. **Metadata:** deploy sends the local `.verilib` tree/layouts. Status includes upload/atomization logs and queue information; resolved source commit and prior metadata deployment state are `null`/`unknown` because the logs endpoint does not expose them. Do not confuse source-ready with proofs verified.
+- JSON mode emits one JSON document for these lifecycle commands; progress goes to stderr. Errors exit nonzero and contain `ok:false` plus an `error` object. Timeout preserves the repo ID/last observed status and does **not** cancel server work. Reuse the ID; never recreate blindly after a timeout.
+- An atomization-specific legacy 503 is `REPO_NOT_READY`, not a generic service outage. Other 503s remain errors. A deploy 202 is reported as pending, **not** success; no write is automatically re-sent after an ambiguous timeout.
+- **Deployment prerequisite (verified on VD, 2026-09-17):** the logs route currently returns 401 for API-key requests and its middleware list is session-only (`LoggedInMiddleware`, RBAC). CLI status/wait cannot work there until the existing route enables API-key authentication with appropriate scopes/RBAC. This update does **not** change backend authentication or fall back to cookies. Mock tests cover the flow; live wait is blocked on that route configuration.
+- **Current API limitations:** no stable job-ID endpoint or atomic `idempotency_key` guarantee is advertised. Repo-ID tracking provides waiting without backend changes, but does not provide server-side idempotency after a lost create response. API-key access to the existing logs endpoint is required; 401/403/404 are explicit errors.
+
 ### `deploy`
-Deploy repository changes to the server.
+Deploy local `.verilib` metadata to the server, not the Git source worktree.
 
 ```bash
 verilib-cli deploy

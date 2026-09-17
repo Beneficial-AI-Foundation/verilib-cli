@@ -28,6 +28,7 @@ def run_cli(
     cwd: str | None = None,
     json_output: bool = False,
     extra_env: dict[str, str] | None = None,
+    timeout_seconds: float = 620,
 ) -> dict[str, Any]:
     cmd = [resolve_binary()]
     if json_output:
@@ -38,13 +39,19 @@ def run_cli(
     if extra_env:
         env.update(extra_env)
 
-    proc = subprocess.run(
-        cmd,
-        cwd=cwd,
-        env=env,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        proc = subprocess.run(
+            cmd, cwd=cwd, env=env, capture_output=True, text=True,
+            stdin=subprocess.DEVNULL, timeout=timeout_seconds,
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "ok": False, "exit_code": None,
+            "error": {"code": "PROCESS_TIMEOUT", "message":
+                "CLI deadline exceeded. Server work may continue; write outcome may be unknown. "
+                "Inspect repo status and saved config before retrying; do not recreate blindly."},
+            "cwd": cwd or os.getcwd(),
+        }
 
     result: dict[str, Any] = {
         "ok": proc.returncode == 0,
