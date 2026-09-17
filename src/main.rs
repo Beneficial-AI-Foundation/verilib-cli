@@ -19,9 +19,27 @@ use commands::{
 };
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() {
     let cli = Cli::parse();
+    let json_output = cli.json;
+    if let Err(error) = run(cli).await {
+        if json_output {
+            let detail = error.to_string();
+            let data = serde_json::from_str::<serde_json::Value>(&detail).unwrap_or_else(
+                |_| serde_json::json!({"code":"COMMAND_FAILED", "message":format!("{error:#}")}),
+            );
+            println!("{}", serde_json::json!({"ok":false, "error":data}));
+        } else {
+            eprintln!("Error: {error:#}");
+        }
+        std::process::exit(1);
+    }
+}
 
+async fn run(cli: Cli) -> Result<()> {
+    if cli.dry_run && !matches!(&cli.command, Commands::Api { .. }) {
+        anyhow::bail!("--dry-run is only supported for local api commands; no operation performed");
+    }
     match cli.command {
         Commands::Auth => {
             handle_auth().await?;
@@ -29,14 +47,30 @@ async fn main() -> Result<()> {
         Commands::Status => {
             handle_status().await?;
         }
-        Commands::Init { id, url } => {
-            handle_init(id, url, cli.debug).await?;
+        Commands::Init {
+            id,
+            url,
+            execution_mode,
+            wait,
+        } => {
+            handle_init(id, url, cli.debug, execution_mode, wait, cli.json).await?;
+        }
+        Commands::Repo { command } => match command {
+            cli::RepoCommands::Create(args) => {
+                commands::repo::handle_create(args, cli.json).await?
+            }
+            cli::RepoCommands::Status { target, options } => {
+                commands::repo::handle_status(target, options, false, cli.json).await?
+            }
+        },
+        Commands::WaitForReady { target, options } => {
+            commands::repo::handle_status(target, options, true, cli.json).await?;
         }
         Commands::Reclone => {
             handle_reclone(cli.debug).await?;
         }
-        Commands::Deploy { url } => {
-            handle_deploy(url, cli.debug).await?;
+        Commands::Deploy { url, wait, yes } => {
+            handle_deploy(url, cli.debug, wait, yes, cli.json).await?;
         }
         Commands::Pull { url } => {
             handle_pull(url, cli.debug).await?;
